@@ -2,8 +2,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-from functools import partial
-from werkzeug.local import LocalStack, LocalProxy
+from werkzeug.local import LocalProxy
 from srht.config import cfg
 
 Base = declarative_base()
