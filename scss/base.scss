@@ -1,0 +1,156 @@
+@import "bootstrap/scss/bootstrap";
+
+$base-font-size: 0.9rem;
+
+body {
+  font-family: sans-serif;
+  font-size: $base-font-size;
+}
+
+p {
+  margin-bottom: 0.5rem;
+}
+
+label {
+  margin-bottom: 0.25rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea.form-control {
+  border-radius: 0;
+  border-color: #888;
+  color: $gray-dark;
+  padding: 0.25rem 0.375rem;
+
+  &:active, &:focus {
+    color: $gray-dark;
+  }
+}
+
+h1, h2 {
+  margin-top: 0;
+}
+
+h3 {
+  font-size: 1.3rem;
+  border-bottom: 1px solid $gray-lighter;
+  padding-bottom: 0.25rem;
+
+  small {
+    @extend .text-muted;
+    font-size: 1rem;
+    margin-left: 1rem;
+  }
+}
+
+h4 {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+}
+
+.table {
+  thead {
+    th {
+      padding: 0.1rem 0.75rem;
+      border: none;
+    }
+  }
+
+  tbody {
+    td {
+      padding: 0.1rem 0.75rem;
+      border: 1px solid $gray-light;
+    }
+  }
+
+  tr.danger {
+    background: lighten($brand-danger, 20);
+  }
+}
+
+section {
+  padding-bottom: 0.5rem;
+}
+
+.container {
+  margin: 0;
+}
+
+.btn {
+  border-radius: 0;
+  padding: 0.1rem 0.75rem;
+
+  &.btn-default {
+    transition: background 0.1s linear;
+    background: $gray-lighter;
+    border: $gray-dark 1px solid;
+    font-size: 0.9rem;
+    color: black;
+
+    &:hover {
+      background: $gray-lightest;
+    }
+  }
+
+  &.btn-danger {
+    border: $btn-danger-border 1px solid;
+    font-size: 0.9rem;
+  }
+
+  &.btn-link {
+    padding: 0;
+    font-size: $base-font-size;
+    margin-top: -0.1rem;
+  }
+}
+
+.navbar {
+  .navbar-brand {
+    padding: 0 1rem 0 0;
+    line-height: 1.8;
+  }
+
+  li {
+    font-size: $base-font-size;
+    line-height: 1.8;
+  }
+
+  .login {
+    padding: 0.425rem 0;
+    font-size: $base-font-size;
+    line-height: 1.5;
+  }
+}
+
+.nav-tabs {
+  padding-left: 1rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 3px #ddd solid;
+
+  .nav-link {
+    padding: 0 1rem;
+    border-radius: 0;
+    color: black;
+    cursor: pointer;
+
+    &.active, &.active:hover {
+      color: black;
+      background: #ddd;
+    }
+  }
+}
+
+.alert {
+  padding: 0.5rem;
+  border-radius: 0;
+
+  .form-group & {
+    margin-top: 1rem;
+  }
+}
+
+.text-centered {
+  text-align: center;
+}
