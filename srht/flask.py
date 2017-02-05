@@ -3,10 +3,11 @@ from enum import Enum
 from srht.config import cfg, cfgi
 from srht.validation import Validation
 from datetime import datetime
-from jinja2 import Markup
+from jinja2 import Markup, FileSystemLoader, ChoiceLoader
 import humanize
 import decimal
 import json
+import os
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
@@ -29,10 +30,19 @@ def datef(d):
         humanize.naturaltime(d)))
 
 class SrhtFlask(Flask):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, site, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.jinja_env.cache = None
         self.jinja_env.filters['date'] = datef
+        self.jinja_loader = ChoiceLoader([
+            FileSystemLoader(os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "templates"
+            )),
+            FileSystemLoader("templates"),
+        ])
 
         @self.context_processor
         def inject():
@@ -46,7 +56,8 @@ class SrhtFlask(Flask):
                 'url_for': url_for,
                 'cfg': cfg,
                 'cfgi': cfgi,
-                'valid': Validation(request)
+                'valid': Validation(request),
+                'site': site,
             }
 
     def make_response(self, rv):
