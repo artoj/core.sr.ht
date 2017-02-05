@@ -1,12 +1,14 @@
-from flask import Flask, Response, request, url_for
+from flask import Flask, Response, request, url_for, render_template
 from enum import Enum
 from srht.config import cfg, cfgi, cfgkeys
 from srht.validation import Validation
+from srht.database import db
 from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader
 import humanize
 import decimal
 import json
+import sys
 import os
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
@@ -43,6 +45,26 @@ class SrhtFlask(Flask):
             )),
             FileSystemLoader("templates"),
         ])
+
+        @self.errorhandler(500)
+        def handle_500(e):
+            if self.debug:
+                raise e
+            # shit
+            try:
+                if hasattr(db, 'session'):
+                    db.session.rollback()
+                    db.session.close()
+            except:
+                # shit shit
+                sys.exit(1)
+            return render_template("internal_error.html"), 500
+
+        @self.errorhandler(404)
+        def handle_404(e):
+            if request.path.startswith("/api"):
+                return { "errors": [ { "reason": "404 not found" } ] }, 404
+            return render_template("not_found.html"), 404
 
         @self.context_processor
         def inject():
