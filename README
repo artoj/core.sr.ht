@@ -1,0 +1,5 @@
+                               sr.ht shared code
+
+Framework for building sr.ht sites. Provides some modules that help with the
+Flask and SQLAlchemy bits, plus shared code for things like validation and
+configuration. Also contains shared HTML and SCSS.
