@@ -1,0 +1,9 @@
+*.pyc
+bin/
+include/
+local/
+lib/
+*.swp
+*.rdb
+pip-selfcheck.json
+.sass-cache/
