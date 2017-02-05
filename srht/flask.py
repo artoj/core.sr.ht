@@ -1,6 +1,6 @@
 from flask import Flask, Response, request, url_for
 from enum import Enum
-from srht.config import cfg, cfgi
+from srht.config import cfg, cfgi, cfgkeys
 from srht.validation import Validation
 from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader
@@ -56,8 +56,10 @@ class SrhtFlask(Flask):
                 'url_for': url_for,
                 'cfg': cfg,
                 'cfgi': cfgi,
+                'cfgkeys': cfgkeys,
                 'valid': Validation(request),
                 'site': site,
+                'site_name': cfg("sr.ht", "site-name"),
             }
 
     def make_response(self, rv):
