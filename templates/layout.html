@@ -18,11 +18,14 @@
         </li>
         {% endfor %}
       </ul>
+      {% block login %}
       {% if current_user %}
       <div class="login pull-xs-right">
         Logged in as
         <a href="{{cfg("network", "meta")}}/profile">{{current_user.username}}</a>
         &mdash;
+        {% block login_nav %}
+        {% endblock %}
         <a href="/logout">Log out</a>
       </div>
       {% else %}
@@ -38,6 +41,7 @@
         {% endif %}
       </div>
       {% endif %}
+      {% endblock %}
     </nav>
     {% endblock %}
     {% block body %}
