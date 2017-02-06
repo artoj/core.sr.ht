@@ -37,6 +37,7 @@ watch:
 	while inotifywait \
 		-e close_write js/ \
 		-e close_write scss/ \
+		-e close_write "${SRHT_PATH}"/scss/ \
 		-e close_write _static/; \
 		do make; done
 
