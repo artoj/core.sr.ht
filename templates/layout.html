@@ -27,9 +27,15 @@
       </div>
       {% else %}
       <div class="login pull-xs-right">
+        {% if site == 'meta' %}
         <a href="/login">Log in</a>
         &mdash;
         <a href="/">Register</a>
+        {% else %}
+        <a href="{{ oauth_url }}">Log in</a>
+        &mdash;
+        <a href="{{cfg("network", "meta")}}">Register</a>
+        {% endif %}
       </div>
       {% endif %}
     </nav>
