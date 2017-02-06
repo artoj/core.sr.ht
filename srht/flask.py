@@ -72,6 +72,7 @@ class SrhtFlask(Flask):
                 'root': cfg("server", "protocol") + "://" + cfg("server", "domain"),
                 'domain': cfg("server", "domain"),
                 'protocol': cfg("server", "protocol"),
+                'app': self,
                 'len': len,
                 'any': any,
                 'request': request,
