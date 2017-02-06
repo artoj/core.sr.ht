@@ -29,8 +29,29 @@ textarea.form-control {
   }
 }
 
+select.form-control {
+  border-radius: 0;
+  border-color: #888;
+  color: $gray-dark;
+  padding: 0 0.75rem;
+  height: 1.9rem !important;
+}
+
+form {
+  margin-bottom: 1rem;
+}
+
+legend {
+  font-size: $base-font-size;
+  margin-bottom: 0;
+}
+
 h1, h2 {
   margin-top: 0;
+
+  small {
+    font-size: $base-font-size;
+  }
 }
 
 h3 {
