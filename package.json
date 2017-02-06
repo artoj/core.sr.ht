@@ -1,0 +1,10 @@
+{
+  "name": "srht",
+  "version": "1.0.0",
+  "description": "Dummy package for build deps",
+  "author": "Drew DeVault <sir@cmpwn.com>",
+  "license": "GPL-2.0",
+  "dependencies": {
+    "purify-css": "^1.1.9"
+  }
+}
