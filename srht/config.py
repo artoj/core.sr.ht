@@ -15,10 +15,10 @@ def load_config(name, paths=None):
 _throw = 1
 
 def cfg(section, key, default=_throw):
-    v = config.get(section, key)
+    v = config.get(section, key) if section in config else None
     if not v:
         if default is _throw:
-            raise Exception("Config option [{}] {} not found", section, key)
+            raise Exception("Config option [{}] {} not found".format(section, key))
     return v
 
 def cfgi(section, key, default=_throw):

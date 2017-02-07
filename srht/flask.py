@@ -38,12 +38,12 @@ class SrhtFlask(Flask):
         self.jinja_env.cache = None
         self.jinja_env.filters['date'] = datef
         self.jinja_loader = ChoiceLoader([
+            FileSystemLoader("templates"),
             FileSystemLoader(os.path.join(
                 os.path.dirname(__file__),
                 "..",
                 "templates"
             )),
-            FileSystemLoader("templates"),
         ])
 
         @self.errorhandler(500)
@@ -82,7 +82,7 @@ class SrhtFlask(Flask):
                 'cfgkeys': cfgkeys,
                 'valid': Validation(request),
                 'site': site,
-                'site_name': cfg("sr.ht", "site-name"),
+                'site_name': cfg("sr.ht", "site-name", default=None),
             }
 
     def make_response(self, rv):
