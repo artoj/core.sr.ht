@@ -41,7 +41,6 @@ class SrhtFlask(Flask):
             FileSystemLoader("templates"),
             FileSystemLoader(os.path.join(
                 os.path.dirname(__file__),
-                "..",
                 "templates"
             )),
         ])
