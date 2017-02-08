@@ -13,14 +13,14 @@ md5sums=('SKIP')
 
 pkgver() {
 	cd "${srcdir}/srht"
-    git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+	git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
 build() {
 	cd "${srcdir}/srht"
-    cd srht
-    npm i
-    cd ..
+	cd srht
+	npm i
+	cd ..
 	python ./setup.py build
 }
 
