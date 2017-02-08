@@ -8,8 +8,13 @@ url="https://git.sr.ht/~sircmpwn/srht"
 license=("MIT")
 depends=("python-flask" "python-sqlalchemy" "python-humanize" "sassc")
 makedepends=("python-distribute" "npm")
-source=("git+https://git.sr.ht/~sircmpwn/srht.git#tag=${pkgver}")
+source=("git+https://git.sr.ht/~sircmpwn/srht.git")
 md5sums=('SKIP')
+
+pkgver() {
+	cd "${srcdir}/srht"
+    git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
 
 build() {
 	cd "${srcdir}/srht"
