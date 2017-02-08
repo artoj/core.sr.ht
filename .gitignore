@@ -8,3 +8,4 @@ lib/
 pip-selfcheck.json
 .sass-cache/
 node_modules
+build
