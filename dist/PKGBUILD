@@ -1,0 +1,26 @@
+# Maintainer: Drew DeVault <sir@cmpwn.com>
+pkgname="python-srht"
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="sr.ht core modules"
+arch=("any")
+url="https://git.sr.ht/~sircmpwn/srht"
+license=("MIT")
+depends=("python-flask" "python-sqlalchemy" "python-humanize" "sassc")
+makedepends=("python-distribute" "npm")
+source=("git+https://git.sr.ht/~sircmpwn/srht.git#tag=${pkgver}")
+md5sums=('SKIP')
+
+build() {
+	cd "${srcdir}/srht"
+    cd srht
+    npm i
+    cd ..
+	python ./setup.py build
+}
+
+package() {
+	cd "${srcdir}/srht"
+	python setup.py install --root="$pkgdir" --optimize=1
+}
+
