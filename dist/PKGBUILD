@@ -21,11 +21,11 @@ build() {
 	cd srht
 	npm i
 	cd ..
-	python ./setup.py build
+	./setup.py build
 }
 
 package() {
 	cd "${srcdir}/srht"
-	python setup.py install --root="$pkgdir" --optimize=1
+	./setup.py install --root="$pkgdir" --optimize=1
 }
 
