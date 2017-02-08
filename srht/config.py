@@ -8,7 +8,8 @@ def load_config(name, paths=None):
         paths = [ "config.ini", "/etc/sr.ht/{}.ini".format(name) ]
     for path in paths:
         try:
-            config.readfp(open(path))
+            with open(path) as f:
+                config.readfp(f)
         except FileNotFoundError:
             pass
 
