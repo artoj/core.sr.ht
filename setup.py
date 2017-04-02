@@ -16,7 +16,7 @@ setup(
   author = 'Drew DeVault',
   author_email = 'sir@cmpwn.com',
   url = 'https://git.sr.ht/~sircmpwn/srht',
-  requires = ['flask', 'humanize', 'sqlalchemy'],
+  requires = ['flask', 'humanize', 'sqlalchemy', 'sqlalchemy-utils'],
   license = 'GPL-2.0',
   package_data={
       'srht': [
