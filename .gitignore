@@ -7,5 +7,5 @@ lib/
 *.rdb
 pip-selfcheck.json
 .sass-cache/
+build/
 node_modules
-build

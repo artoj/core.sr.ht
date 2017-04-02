@@ -3,35 +3,35 @@
 
 .PHONY: all static watch clean
 
-SCRIPTS+=$(patsubst js/%.js,static/%.js,$(wildcard js/*.js))
-_STATIC:=$(patsubst _static/%,static/%,$(wildcard _static/*))
+SCRIPTS+=$(patsubst js/%.js,$(MODULE)static/%.js,$(wildcard js/*.js))
+_STATIC:=$(patsubst _static/%,$(MODULE)static/%,$(wildcard _static/*))
 
 SRHT_PATH?=/usr/lib/python3.6/site-packages/srht
 
-static/%: _static/%
-	@mkdir -p static/
+$(MODULE)static/%: _static/%
+	@mkdir -p $(MODULE)static/
 	cp $< $@
 
-static/main.css: scss/*.scss ${SRHT_PATH}/scss/*.scss
-	@mkdir -p static/
+$(MODULE)static/main.css: scss/*.scss ${SRHT_PATH}/scss/*.scss
+	@mkdir -p $(MODULE)static/
 	sassc -I${SRHT_PATH}/scss scss/main.scss $@
 
-static/main.min.css: static/main.css
+$(MODULE)static/main.min.css: $(MODULE)static/main.css
 	node ${SRHT_PATH}/minify-css.js \
 		static/main.css \
 		static/main.min.css \
-		"templates/*" "${SRHT_PATH}/templates/*"
+		"$(MODULE)templates/*" "${SRHT_PATH}/templates/*"
 
-static/%.js: js/%.js
-	@mkdir -p static/
+$(MODULE)static/%.js: js/%.js
+	@mkdir -p $(MODULE)static/
 	cp $< $@
 
-static: $(SCRIPTS) $(_STATIC) static/main.min.css
+static: $(SCRIPTS) $(_STATIC) $(MODULE)static/main.min.css
 
 all: static
 
 clean:
-	rm -rf static
+	rm -rf $(MODULE)static
 
 watch:
 	while inotifywait \

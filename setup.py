@@ -2,6 +2,11 @@
 from distutils.core import setup
 import subprocess
 import glob
+import os
+
+if not os.path.exists("srht/node_modules"):
+    subprocess.call(["npm", "i"], cwd="srht")
+
 setup(
   name = 'srht',
   packages = ['srht'],

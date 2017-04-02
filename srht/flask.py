@@ -5,6 +5,7 @@ from srht.validation import Validation
 from srht.database import db
 from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader
+import inspect
 import humanize
 import decimal
 import json
@@ -35,10 +36,15 @@ class SrhtFlask(Flask):
     def __init__(self, site, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        mod = inspect.getmodule(inspect.stack()[1][0])
+        mod = __import__(mod.__package__)
+        path = list(mod.__path__)[0]
+
         self.jinja_env.cache = None
         self.jinja_env.filters['date'] = datef
         self.jinja_loader = ChoiceLoader([
             FileSystemLoader("templates"),
+            FileSystemLoader(os.path.join(path, "templates")),
             FileSystemLoader(os.path.join(
                 os.path.dirname(__file__),
                 "templates"

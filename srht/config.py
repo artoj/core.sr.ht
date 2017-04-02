@@ -1,9 +1,10 @@
 from configparser import ConfigParser
 
-config = ConfigParser()
+config = None
 
 def load_config(name, paths=None):
     global config
+    config = ConfigParser()
     if paths == None:
         paths = [ "config.ini", "/etc/sr.ht/{}.ini".format(name) ]
     for path in paths:
@@ -12,6 +13,9 @@ def load_config(name, paths=None):
                 config.readfp(f)
         except FileNotFoundError:
             pass
+
+def loaded():
+    return config != None
 
 _throw = 1
 
