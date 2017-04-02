@@ -7,16 +7,18 @@ import os
 if not os.path.exists("srht/node_modules"):
     subprocess.call(["npm", "i"], cwd="srht")
 
+ver = os.environ.get("PKGVER") or subprocess.run(['git', 'describe', '--tags'],
+      stdout=subprocess.PIPE).stdout.decode().strip()
+
 setup(
   name = 'srht',
   packages = ['srht'],
-  version = subprocess.run(['git', 'describe', '--tags'],
-      stdout=subprocess.PIPE).stdout.decode().strip(),
+  version = ver,
   description = 'sr.ht core modules',
   author = 'Drew DeVault',
   author_email = 'sir@cmpwn.com',
   url = 'https://git.sr.ht/~sircmpwn/srht',
-  requires = ['flask', 'humanize', 'sqlalchemy', 'sqlalchemy-utils'],
+  install_requires = ['flask', 'humanize', 'sqlalchemy', 'sqlalchemy-utils'],
   license = 'GPL-2.0',
   package_data={
       'srht': [
