@@ -24,6 +24,9 @@ class Validation:
             self.source = request.form
         self.request = request
         self.errors = []
+        self._kwargs = {
+            "valid": self
+        }
 
     @property
     def ok(self):
@@ -47,11 +50,17 @@ class Validation:
     def response(self):
         return { "errors": [ e.json() for e in self.errors ] }, 400
 
+    @property
+    def kwargs(self):
+        return self._kwargs
+
     def error(self, message, field=None):
         self.errors.append(ValidationError(field, message))
 
     def optional(self, name, default=None):
-        return self.source.get(name) or default
+        v = self.source.get(name) or default
+        self._kwargs[name] = v
+        return v
 
     def require(self, name, friendly_name=None):
         value = self.source.get(name)
@@ -59,6 +68,7 @@ class Validation:
             friendly_name = name
         if not value:
             self.error('{} is required'.format(friendly_name), field=name)
+        self._kwargs[name] = value
         return value
 
     def expect(self, condition, message, field=None):
