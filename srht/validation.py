@@ -62,8 +62,10 @@ class Validation:
         self.errors.append(ValidationError(field, message))
 
     def optional(self, name, cls=None, default=None):
-        value = self.source.get(name) or default
-        if value:
+        value = self.source.get(name)
+        if value is None:
+            value = default
+        if value is not None:
             if cls and issubclass(cls, IntEnum):
                 if not isinstance(value, int):
                     self.error('{} should be an int', name)
