@@ -7,9 +7,9 @@ def add_alias(name, client_id):
 def set_validator(validator):
     """
     Sets the scope resolver for this application. Provide a function
-    fn(client_id, scope, access) that returns the human-readable description of
-    this scope (if appropriate) and performs any necessarily validation.
-    Indicate failure by raising an exception.
+    fn(self, client_id, scope, access) that returns the human-readable
+    description of this scope (if appropriate) and performs any necessarily
+    validation. Indicate failure by raising an exception.
     """
     global _validator
     _validator = validator
@@ -34,7 +34,7 @@ class OAuthScope:
             client = _aliases[client]
         if not access in ['read', 'write']:
             raise Exception('Invalid scope access {}'.format(access))
-        self.description = _validator(client, scope, access) if _validator else None
+        self.description = _validator(self, client, scope, access) if _validator else None
         self.client_id = client
         self.scope = scope
         self.access = access
@@ -45,7 +45,7 @@ class OAuthScope:
                 and self.scope == other.scope
 
     def __repr__(self):
-        if self.client:
+        if self.client_id:
             return '{}/{}:{}'.format(self.client_id, self.scope, self.access)
         return '{}:{}'.format(self.scope, self.access)
 
