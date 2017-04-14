@@ -61,7 +61,7 @@ class Validation:
     def error(self, message, field=None):
         self.errors.append(ValidationError(field, message))
 
-    def optional(self, name, cls=None, default=None):
+    def optional(self, name, default=None, cls=None):
         value = self.source.get(name)
         if value is None:
             value = default
@@ -82,7 +82,7 @@ class Validation:
         return value
 
     def require(self, name, cls=None, friendly_name=None):
-        value = self.optional(name, cls)
+        value = self.optional(name, None, cls)
         if not friendly_name:
             friendly_name = name
         if not value:
