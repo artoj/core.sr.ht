@@ -19,7 +19,7 @@ setup(
   author_email = 'sir@cmpwn.com',
   url = 'https://git.sr.ht/~sircmpwn/srht',
   install_requires = ['flask', 'humanize', 'sqlalchemy', 'sqlalchemy-utils'],
-  license = 'GPL-2.0',
+  license = 'AGPL-3.0',
   package_data={
       'srht': [
           'Makefile',

@@ -10,6 +10,8 @@
     {% else %}
     <link rel="stylesheet" href="/static/main.min.css">
     {% endif %}
+    {% block head %}
+    {% endblock %}
   </head>
   <body>
     {% block nav %}

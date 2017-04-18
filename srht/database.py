@@ -3,7 +3,6 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from werkzeug.local import LocalProxy
-from srht.config import cfg
 
 Base = declarative_base()
 

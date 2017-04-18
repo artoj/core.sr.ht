@@ -20,7 +20,7 @@ def loaded():
 _throw = 1
 
 def cfg(section, key, default=_throw):
-    v = config.get(section, key) if section in config else None
+    v = config.get(section, key) if section in config and key in config[section] else None
     if not v:
         if default is _throw:
             raise Exception("Config option [{}] {} not found".format(section, key))
