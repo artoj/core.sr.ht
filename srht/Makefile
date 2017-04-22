@@ -10,7 +10,7 @@ SRHT_PATH?=/usr/lib/python3.6/site-packages/srht
 
 $(MODULE)static/%: _static/%
 	@mkdir -p $(MODULE)static/
-	cp $< $@
+	cp -L $< $@
 
 $(MODULE)static/main.css: scss/*.scss ${SRHT_PATH}/scss/*.scss
 	@mkdir -p $(MODULE)static/
@@ -38,6 +38,7 @@ watch:
 		-e close_write js/ \
 		-e close_write scss/ \
 		-e close_write "${SRHT_PATH}"/scss/ \
+		-e close_write $(MODULE)/templates/ \
 		-e close_write _static/; \
 		do make; done
 
