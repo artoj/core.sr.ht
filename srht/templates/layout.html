@@ -15,38 +15,40 @@
   </head>
   <body>
     {% block nav %}
-    <nav class="navbar navbar-light">
+    <nav class="navbar navbar-light navbar-toggleable-xl">
       <a class="navbar-brand" href="{{cfg("network", "meta")}}">{{site_name}}</a>
-      <ul class="nav navbar-nav">
-        {% for _site in cfgkeys("network") %}
-        <li class="nav-item {{"active" if _site == site else ""}}">
-          <a class="nav-link" href="{{cfg("network", _site)}}">{{_site}}</a>
-        </li>
-        {% endfor %}
-      </ul>
-      {% block login %}
-      {% if current_user %}
-      <div class="login pull-xs-right">
-        Logged in as
-        <a href="{{cfg("network", "meta")}}/profile">{{current_user.username}}</a>
-        &mdash;
-        {% block login_nav %}
-        {% endblock %}
-        <a href="/logout">Log out</a>
-      </div>
-      {% else %}
-      <div class="login pull-xs-right">
-        {% if site == 'meta' %}
-        <a href="/login">Log in</a>
-        &mdash;
-        <a href="/">Register</a>
+      <div class="navbar-collapse collapse">
+        <ul class="navbar-nav mr-auto">
+          {% for _site in cfgkeys("network") %}
+          <li class="nav-item {{"active" if _site == site else ""}}">
+            <a class="nav-link" href="{{cfg("network", _site)}}">{{_site}}</a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% block login %}
+        {% if current_user %}
+        <span class="navbar-text">
+          Logged in as
+          <a href="{{cfg("network", "meta")}}/profile">{{current_user.username}}</a>
+          &mdash;
+          {% block login_nav %}
+          {% endblock %}
+          <a href="/logout">Log out</a>
+        </span>
         {% else %}
-        <a href="{{ oauth_url }}">Log in</a>
-        &mdash;
-        <a href="{{cfg("network", "meta")}}">Register</a>
+        <span class="navbar-text">
+          {% if site == 'meta' %}
+          <a href="/login">Log in</a>
+          &mdash;
+          <a href="/">Register</a>
+          {% else %}
+          <a href="{{ oauth_url }}">Log in</a>
+          &mdash;
+          <a href="{{cfg("network", "meta")}}">Register</a>
+          {% endif %}
+        </span>
         {% endif %}
       </div>
-      {% endif %}
       {% endblock %}
     </nav>
     {% endblock %}
