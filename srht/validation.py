@@ -97,6 +97,9 @@ class Validation:
         for err in self.errors:
             valid.error(err.message, field + "." + err.field)
 
+    def __contains__(self, value):
+        return value in self.source
+
 def valid_url(url):
     try:
         u = parse.urlparse(url)
