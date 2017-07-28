@@ -18,7 +18,14 @@ setup(
   author = 'Drew DeVault',
   author_email = 'sir@cmpwn.com',
   url = 'https://git.sr.ht/~sircmpwn/srht',
-  install_requires = ['flask', 'humanize', 'sqlalchemy', 'sqlalchemy-utils'],
+  install_requires = [
+      'flask',
+      'humanize',
+      'sqlalchemy',
+      'sqlalchemy-utils',
+      'markdown',
+      'bleach'
+  ],
   license = 'AGPL-3.0',
   package_data={
       'srht': [

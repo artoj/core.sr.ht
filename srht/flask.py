@@ -7,7 +7,9 @@ from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader
 import inspect
 import humanize
+import markdown
 import decimal
+import bleach
 import json
 import sys
 import os
@@ -89,6 +91,13 @@ class SrhtFlask(Flask):
                 'site': site,
                 'site_name': cfg("sr.ht", "site-name", default=None),
             }
+
+        @self.template_filter()
+        def md(text):
+            html = bleach.clean(markdown.markdown(text),
+                tags=bleach.sanitizer.ALLOWED_TAGS + ["p"],
+                strip=True)
+            return Markup(html)
 
     def make_response(self, rv):
         # Converts responses from dicts to JSON response objects
