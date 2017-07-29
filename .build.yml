@@ -123,8 +123,11 @@ tasks:
         --prefix=srht-$pkgver/ HEAD
   - package: |
       cd sr.ht-pkgbuilds/python-srht
-      pkgrel=$(pacman -Si python-srht | grep Version | cut -d'-' -f2)
-      pkgrel=$(expr $pkgrel + 1)
+      _ver=$(pacman -Si python-srht | grep Version | cut -d':' -f2 | sed -e 's/^ *//')
+      _prevver=$(echo "$_ver" | cut -d'-' -f1)
+      _prevrel=$(echo "$_ver" | cut -d'-' -f2)
+      pkgrel=1
+      [ "$_prevver" == "$pkgver" ] && pkgrel=$(expr $_prevrel + 1)
       sed -e "s/pkgver=.*/pkgver=$pkgver/" -i PKGBUILD
       sed -e "s/pkgrel=.*/pkgrel=$pkgrel/" -i PKGBUILD
       echo "pkgrel=$pkgrel" >> ~/.buildenv
