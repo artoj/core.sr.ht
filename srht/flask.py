@@ -35,11 +35,10 @@ def datef(d):
         humanize.naturaltime(d)))
 
 class SrhtFlask(Flask):
-    def __init__(self, site, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, site, name, *args, **kwargs):
+        super().__init__(name, *args, **kwargs)
 
-        mod = inspect.getmodule(inspect.stack()[1][0])
-        mod = __import__(mod.__package__)
+        mod = __import__(name)
         path = list(mod.__path__)[0]
 
         self.jinja_env.cache = None
