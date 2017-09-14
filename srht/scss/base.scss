@@ -72,8 +72,15 @@ h3 {
 }
 
 h4 {
-  margin-top: 1rem;
   font-size: 1.1rem;
+  border-bottom: 1px solid $gray-lighter;
+  padding-bottom: 0.25rem;
+
+  small {
+    @extend .text-muted;
+    font-size: 0.8rem;
+    margin-left: 1rem;
+  }
 }
 
 .table {
