@@ -18,6 +18,8 @@ class OAuthScope:
     def __init__(self, scope):
         client = None
         access = 'read'
+        if scope == "*":
+            access = 'write'
         if '/' in scope:
             s = scope.split('/')
             if len(s) != 2:
@@ -56,6 +58,18 @@ class OAuthScope:
         if self.client:
             return '{}/{}:{}'.format(self.client_id, self.scope, 'read')
         return '{}:{}'.format(self.scope, 'read')
+
+    def fulfills(self, want):
+        if self.scope == "*":
+            if want.access == "read":
+                return True
+            return self.access == "write"
+        else:
+            return (
+                self.scope == want.scope and
+                self.client_id == want.client_id and
+                self.access == "write" if want.access == "write" else True
+            )
 
     def friendly(self):
         return self.description or ""
