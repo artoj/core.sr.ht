@@ -11,7 +11,14 @@ class AbstractOAuthService(abc.ABC):
     """
 
     @abc.abstractmethod
-    def get_token(self, token_hash, scopes):
+    def get_client_id(self):
+        """
+        Used to add your client ID to scopes with no client ID set.
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_token(self, token, token_hash, scopes):
         """
         Get or create an OAuthToken object. We don't do anything with it but
         hand it back to you; the type can be anything that you find useful.
@@ -128,28 +135,20 @@ def oauth(scopes):
                 required = OAuthScope(scopes)
             except Exception as ex:
                 return valid.error(str(ex))
-            oauth_token = _base_service.get_token(token_hash, required)
+            try:
+                oauth_token = _base_service.get_token(token, token_hash, required)
+            except Exception as ex:
+                return valid.error(str(ex))
             if not oauth_token:
                 return valid.error("Invalid or expired OAuth token", status=401)
             args = (oauth_token,) + args
             if oauth_token.scopes == "*":
                 return f(*args, **kwargs)
             available = [OAuthScope(s) for s in oauth_token.scopes.split(',')]
-            applicable = [
-                s for s in available
-                if s.client_id == required.client_id and s.scope == required.scope
-            ]
+            applicable = [s for s in available if s.fulfills(required)]
             if not any(applicable):
                 return valid.error("Your OAuth token is not permitted to use " +
                     "this endpoint (needs {})".format(required), status=403)
-            if (required.access == 'read'
-                    and any([s for s in applicable
-                        if s.access == 'read' or s.access == 'write'])):
-                return f(*args, **kwargs)
-            if (required.access == 'write'
-                    and any([s for s in applicable if s.access == 'write'])):
-                return f(*args, **kwargs)
-            return valid.errors("Your OAuth token is not permitted to use " +
-                "this endpoint (needs {})".format(required), status=403)
+            return f(*args, **kwargs)
         return wrapper
     return wrap
