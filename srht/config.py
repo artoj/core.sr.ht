@@ -20,6 +20,8 @@ def loaded():
 _throw = 1
 
 def cfg(section, key, default=_throw):
+    if not config:
+        return None
     v = config.get(section, key) if section in config and key in config[section] else None
     if not v:
         if default is _throw:
