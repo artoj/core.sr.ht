@@ -146,6 +146,7 @@ def oauth(scopes):
             token_hash = hashlib.sha512(token.encode()).hexdigest()
             try:
                 required = OAuthScope(scopes)
+                required.client_id = _base_service.get_client_id()
             except OAuthError as err:
                 return err.response
             try:
