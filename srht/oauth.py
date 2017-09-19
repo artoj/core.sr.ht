@@ -2,7 +2,20 @@ import abc
 from functools import wraps
 from flask import request
 import hashlib
+import requests
 from srht.validation import Validation
+from srht.config import cfg
+
+class OAuthError(Exception):
+    def __init__(self, err, *args, status=401, **kwargs):
+        super().__init__(*args, **kwargs)
+        if isinstance(err, dict):
+            self.response = err
+        else:
+            valid = Validation()
+            valid.error(err)
+            self.response = valid.response
+        self.status = status
 
 class AbstractOAuthService(abc.ABC):
     """
@@ -133,12 +146,12 @@ def oauth(scopes):
             token_hash = hashlib.sha512(token.encode()).hexdigest()
             try:
                 required = OAuthScope(scopes)
-            except Exception as ex:
-                return valid.error(str(ex))
+            except OAuthError as err:
+                return err.response
             try:
                 oauth_token = _base_service.get_token(token, token_hash, required)
-            except Exception as ex:
-                return valid.error(str(ex))
+            except OAuthError as err:
+                return err.response
             if not oauth_token:
                 return valid.error("Invalid or expired OAuth token", status=401)
             args = (oauth_token,) + args
@@ -152,3 +165,32 @@ def oauth(scopes):
             return f(*args, **kwargs)
         return wrapper
     return wrap
+
+meta = cfg("network", "meta")
+def meta_delegated_exchange(token, client_id, client_secret, revocation_url):
+    """
+    Validates an OAuth token with meta.sr.ht and returns a tuple of
+    meta.sr.ht's responses: token, profile. Raises an OAuthError if anything
+    goes wrong.
+    """
+    try:
+        r = requests.post("{}/oauth/token/{}".format(meta, token), json={
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "revocation_url": revocation_url
+        })
+        _token = r.json()
+    except Exception as ex:
+        raise OAuthError("Temporary authentication failure", status=500)
+    if r.status_code != 200:
+        raise OAuthError(_token, status=r.status_code)
+    try:
+        r = requests.get("{}/api/user/profile".format(meta), headers={
+            "Authorization": "token {}".format(token)
+        })
+        profile = r.json()
+    except Exception as ex:
+        raise OAuthError("Temporary authentication failure", status=500)
+    if r.status_code != 200:
+        raise OAuthError(profile, status=r.status_code)
+    return _token, profile

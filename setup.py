@@ -24,7 +24,8 @@ setup(
       'sqlalchemy',
       'sqlalchemy-utils',
       'markdown',
-      'bleach'
+      'bleach',
+      'requests'
   ],
   license = 'AGPL-3.0',
   package_data={
