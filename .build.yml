@@ -14,6 +14,7 @@ sources:
   - https://git.sr.ht/~sircmpwn/srht
   - https://git.sr.ht/~sircmpwn/sr.ht-pkgbuilds
 environment:
+  project: srht
   repo_server: deploy@mirror.sr.ht
   repo_path: /var/html/mirror/sr.ht/archlinux
 secrets:
@@ -21,27 +22,31 @@ secrets:
   - 3e65a1a8-a20f-4f6b-a452-df2ac398bc1e # package signing key
 tasks:
   - build: |
-      cd srht
+      cd ${project}
       ./setup.py build
   - archive: |
-      cd srht
+      cd ${project}
       pkgver=$(git describe | sed -e 's/-/_/g')
       echo "pkgver=$pkgver" >> ~/.buildenv
       git archive -o ~/sr.ht-pkgbuilds/python-srht/srht-$pkgver.tar.xz \
         --prefix=srht-$pkgver/ HEAD
   - package: |
       cd sr.ht-pkgbuilds/python-srht
-      _ver=$(pacman -Si python-srht | grep Version | cut -d':' -f2 | sed -e 's/^ *//')
-      _prevver=$(echo "$_ver" | cut -d'-' -f1)
-      _prevrel=$(echo "$_ver" | cut -d'-' -f2)
-      pkgrel=1
-      [ "$_prevver" == "$pkgver" ] && pkgrel=$(expr $_prevrel + 1)
+      prev_pkgver=$(pacman -Si python-srht | grep Version | cut -d ':' -f2 | cut -d ' ' -f2)
+      prev_pkgrel=$(printf "%s" "$prev_pkgver" | cut -d'-' -f2)
+      prev_pkgver=$(printf "%s" "$prev_pkgver" | cut -d'-' -f1)
+      if [ "$prev_pkgver" == "$pkgver" ]
+      then
+        pkgrel=$(expr $prev_pkgrel + 1)
+      else
+        pkgrel=1
+      fi
       sed -e "s/pkgver=.*/pkgver=$pkgver/" -i PKGBUILD
       sed -e "s/pkgrel=.*/pkgrel=$pkgrel/" -i PKGBUILD
       echo "pkgrel=$pkgrel" >> ~/.buildenv
       updpkgsums
       makepkg --config ../makepkg.conf -s --noconfirm
-      cd ~/srht
+      cd ~/${project}
       git describe --exact-match HEAD || complete-build
   - publish: |
       cd sr.ht-pkgbuilds/python-srht
