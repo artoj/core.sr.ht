@@ -3,10 +3,15 @@
 
 .PHONY: all static watch clean
 
+SRHT_PATH?=/usr/lib/python3.6/site-packages/srht
+
 SCRIPTS+=$(patsubst js/%.js,$(MODULE)static/%.js,$(wildcard js/*.js))
 _STATIC:=$(patsubst _static/%,$(MODULE)static/%,$(wildcard _static/*))
+_STATIC+=$(patsubst $(SRHT_PATH)/static/%,$(MODULE)static/%,$(wildcard $(SRHT_PATH)/static/*))
 
-SRHT_PATH?=/usr/lib/python3.6/site-packages/srht
+$(MODULE)static/%: $(SRHT_PATH)/static/%
+	@mkdir -p $(MODULE)static/
+	cp -L $< $@
 
 $(MODULE)static/%: _static/%
 	@mkdir -p $(MODULE)static/

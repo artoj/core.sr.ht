@@ -72,14 +72,18 @@ class Validation:
         if value is not None:
             if cls and issubclass(cls, IntEnum):
                 if not isinstance(value, int):
-                    self.error('{} should be an int', name)
+                    self.error('{} should be an int'.format(name), field=name)
                 else:
                     value = cls(value)
             elif cls and issubclass(cls, Enum):
                 if not isinstance(value, str):
-                    self.error('{} should be an str', name)
+                    self.error("{} should be an str".format(name), field=name)
                 else:
-                    value = cls(value)
+                    if value not in (m[0] for m in cls.__members__.items()):
+                        self.error("{} should be a valid {}".format(name, cls.__name__),
+                                field=name)
+                    else:
+                        value = cls(value)
             elif cls and not isinstance(value, cls):
                 self.error('{} should be a {}'.format(name, cls.__name__), field=name)
         self._kwargs[name] = value
