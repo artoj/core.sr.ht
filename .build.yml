@@ -51,7 +51,8 @@ tasks:
   - publish: |
       cd sr.ht-pkgbuilds/python-srht
       sshopts="-o StrictHostKeyChecking=no" # TODO: remove this when builds run on a tty
-      rsync --rsh="ssh $sshopts" -rP *.pkg.tar.xz{,.sig} $repo_server:$repo_path/
+      rsync --blocking-io \
+        -rPe "ssh $sshopts" *.pkg.tar.xz{,.sig} $repo_server:$repo_path/
       ssh $sshopts $repo_server repo-add -n -R \
         $repo_path/sr.ht.db.tar.gz \
         $repo_path/python-srht-$pkgver-$pkgrel-any.pkg.tar.xz
