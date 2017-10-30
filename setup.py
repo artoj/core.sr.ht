@@ -35,6 +35,7 @@ setup(
           'package.json',
           'templates/*.html',
           'scss/*.scss',
+          'scss/*.css',
           'scss/bootstrap/LICENSE',
           'static/*'
       ] + [f[5:] for f in glob.glob('srht/node_modules/**', recursive=True)] \
