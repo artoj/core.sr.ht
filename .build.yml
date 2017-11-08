@@ -50,7 +50,7 @@ tasks:
       git describe --exact-match HEAD || complete-build
   - publish: |
       cd sr.ht-pkgbuilds/python-srht
-      sshopts="-o StrictHostKeyChecking=no" # TODO: remove this when builds run on a tty
+      sshopts="-o StrictHostKeyChecking=no"
       rsync --blocking-io \
         -rPe "ssh $sshopts" *.pkg.tar.xz{,.sig} $repo_server:$repo_path/
       ssh $sshopts $repo_server repo-add -n -R \
