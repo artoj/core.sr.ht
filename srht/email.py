@@ -33,7 +33,7 @@ def lookup_key(user, oauth_token):
         return None
     return r.json()["key"]
 
-def send_email(body, to, subject, encrypt_key=None):
+def send_email(body, to, subject, encrypt_key=None, **headers):
     if smtp_host == "":
         return
     smtp = smtplib.SMTP(smtp_host, smtp_port)
@@ -52,8 +52,12 @@ def send_email(body, to, subject, encrypt_key=None):
     multipart.attach(sig_part)
     if not encrypt_key:
         multipart['Subject'] = subject
-        multipart['From'] = smtp_user
-        multipart['To'] = to
+        if 'From' not in headers:
+            multipart['From'] = smtp_user
+        if 'To' not in headers:
+            multipart['To'] = to
+        for key in headers:
+            multipart[key] = headers[key]
         smtp.sendmail(smtp_user, [to], multipart.as_string(unixfrom=True))
     else:
         pubkey, _ = pgpy.PGPKey.from_blob(encrypt_key.replace('\r', '').encode())
@@ -70,7 +74,11 @@ def send_email(body, to, subject, encrypt_key=None):
         wrapped.attach(ver_part)
         wrapped.attach(enc_part)
         wrapped['Subject'] = subject
-        wrapped['From'] = smtp_user
-        wrapped['To'] = to
+        if 'From' not in headers:
+            wrapped['From'] = smtp_user
+        if 'To' not in headers:
+            wrapped['To'] = to
+        for key in headers:
+            wrapped[key] = headers[key]
         smtp.sendmail(smtp_user, [to], wrapped.as_string(unixfrom=True))
     smtp.quit()

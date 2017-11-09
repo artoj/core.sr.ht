@@ -128,7 +128,7 @@ class OAuthScope:
             )
 
     def friendly(self):
-        return self.description or ""
+        return self.description if hasattr(self, "description") else self.scope
 
 def oauth(scopes):
     def wrap(f):
