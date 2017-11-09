@@ -4,6 +4,7 @@ from email.message import Message
 from srht.config import cfg, cfgi
 import smtplib
 import pgpy
+import requests
 
 # TODO: move this into celery worker
 
@@ -12,6 +13,25 @@ smtp_host = cfg("mail", "smtp-host", default=None)
 smtp_port = cfgi("mail", "smtp-port", default=None)
 smtp_user = cfg("mail", "smtp-user", default=None)
 smtp_password = cfg("mail", "smtp-password", default=None)
+meta_url = cfg("network", "meta")
+
+def lookup_key(user, oauth_token):
+    """
+    Looks up the preferred PGP key for the given username and their OAuth token.
+    """
+    # TODO: we should stash this somewhere and use webhooks to update it
+    r = requests.get(meta_url + "/api/user/profile", headers={
+        "Authorization": "token {}".format(oauth_token)
+    })
+    if r.status_code != 200:
+        return None
+    key_id = r.json()["use_pgp_key"]
+    if key_id == None:
+        return None
+    r = requests.get(meta_url + "/api/pgp-key/{}".format(key_id))
+    if r.status_code != 200:
+        return None
+    return r.json()["key"]
 
 def send_email(body, to, subject, encrypt_key=None):
     if smtp_host == "":
