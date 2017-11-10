@@ -34,4 +34,5 @@ class DbSession():
             if hasattr(target, 'updated'):
                 target.updated = datetime.utcnow()
 
+    def create(self):
         Base.metadata.create_all(bind=self.engine)
