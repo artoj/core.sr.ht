@@ -18,7 +18,7 @@ class ValidationError:
 
 class Validation:
     def __init__(self, request):
-        if request is dict():
+        if isinstance(request, dict):
             self.source = request
         else:
             contentType = request.headers.get("Content-Type")
