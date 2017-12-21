@@ -3,12 +3,11 @@ from enum import Enum
 from srht.config import cfg, cfgi, cfgkeys
 from srht.validation import Validation
 from srht.database import db
+from srht.markdown import markdown
 from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader
-from markdown.extensions.toc import TocExtension
 import inspect
 import humanize
-import markdown
 import decimal
 import bleach
 import json
@@ -92,30 +91,13 @@ class SrhtFlask(Flask):
                 'site_name': cfg("sr.ht", "site-name", default=None),
             }
 
-        def _md(text, tags=[], baselevel=1):
-            attrs = {
-                "h1": ["id"],
-                "h2": ["id"],
-                "h3": ["id"],
-                "h4": ["id"],
-                "h5": ["id"],
-            }
-            attrs.update(bleach.sanitizer.ALLOWED_ATTRIBUTES)
-            html = bleach.clean(markdown.markdown(text, extensions=[
-                    TocExtension(baselevel=baselevel)
-                ]),
-                tags=bleach.sanitizer.ALLOWED_TAGS + ["p"] + tags,
-                attributes=attrs,
-                strip=True)
-            return Markup(html)
-
         @self.template_filter()
         def md(text):
-            return _md(text)
+            return markdown(text)
 
         @self.template_filter()
         def extended_md(text, baselevel=1):
-            return _md(text, ["h1", "h2", "h3", "h4", "h5"], baselevel)
+            return markdown(text, ["h1", "h2", "h3", "h4", "h5"], baselevel)
 
     def make_response(self, rv):
         # Converts responses from dicts to JSON response objects
