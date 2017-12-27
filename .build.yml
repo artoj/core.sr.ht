@@ -16,7 +16,7 @@ sources:
 environment:
   project: srht
   repo_server: deploy@mirror.sr.ht
-  repo_path: /var/html/mirror/sr.ht/archlinux
+  repo_path: /var/html/mirror/archlinux/sr.ht
 secrets:
   - fa00a8d3-7b63-42d5-8060-3bb31c3e3018 # ssh deploy key
   - 3e65a1a8-a20f-4f6b-a452-df2ac398bc1e # package signing key
