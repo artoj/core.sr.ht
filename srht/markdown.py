@@ -17,6 +17,12 @@ def _wildcard_filter(tag, name, value):
             "form-control"
         ] + ["col-md-{}".format(c) for c in range(1, 13)]
 
+def add_noopener(html):
+    soup = BeautifulSoup(str(html), "html5lib")
+    for a in soup.findAll('a'):
+        a['rel'] = 'nofollow noopener'
+    return str(soup)
+
 def markdown(text, tags=[], baselevel=1):
     attrs = {
         "h1": ["id"],
@@ -46,7 +52,7 @@ def markdown(text, tags=[], baselevel=1):
         + ["padding-{}".format(p) for p in ["left", "right", "bottom", "top"]]
         + ["margin-{}".format(p) for p in ["left", "right", "bottom", "top"]],
         strip=True)
-    return Markup(html)
+    return Markup(add_noopener(html))
 
 Heading = namedtuple("Header", ["level", "name", "id", "children", "parent"])
 
