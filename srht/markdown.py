@@ -2,8 +2,12 @@ from bs4 import BeautifulSoup
 from collections import namedtuple
 from jinja2 import Markup
 from markdown.extensions.toc import TocExtension
+from srht.urlify import URLifyExtension
 import bleach
 import markdown as md
+import re
+
+urlregex = re.compile(r'(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?\xab\xbb\u201c\u201d\u2018\u2019]))')
 
 def _input_filter(tag, name, value):
     return name == "type" and value in ["check"]
@@ -35,7 +39,8 @@ def markdown(text, tags=[], baselevel=1):
     }
     attrs.update(bleach.sanitizer.ALLOWED_ATTRIBUTES)
     html = bleach.clean(md.markdown(text, extensions=[
-            TocExtension(baselevel=baselevel, marker="")
+            TocExtension(baselevel=baselevel, marker=""),
+            URLifyExtension()
         ]),
         tags=bleach.sanitizer.ALLOWED_TAGS + [
             "p", "div", "span", "pre",
