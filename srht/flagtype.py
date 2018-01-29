@@ -11,7 +11,7 @@ class FlagType(types.TypeDecorator):
         self.enum = enum
 
     def process_bind_param(self, value, dialect):
-        return int(value)
+        return int(value) if value != None else None
 
     def process_result_value(self, value, dialect):
-        return self.enum(value)
+        return self.enum(value) if value != None else None
