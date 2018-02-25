@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from distutils.core import setup
+from setuptools import setup
 import subprocess
 import glob
 import os
@@ -23,9 +23,11 @@ setup(
       'humanize',
       'sqlalchemy',
       'sqlalchemy-utils',
+      'psycopg2-binary',
       'markdown',
       'bleach',
-      'requests'
+      'requests',
+      'BeautifulSoup4',
   ],
   license = 'AGPL-3.0',
   package_data={
