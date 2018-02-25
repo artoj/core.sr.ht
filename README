@@ -3,3 +3,8 @@
 Framework for building sr.ht sites. Provides some modules that help with the
 Flask and SQLAlchemy bits, plus shared code for things like validation and
 configuration. Also contains shared HTML and SCSS.
+
+PREREQUISITES
+
+1. Install sassc
+2. Fetch the submodules: git submodule update --init
