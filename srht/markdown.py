@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup
 from collections import namedtuple
 from jinja2 import Markup
 from markdown.extensions.toc import TocExtension
-from srht.urlify import URLifyExtension
 import bleach
 import markdown as md
 import re
@@ -39,8 +38,7 @@ def markdown(text, tags=[], baselevel=1):
     }
     attrs.update(bleach.sanitizer.ALLOWED_ATTRIBUTES)
     html = bleach.clean(md.markdown(text, extensions=[
-            TocExtension(baselevel=baselevel, marker=""),
-            URLifyExtension()
+            TocExtension(baselevel=baselevel, marker="")
         ]),
         tags=bleach.sanitizer.ALLOWED_TAGS + [
             "p", "div", "span", "pre",
