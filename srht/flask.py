@@ -38,19 +38,20 @@ class SrhtFlask(Flask):
     def __init__(self, site, name, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
 
+        choices = [FileSystemLoader("templates")]
+
         mod = __import__(name)
-        path = list(mod.__path__)[0]
+        if hasattr(mod, "__path__"):
+            path = list(mod.__path__)[0]
+            choices.append(FileSystemLoader(os.path.join(path, "templates")))
+            choices.append(FileSystemLoader(os.path.join(
+                os.path.dirname(__file__),
+                "templates"
+            )))
 
         self.jinja_env.cache = None
         self.jinja_env.filters['date'] = datef
-        self.jinja_loader = ChoiceLoader([
-            FileSystemLoader("templates"),
-            FileSystemLoader(os.path.join(path, "templates")),
-            FileSystemLoader(os.path.join(
-                os.path.dirname(__file__),
-                "templates"
-            )),
-        ])
+        self.jinja_loader = ChoiceLoader(choices)
 
         @self.errorhandler(500)
         def handle_500(e):
