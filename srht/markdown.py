@@ -21,7 +21,7 @@ def _wildcard_filter(tag, name, value):
         ] + ["col-md-{}".format(c) for c in range(1, 13)]
 
 def add_noopener(html):
-    soup = BeautifulSoup(str(html), "html5lib")
+    soup = BeautifulSoup(str(html), 'html.parser')
     for a in soup.findAll('a'):
         a['rel'] = 'nofollow noopener'
     return str(soup)
