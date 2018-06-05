@@ -10,6 +10,7 @@ packages:
   - python-sqlalchemy
   - python-sqlalchemy-utils
   - rsync
+  - pacman-contrib
 sources:
   - https://git.sr.ht/~sircmpwn/srht
   - https://git.sr.ht/~sircmpwn/sr.ht-pkgbuilds
