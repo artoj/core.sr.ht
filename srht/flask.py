@@ -116,6 +116,7 @@ class SrhtFlask(Flask):
                 history = []
         else:
             history = []
+        history = [h for h in history if cfg("network", h, default=None)]
         defaults = cfgkeys("network")
         ndefaults = len(list(cfgkeys("network")))
         while len(history) < 5 or ndefaults > len(history):
