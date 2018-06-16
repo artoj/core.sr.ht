@@ -72,7 +72,7 @@ def set_base_provider(base_provider):
     _base_provider = base_provider
 
 class OAuthScope:
-    def __init__(self, scope):
+    def __init__(self, scope, resolve=True):
         client_id = None
         access = 'read'
         if scope == "*":
@@ -95,7 +95,8 @@ class OAuthScope:
         self.client_id = alias or client_id
         self.scope = scope
         self.access = access
-        _base_provider and _base_provider.resolve_scope(self)
+        if resolve:
+            _base_provider and _base_provider.resolve_scope(self)
 
     def __eq__(self, other):
         return self.client_id == other.client_id \
