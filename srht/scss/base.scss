@@ -239,6 +239,10 @@ blockquote {
     margin: 0.5rem 0;
     background: #f5f5f5;
 
+    &:first-child {
+      margin-top: 0;
+    }
+
     &:last-child {
       margin-bottom: 0;
     }
