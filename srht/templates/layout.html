@@ -17,29 +17,26 @@
   </head>
   <body>
     {% block nav %}
-    <nav class="navbar navbar-light navbar-toggleable-xl">
+    <nav class="navbar navbar-light navbar-expand-lg">
       <a class="navbar-brand" href="/">
         {{site_name}}
         <span class="text-danger">{{site}}</span>
       </a>
-      <div class="navbar-collapse collapse">
-        <ul class="navbar-nav mr-auto">
-          {% for _site in history %}
-          {% if _site != site %}
-          <li class="nav-item">
-            <a class="nav-link" href="{{cfg("network", _site)}}">{{_site}}</a>
-          </li>
-          {% endif %}
-          {% endfor %}
-        </ul>
-        {% block login %}
+      <ul class="navbar-nav mr-auto">
+        {% for _site in history %}
+        {% if _site != site %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{cfg("network", _site)}}">{{_site}}</a>
+        </li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+      <div class="login">
         {% if current_user %}
         <span class="navbar-text">
           Logged in as
           <a href="{{cfg("network", "meta")}}/profile">{{current_user.username}}</a>
           &mdash;
-          {% block login_nav %}
-          {% endblock %}
           <a href="/logout">Log out</a>
         </span>
         {% else %}
@@ -56,7 +53,6 @@
         </span>
         {% endif %}
       </div>
-      {% endblock %}
     </nav>
     {% endblock %}
     {% block body %}

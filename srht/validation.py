@@ -38,7 +38,9 @@ class Validation:
         return len(self.errors) == 0
 
     def cls(self, name):
-        return 'has-danger' if any([e for e in self.errors if e.field == name]) else ""
+        return 'is-invalid' if any([
+            e for e in self.errors if e.field == name
+        ]) else ""
 
     def summary(self, name=None):
         errors = [e.message for e in self.errors if e.field == name or name == '@all']
@@ -48,7 +50,7 @@ class Validation:
             return Markup('<div class="alert alert-danger">{}</div>'
                     .format('<br />'.join(errors)))
         else:
-            return Markup('<div class="form-control-feedback">{}</div>'
+            return Markup('<div class="invalid-feedback">{}</div>'
                     .format('<br />'.join(errors)))
 
     @property
