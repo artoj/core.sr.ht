@@ -11,5 +11,5 @@ for (var i = 4; i < process.argv.length; ++i) {
 purify(files, [input], {
   minify: true,
   output: output,
-  whitelist: ["*cgit*"],
+  whitelist: ["*cgit*", "*fa-*"],
 });

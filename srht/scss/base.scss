@@ -121,12 +121,12 @@ section {
 .btn {
   border-radius: 0;
   padding: 0.1rem 0.75rem;
+  font-size: 0.9rem;
 
   &.btn-default {
     transition: background 0.1s linear;
     background: $gray-lighter;
     border: $gray-dark 1px solid;
-    font-size: 0.9rem;
     color: black;
 
     &:hover {
@@ -134,9 +134,12 @@ section {
     }
   }
 
+  &.btn-primary {
+    border: darken($brand-primary, 40) 1px solid;
+  }
+
   &.btn-danger {
     border: $btn-danger-border 1px solid;
-    font-size: 0.9rem;
   }
 
   &.btn-link {
@@ -168,6 +171,10 @@ section {
   li {
     font-size: $base-font-size;
     line-height: 1.8;
+
+    a {
+      color: #111;
+    }
   }
 
   .login {

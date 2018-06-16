@@ -6,6 +6,7 @@ from srht.database import db
 from srht.markdown import markdown
 from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader
+from urllib.parse import urlparse
 import inspect
 import humanize
 import decimal
@@ -37,6 +38,8 @@ def datef(d):
 class SrhtFlask(Flask):
     def __init__(self, site, name, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
+
+        self.site = site
 
         choices = [FileSystemLoader("templates")]
 
@@ -90,6 +93,7 @@ class SrhtFlask(Flask):
                 'valid': Validation(request),
                 'site': site,
                 'site_name': cfg("sr.ht", "site-name", default=None),
+                'history': self.get_site_history(),
             }
 
         @self.template_filter()
@@ -99,6 +103,26 @@ class SrhtFlask(Flask):
         @self.template_filter()
         def extended_md(text, baselevel=1):
             return markdown(text, ["h1", "h2", "h3", "h4", "h5"], baselevel)
+
+    def get_site_history(self):
+        history = request.cookies.get("history")
+        if history:
+            try:
+                history = json.loads(history)
+                if (not isinstance(history, list) or
+                        not all([isinstance(h, str) for h in history])):
+                    history = []
+            except:
+                history = []
+        else:
+            history = []
+        defaults = cfgkeys("network")
+        ndefaults = len(list(cfgkeys("network")))
+        while len(history) < 5 or ndefaults > len(history):
+            n = next(defaults)
+            if n not in history:
+                history += [n]
+        return history
 
     def make_response(self, rv):
         # Converts responses from dicts to JSON response objects
@@ -117,4 +141,11 @@ class SrhtFlask(Flask):
             response = jsonify_wrap(rv)
         else:
             response = rv
-        return super(SrhtFlask, self).make_response(response)
+        response = super(SrhtFlask, self).make_response(response)
+        history = self.get_site_history()
+        history = [self.site] + [h for h in history if h != self.site]
+        response.set_cookie(
+                "history",
+                json.dumps(history),
+                domain="." + ".".join(cfg("server", "domain").split('.')[1:]))
+        return response

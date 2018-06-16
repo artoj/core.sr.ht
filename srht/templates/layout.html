@@ -18,13 +18,18 @@
   <body>
     {% block nav %}
     <nav class="navbar navbar-light navbar-toggleable-xl">
-      <a class="navbar-brand" href="{{cfg("network", "meta")}}">{{site_name}}</a>
+      <a class="navbar-brand" href="/">
+        {{site_name}}
+        <span class="text-danger">{{site}}</span>
+      </a>
       <div class="navbar-collapse collapse">
         <ul class="navbar-nav mr-auto">
-          {% for _site in cfgkeys("network") %}
-          <li class="nav-item {{"active" if _site == site else ""}}">
+          {% for _site in history %}
+          {% if _site != site %}
+          <li class="nav-item">
             <a class="nav-link" href="{{cfg("network", _site)}}">{{_site}}</a>
           </li>
+          {% endif %}
           {% endfor %}
         </ul>
         {% block login %}
