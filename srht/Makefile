@@ -22,10 +22,9 @@ $(MODULE)static/main.css: scss/*.scss ${SRHT_PATH}/scss/*.scss
 	sassc -I${SRHT_PATH}/scss scss/main.scss $@
 
 $(MODULE)static/main.min.css: $(MODULE)static/main.css
-	node ${SRHT_PATH}/minify-css.js \
-		static/main.css \
-		static/main.min.css \
-		"$(MODULE)templates/*" "${SRHT_PATH}/templates/*"
+	node ${SRHT_PATH}/node_modules/.bin/cleancss \
+		-o static/main.min.css \
+		static/main.css
 
 $(MODULE)static/%.js: js/%.js
 	@mkdir -p $(MODULE)static/
