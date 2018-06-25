@@ -119,10 +119,13 @@ class SrhtFlask(Flask):
         history = [h for h in history if cfg("network", h, default=None)]
         defaults = cfgkeys("network")
         ndefaults = len(list(cfgkeys("network")))
-        while len(history) < 5 or ndefaults > len(history):
-            n = next(defaults)
-            if n not in history:
-                history += [n]
+        try:
+            while len(history) < 5 or ndefaults > len(history):
+                n = next(defaults)
+                if n not in history:
+                    history += [n]
+        except StopIteration:
+            pass
         return history
 
     def make_response(self, rv):
