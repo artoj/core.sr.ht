@@ -56,6 +56,10 @@ class SrhtFlask(Flask):
         self.jinja_env.filters['date'] = datef
         self.jinja_loader = ChoiceLoader(choices)
 
+        @self.teardown_appcontext
+        def expire_db(err):
+            db.session.expire_all()
+
         @self.errorhandler(500)
         def handle_500(e):
             if self.debug:
