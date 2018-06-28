@@ -13,6 +13,7 @@ smtp_host = cfg("mail", "smtp-host", default=None)
 smtp_port = cfgi("mail", "smtp-port", default=None)
 smtp_user = cfg("mail", "smtp-user", default=None)
 smtp_password = cfg("mail", "smtp-password", default=None)
+smtp_from = cfg("mail", "smtp-from", default=None)
 meta_url = cfg("network", "meta")
 
 def lookup_key(user, oauth_token):
@@ -53,7 +54,7 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
     if not encrypt_key:
         multipart['Subject'] = subject
         if 'From' not in headers:
-            multipart['From'] = smtp_user
+            multipart['From'] = smtp_from or smtp_user
         if 'To' not in headers:
             multipart['To'] = to
         for key in headers:
@@ -75,7 +76,7 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
         wrapped.attach(enc_part)
         wrapped['Subject'] = subject
         if 'From' not in headers:
-            wrapped['From'] = smtp_user
+            wrapped['From'] = smtp_from or smtp_user
         if 'To' not in headers:
             wrapped['To'] = to
         for key in headers:
