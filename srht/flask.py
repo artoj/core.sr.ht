@@ -6,6 +6,7 @@ from srht.config import cfg, cfgi, cfgkeys
 from srht.validation import Validation
 from srht.database import db
 from srht.markdown import markdown
+from srht.oauth import oauth_blueprint
 from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
 from urllib.parse import urlparse, quote_plus
@@ -66,17 +67,22 @@ def paginate_query(query, results_per_page=15):
     return query, { "total_pages": total_pages, "page": page + 1 }
 
 class LoginConfig:
-    def __init__(self, client_id, user_class,
-            base_scopes=["profile"]):
+    def __init__(self, client_id, client_secret, base_scopes):
         self.client_id = client_id
-        self.user_class = user_class
+        self.client_secret = client_secret
         self.base_scopes = base_scopes
+
+    def oauth_url(self, return_to, scopes=[]):
+        meta_sr_ht = cfg("network", "meta")
+        return "{}/oauth/authorize?client_id={}&scopes={}&state={}".format(
+            meta_sr_ht, self.client_id, ','.join(self.base_scopes + scopes),
+            quote_plus(return_to))
 
 def loginrequired(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if not current_user:
-            return redirect(current_app.oauth_url(request.url))
+            return redirect(current_app.login_config.oauth_url(request.url))
         else:
             return f(*args, **kwargs)
     return wrapper
@@ -104,18 +110,10 @@ class SrhtFlask(Flask):
         self.jinja_loader = ChoiceLoader(choices)
         self.secret_key = cfg("server", "secret-key")
 
-        self.login_config = login_config
-        if login_config:
-            self.login_manager = LoginManager()
-            self.login_manager.init_app(self)
-            self.login_manager.anonymous_user = lambda: None
-
-            @self.login_manager.user_loader
-            def load_user(username):
-                user_class = self.login_config.user_class
-                return (user_class.query
-                    .filter(user_class.username == username)
-                ).one_or_none()
+        self.login_manager = LoginManager()
+        self.login_manager.init_app(self)
+        self.login_manager.anonymous_user = lambda: None
+        self.login_config = None
 
         @self.teardown_appcontext
         def expire_db(err):
@@ -143,6 +141,8 @@ class SrhtFlask(Flask):
 
         @self.context_processor
         def inject():
+            user_class = (current_user._get_current_object().__class__
+                    if current_user else None)
             ctx = {
                 'root': cfg("server", "protocol") + "://" + cfg("server", "domain"),
                 'domain': cfg("server", "domain"),
@@ -159,14 +159,13 @@ class SrhtFlask(Flask):
                 'site': site,
                 'site_name': cfg("sr.ht", "site-name", default=None),
                 'history': self.get_site_history(),
+                'current_user': (user_class.query
+                    .filter(user_class.id == current_user.id)
+                ).one_or_none() if current_user else None,
             }
             if self.login_config:
-                user_class = self.login_config.user_class
                 ctx.update({
-                    "current_user": (user_class.query
-                            .filter(user_class.id == current_user.id)
-                        ).one_or_none() if current_user else None,
-                    "oauth_url": self.oauth_url(request.full_path),
+                    "oauth_url": self.login_config.oauth_url(request.full_path),
                 })
             return ctx
 
@@ -178,15 +177,13 @@ class SrhtFlask(Flask):
         def extended_md(text, baselevel=1):
             return markdown(text, ["h1", "h2", "h3", "h4", "h5"], baselevel)
 
-    def oauth_url(self, return_to, scopes=[]):
-        if not self.login_config:
-            return None
-        meta_sr_ht = cfg("network", "meta")
-        return "{}/oauth/authorize?client_id={}&scopes={}&state={}".format(
-            meta_sr_ht,
-            self.login_config.client_id,
-            ','.join(self.login_config.base_scopes + scopes),
-            quote_plus(return_to))
+    def configure_meta_auth(self,
+            meta_client_id, meta_client_secret,
+            base_scopes=["profile"]):
+        assert hasattr(self, 'lookup_or_register')
+        self.login_config = LoginConfig(
+                meta_client_id, meta_client_secret, base_scopes)
+        self.register_blueprint(oauth_blueprint)
 
     def get_site_history(self):
         history = request.cookies.get("history")
