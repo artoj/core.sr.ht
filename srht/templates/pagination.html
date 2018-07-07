@@ -1,0 +1,29 @@
+{% if total_pages > 1 %}
+<div class="row">
+  <div class="col-md-4">
+  {% if page != 1 %}
+    <a
+      class="btn btn-default"
+      href="?page={{ page - 1 }}{{ '&search=' + search if search else '' }}"
+    >
+      <i class="fa fa-caret-left"></i>
+      prev
+    </a>
+  {% endif %}
+  </div>
+  <div class="col-md-4 text-centered">
+    {{ page }} / {{ total_pages }}
+  </div>
+  <div class="col-md-4 text-right">
+  {% if page != total_pages %}
+    <a
+      class="btn btn-default"
+      href="?page={{ page + 1 }}{{ '&search=' + search if search else '' }}"
+    >
+      next
+      <i class="fa fa-caret-right"></i>
+    </a>
+  {% endif %}
+  </div>
+</div>
+{% endif %}

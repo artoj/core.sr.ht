@@ -5,7 +5,7 @@ from srht.validation import Validation
 from srht.database import db
 from srht.markdown import markdown
 from datetime import datetime
-from jinja2 import Markup, FileSystemLoader, ChoiceLoader
+from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
 from urllib.parse import urlparse
 import inspect
 import humanize
@@ -35,6 +35,28 @@ def datef(d):
         d.strftime('%Y-%m-%d %H:%M:%S UTC'),
         humanize.naturaltime(d)))
 
+@contextfunction
+def pagination(context):
+    template = context.environment.get_template("pagination.html")
+    return Markup(template.render(**context.parent))
+
+def paginate_query(query, results_per_page=15):
+    page = request.args.get("page")
+    total_results = query.count()
+    total_pages = total_results // results_per_page + 1
+    if total_results % results_per_page == 0:
+        total_pages -= 1
+    if page is not None:
+        try:
+            page = int(page) - 1
+            query = query.offset(page * results_per_page)
+        except:
+            page = 0
+    else:
+        page = 0
+    query = query.limit(results_per_page).all()
+    return query, { "total_pages": total_pages, "page": page + 1 }
+
 class SrhtFlask(Flask):
     def __init__(self, site, name, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
@@ -54,6 +76,7 @@ class SrhtFlask(Flask):
 
         self.jinja_env.cache = None
         self.jinja_env.filters['date'] = datef
+        self.jinja_env.globals['pagination'] = pagination
         self.jinja_loader = ChoiceLoader(choices)
 
         @self.teardown_appcontext
