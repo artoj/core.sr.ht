@@ -1,4 +1,6 @@
 from flask import Flask, Response, request, url_for, render_template
+from flask import current_app
+from flask_login import LoginManager, current_user
 from enum import Enum
 from srht.config import cfg, cfgi, cfgkeys
 from srht.validation import Validation
@@ -6,18 +8,24 @@ from srht.database import db
 from srht.markdown import markdown
 from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote_plus
 import inspect
 import humanize
 import decimal
 import bleach
 import json
+import locale
 import sys
 import os
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 humanize.time._now = lambda: datetime.utcnow()
+
+try:
+    locale.setlocale(locale.LC_ALL, 'en_US')
+except:
+    pass
 
 def date_handler(obj):
     if hasattr(obj, 'strftime'):
@@ -57,8 +65,24 @@ def paginate_query(query, results_per_page=15):
     query = query.limit(results_per_page).all()
     return query, { "total_pages": total_pages, "page": page + 1 }
 
+class LoginConfig:
+    def __init__(self, client_id, user_class,
+            base_scopes=["profile"]):
+        self.client_id = client_id
+        self.user_class = user_class
+        self.base_scopes = base_scopes
+
+def loginrequired(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not current_user:
+            return redirect(current_app.oauth_url(request.url))
+        else:
+            return f(*args, **kwargs)
+    return wrapper
+
 class SrhtFlask(Flask):
-    def __init__(self, site, name, *args, **kwargs):
+    def __init__(self, site, name, login_config=None, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
 
         self.site = site
@@ -78,6 +102,20 @@ class SrhtFlask(Flask):
         self.jinja_env.filters['date'] = datef
         self.jinja_env.globals['pagination'] = pagination
         self.jinja_loader = ChoiceLoader(choices)
+        self.secret_key = cfg("server", "secret-key")
+
+        self.login_config = login_config
+        if login_config:
+            self.login_manager = LoginManager()
+            self.login_manager.init_app(self)
+            self.login_manager.anonymous_user = lambda: None
+
+            @self.login_manager.user_loader
+            def load_user(username):
+                user_class = self.login_config.user_class
+                return (user_class.query
+                    .filter(user_class.username == username)
+                ).one_or_none()
 
         @self.teardown_appcontext
         def expire_db(err):
@@ -105,7 +143,7 @@ class SrhtFlask(Flask):
 
         @self.context_processor
         def inject():
-            return {
+            ctx = {
                 'root': cfg("server", "protocol") + "://" + cfg("server", "domain"),
                 'domain': cfg("server", "domain"),
                 'protocol': cfg("server", "protocol"),
@@ -122,6 +160,15 @@ class SrhtFlask(Flask):
                 'site_name': cfg("sr.ht", "site-name", default=None),
                 'history': self.get_site_history(),
             }
+            if self.login_config:
+                user_class = self.login_config.user_class
+                ctx.update({
+                    "current_user": (user_class.query
+                            .filter(user_class.id == current_user.id)
+                        ).one_or_none() if current_user else None,
+                    "oauth_url": self.oauth_url(request.full_path),
+                })
+            return ctx
 
         @self.template_filter()
         def md(text):
@@ -130,6 +177,16 @@ class SrhtFlask(Flask):
         @self.template_filter()
         def extended_md(text, baselevel=1):
             return markdown(text, ["h1", "h2", "h3", "h4", "h5"], baselevel)
+
+    def oauth_url(self, return_to, scopes=[]):
+        if not self.login_config:
+            return None
+        meta_sr_ht = cfg("network", "meta")
+        return "{}/oauth/authorize?client_id={}&scopes={}&state={}".format(
+            meta_sr_ht,
+            self.login_config.client_id,
+            ','.join(self.login_config.base_scopes + scopes),
+            quote_plus(return_to))
 
     def get_site_history(self):
         history = request.cookies.get("history")
