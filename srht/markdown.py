@@ -41,7 +41,7 @@ def markdown(text, tags=[], baselevel=1):
             TocExtension(baselevel=baselevel, marker="")
         ]),
         tags=bleach.sanitizer.ALLOWED_TAGS + [
-            "p", "div", "span", "pre",
+            "p", "div", "span", "pre", "hr",
             "dd", "dt", "dl",
             "table", "thead", "tbody", "tr", "th", "td",
             "input",
