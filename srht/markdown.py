@@ -37,9 +37,7 @@ def markdown(text, tags=[], baselevel=1):
         "*": _wildcard_filter,
     }
     attrs.update(bleach.sanitizer.ALLOWED_ATTRIBUTES)
-    html = bleach.clean(md.markdown(text, extensions=[
-            TocExtension(baselevel=baselevel, marker="")
-        ]),
+    cleaner = bleach.sanitizer.Cleaner(
         tags=bleach.sanitizer.ALLOWED_TAGS + [
             "p", "div", "span", "pre", "hr",
             "dd", "dt", "dl",
@@ -54,7 +52,11 @@ def markdown(text, tags=[], baselevel=1):
         ]
         + ["padding-{}".format(p) for p in ["left", "right", "bottom", "top"]]
         + ["margin-{}".format(p) for p in ["left", "right", "bottom", "top"]],
+        filters=[bleach.linkifier.LinkifyFilter],
         strip=True)
+    html = md.markdown(text,
+        extensions=[TocExtension(baselevel=baselevel, marker="")])
+    html = cleaner.clean(html)
     return Markup(add_noopener(html))
 
 Heading = namedtuple("Header", ["level", "name", "id", "children", "parent"])
