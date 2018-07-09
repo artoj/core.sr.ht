@@ -52,11 +52,12 @@ def markdown(text, tags=[], baselevel=1):
         ]
         + ["padding-{}".format(p) for p in ["left", "right", "bottom", "top"]]
         + ["margin-{}".format(p) for p in ["left", "right", "bottom", "top"]],
-        filters=[bleach.linkifier.LinkifyFilter],
         strip=True)
     html = md.markdown(text,
         extensions=[TocExtension(baselevel=baselevel, marker="")])
     html = cleaner.clean(html)
+    linker = bleach.linkifier.Linker(skip_tags=["code", "pre"])
+    html = linker.linkify(html)
     return Markup(add_noopener(html))
 
 Heading = namedtuple("Header", ["level", "name", "id", "children", "parent"])
