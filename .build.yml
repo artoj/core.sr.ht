@@ -12,10 +12,10 @@ packages:
   - rsync
   - pacman-contrib
 sources:
-  - https://git.sr.ht/~sircmpwn/srht
+  - https://git.sr.ht/~sircmpwn/core.sr.ht
   - https://git.sr.ht/~sircmpwn/sr.ht-pkgbuilds
 environment:
-  project: srht
+  project: core.sr.ht
   repo_server: deploy@mirror.sr.ht
   repo_path: /var/www/mirror.sr.ht/archlinux/sr.ht
 secrets:
