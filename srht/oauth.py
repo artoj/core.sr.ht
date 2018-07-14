@@ -10,15 +10,13 @@ import urllib
 from srht.validation import Validation
 from srht.config import cfg
 
-meta = cfg("network", "meta")
-
 class OAuthError(Exception):
     def __init__(self, err, *args, status=401, **kwargs):
         super().__init__(*args, **kwargs)
         if isinstance(err, dict):
             self.response = err
         else:
-            valid = Validation()
+            valid = Validation(request)
             valid.error(err)
             self.response = valid.response
         self.status = status
@@ -180,23 +178,26 @@ def meta_delegated_exchange(token, client_id, client_secret, revocation_url):
     meta.sr.ht's responses: token, profile. Raises an OAuthError if anything
     goes wrong.
     """
+    meta_uri = cfg("network", "meta")
     try:
-        r = requests.post("{}/oauth/token/{}".format(meta, token), json={
+        r = requests.post("{}/oauth/token/{}".format(meta_uri, token), json={
             "client_id": client_id,
             "client_secret": client_secret,
             "revocation_url": revocation_url
         })
         _token = r.json()
     except Exception as ex:
+        print(ex)
         raise OAuthError("Temporary authentication failure", status=500)
     if r.status_code != 200:
         raise OAuthError(_token, status=r.status_code)
     try:
-        r = requests.get("{}/api/user/profile".format(meta), headers={
+        r = requests.get("{}/api/user/profile".format(meta_uri), headers={
             "Authorization": "token {}".format(token)
         })
         profile = r.json()
     except Exception as ex:
+        print(ex)
         raise OAuthError("Temporary authentication failure", status=500)
     if r.status_code != 200:
         raise OAuthError(profile, status=r.status_code)
