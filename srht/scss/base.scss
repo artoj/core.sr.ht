@@ -254,11 +254,11 @@ blockquote {
 pre {
   background: $gray-200;
   padding: 0.25rem;
+}
 
-  code {
-    margin: 0;
-    background: transparent;
-  }
+code {
+  margin: 0;
+  background: transparent;
 }
 
 .event-list {
