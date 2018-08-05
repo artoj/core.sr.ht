@@ -39,8 +39,9 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
         return
     smtp = smtplib.SMTP(smtp_host, smtp_port)
     smtp.ehlo()
-    smtp.starttls()
-    smtp.login(smtp_user, smtp_password)
+    if smtp_user and smtp_password:
+        smtp.starttls()
+        smtp.login(smtp_user, smtp_password)
     multipart = MIMEMultipart(_subtype="signed", micalg="pgp-sha1",
         protocol="application/pgp-signature")
     text_part = MIMEText(body)
