@@ -10,7 +10,7 @@ def load_config(name, paths=None):
     for path in paths:
         try:
             with open(path) as f:
-                config.readfp(f)
+                config.read_file(f)
         except FileNotFoundError:
             pass
 
