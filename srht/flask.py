@@ -170,6 +170,11 @@ class SrhtFlask(Flask):
                 })
             return ctx
 
+        @self.teardown_appcontext
+        def shutdown_session(resp):
+            db.session.remove()
+            return resp
+
         @self.template_filter()
         def md(text):
             return markdown(text)
