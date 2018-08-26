@@ -1,0 +1,71 @@
+image: alpine/edge
+repositories:
+  sr.ht: >
+    https://mirror.sr.ht/alpine/sr.ht/
+    https://mirror.sr.ht/alpine/sr.ht/alpine%40sr.ht.rsa.pub
+    alpine@sr.ht.rsa.pub
+packages:
+  - python3
+  - py-setuptools
+  - nodejs
+  - nodejs-npm
+  - xz
+  - rsync
+sources:
+  - https://git.sr.ht/~sircmpwn/core.sr.ht
+  - https://git.sr.ht/~sircmpwn/sr.ht-apkbuilds
+environment:
+  project: core.sr.ht
+  repo_server: deploy@mirror.sr.ht
+  repo_path: /var/www/mirror.sr.ht/alpine/sr.ht/x86_64
+secrets:
+  - fa00a8d3-7b63-42d5-8060-3bb31c3e3018 # ssh deploy key
+  - d0adc1d4-af78-4852-920f-1134392f5d10 # package signing key
+tasks:
+  - build: |
+      cd ${project}
+      ./setup.py build
+  - archive: |
+      cd ${project}
+      pkgver=$(git describe | sed -e 's/-/_/g')
+      echo "pkgver=$pkgver" >> ~/.buildenv
+      git archive --prefix=srht-$pkgver/ HEAD | xz \
+        > ~/sr.ht-apkbuilds/sr.ht/py3-srht/srht-$pkgver.tar.xz
+  - package: |
+      cd sr.ht-apkbuilds/sr.ht/py3-srht
+      echo 'PACKAGER_PRIVKEY="/home/build/.abuild/alpine@sr.ht.rsa"' >> \
+        ~/.abuild/abuild.conf
+      prev_pkgver=$(apk search -x py3-srht | cut -d '-' -f3-)
+      prev_pkgrel=$(printf "%s" "$prev_pkgver" | cut -d'-' -f2 | cut -c2-)
+      prev_pkgver=$(printf "%s" "$prev_pkgver" | cut -d'-' -f1)
+      if [ "$prev_pkgver" = "$pkgver" ]
+      then
+        pkgrel=$(($prev_pkgrel + 1))
+      else
+        pkgrel=1
+      fi
+      sed -e "s/pkgver=.*/pkgver=$pkgver/" -i APKBUILD
+      sed -e "s/pkgrel=.*/pkgrel=$pkgrel/" -i APKBUILD
+      sed -e "s?http://git.sr.ht/.*/snapshot/??g" -i APKBUILD
+      cat APKBUILD
+      echo "pkgrel=$pkgrel" >> ~/.buildenv
+      abuild checksum
+      abuild -r
+      cd ~/${project}
+      git describe --exact-match HEAD || complete-build
+  - publish: |
+      cd ~/packages/sr.ht/x86_64
+      sshopts="-o StrictHostKeyChecking=no"
+      ssh $sshopts $repo_server rm $repo_path/'py3-srht*.apk'
+      rsync --blocking-io \
+        -rPe "ssh $sshopts" *.apk $repo_server:$repo_path/
+      ssh $sshopts $repo_server find $repo_path -type f -name '*.apk' -print0 |
+        ssh $sshopts $repo_server xargs -0 apk index \
+          --rewrite-arch x86_64 \
+          -x $repo_path/APKINDEX.tar.gz \
+          -o $repo_path/APKINDEX.unsigned.tar.gz
+      rsync --blocking-io -rPe "ssh $sshopts" \
+        $repo_server:$repo_path/APKINDEX.unsigned.tar.gz APKINDEX.tar.gz
+      abuild-sign -k ~/.abuild/alpine@sr.ht.rsa APKINDEX.tar.gz
+      rsync --blocking-io -rPe "ssh $sshopts" \
+        APKINDEX.tar.gz $repo_server:$repo_path/
