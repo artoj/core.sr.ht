@@ -27,7 +27,13 @@ tasks:
       ./setup.py build
   - archive: |
       cd ${project}
-      pkgver=$(git describe | sed -e 's/-/_/g')
+      pkgver=$(git describe --abbrev=0)
+      if ! git describe --exact-match HEAD
+      then
+        cdate=$(git show -s -1 --format='%ci' HEAD)
+        cdate=$(echo "$cdate" | cut -d' ' -f1 | sed -e 's/-//g')
+        pkgver="${pkgver}_git${cdate}"
+      fi
       echo "pkgver=$pkgver" >> ~/.buildenv
       git archive --prefix=srht-$pkgver/ HEAD | xz \
         > ~/sr.ht-apkbuilds/sr.ht/py3-srht/srht-$pkgver.tar.xz
