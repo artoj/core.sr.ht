@@ -18,6 +18,7 @@ class ValidationError:
 
 class Validation:
     def __init__(self, request):
+        self.files = dict()
         if isinstance(request, dict):
             self.source = request
         else:
@@ -26,6 +27,7 @@ class Validation:
                 self.source = json.loads(request.data.decode('utf-8'))
             else:
                 self.source = request.form
+                self.files = request.files
             self.request = request
         self.errors = []
         self.status = 400
@@ -67,8 +69,20 @@ class Validation:
             self.status = status
         return self.response
 
-    def optional(self, name, default=None, cls=None):
+    def optional(self, name, default=None, cls=None, max_file_size=-1):
         value = self.source.get(name)
+        if value is None:
+            value = self.files.get(name)
+            if value and value.filename:
+                if max_file_size >= 0:
+                    fbytes = value.read(max_file_size + 1)
+                    if len(fbytes) == max_file_size + 1:
+                        self.error('{} is too large'.format(name), field=name)
+                        value = None
+                    else:
+                        value = fbytes
+                else:
+                    value = value.read()
         if value is None:
             value = default
         if value is not None:
@@ -108,7 +122,7 @@ class Validation:
             valid.error(err.message, field + "." + err.field)
 
     def __contains__(self, value):
-        return value in self.source
+        return value in self.source or value in self.files
 
 def valid_url(url):
     try:
