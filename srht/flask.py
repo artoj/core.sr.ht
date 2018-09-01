@@ -1,5 +1,5 @@
 from flask import Flask, Response, request, url_for, render_template, redirect
-from flask import current_app
+from flask import current_app, g
 from flask_login import LoginManager, current_user
 from functools import wraps
 from enum import Enum
@@ -45,6 +45,25 @@ def datef(d):
     return Markup('<span title="{}">{}</span>'.format(
         d.strftime('%Y-%m-%d %H:%M:%S UTC'),
         humanize.naturaltime(d)))
+
+icon_cache = {}
+
+def icon(i):
+    if i in icon_cache:
+        svg = icon_cache[i]
+        return Markup(f'<span class="icon icon-{i}">{svg}</span>')
+    fa_license = """<!--
+        Font Awesome Free 5.3.1 by @fontawesome - https://fontawesome.com
+        License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
+    -->"""
+    path = os.path.join(current_app.mod_path, 'static', 'icons', i + '.svg')
+    with open(path) as f:
+        svg = f.read()
+    icon_cache[i] = svg
+    if "fa_license" not in g:
+        svg += fa_license
+        g.fa_license = True
+    return Markup(f'<span class="icon icon-{i}">{svg}</span>')
 
 @contextfunction
 def pagination(context):
@@ -110,6 +129,7 @@ class SrhtFlask(Flask):
         self.jinja_env.cache = None
         self.jinja_env.filters['date'] = datef
         self.jinja_env.globals['pagination'] = pagination
+        self.jinja_env.globals['icon'] = icon
         self.jinja_loader = ChoiceLoader(choices)
         self.secret_key = cfg("server", "secret-key")
 

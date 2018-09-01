@@ -11,7 +11,7 @@ _STATIC+=$(patsubst $(SRHT_PATH)/static/%,$(MODULE)static/%,$(wildcard $(SRHT_PA
 
 $(MODULE)static/%: $(SRHT_PATH)/static/%
 	@mkdir -p $(MODULE)static/
-	cp -L $< $@
+	cp -Lr $(SRHT_PATH)/static $(MODULE)/static
 
 $(MODULE)static/%: _static/%
 	@mkdir -p $(MODULE)static/
