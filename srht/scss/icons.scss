@@ -3,13 +3,34 @@
   width: 0.5em;
   vertical-align: -0.35em;
   line-height: .75em;
-  margin-left: 0.2rem;
   
   path {
     fill: currentColor;
   }
+
+  &.sm {
+    width: 0.4em;
+  }
+
+  .btn & {
+    margin-left: 0.2rem;
+  }
 }
 
-.icon-arrow-right {
+.icon-arrow-right,
+.icon-envelope-o,
+.icon-check,
+.icon-comments,
+.icon-comments-o {
   width: 1.1em;
+  vertical-align: -0.2em;
+
+  .btn & {
+    vertical-align: -0.3em;
+  }
+
+  &.sm {
+    width: 0.9em;
+    vertical-align: -0.2em;
+  }
 }

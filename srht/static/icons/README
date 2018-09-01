@@ -1,0 +1,9 @@
+These are Font Awesome 5.0 icons, which we have a customized system to import
+into templates so that we can avoid using JavaScript.
+
+To use an icon, first copy the SVG here and strip the license[1]. Then add this
+to your template:
+
+    {{icon("caret-right")}}
+
+[1] Note, we add the license back again later.
