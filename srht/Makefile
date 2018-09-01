@@ -25,6 +25,8 @@ $(MODULE)static/main.min.css: $(MODULE)static/main.css
 	node ${SRHT_PATH}/node_modules/clean-css-cli/bin/cleancss \
 		-o static/main.min.css \
 		static/main.css
+	cp static/main.min.css \
+		static/main.min.$$(sha256sum static/main.min.css | cut -c1-8).css
 
 $(MODULE)static/%.js: js/%.js
 	@mkdir -p $(MODULE)static/

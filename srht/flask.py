@@ -11,6 +11,7 @@ from srht.oauth import oauth_blueprint
 from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
 from urllib.parse import urlparse, quote_plus
+import hashlib
 import inspect
 import humanize
 import decimal
@@ -99,6 +100,7 @@ class SrhtFlask(Flask):
         mod = __import__(name)
         if hasattr(mod, "__path__"):
             path = list(mod.__path__)[0]
+            self.mod_path = path
             choices.append(FileSystemLoader(os.path.join(path, "templates")))
             choices.append(FileSystemLoader(os.path.join(
                 os.path.dirname(__file__),
@@ -164,6 +166,7 @@ class SrhtFlask(Flask):
                 'current_user': (user_class.query
                     .filter(user_class.id == current_user.id)
                 ).one_or_none() if current_user else None,
+                'static_resource': self.static_resource,
             }
             if self.login_config:
                 ctx.update({
@@ -183,6 +186,21 @@ class SrhtFlask(Flask):
         @self.template_filter()
         def extended_md(text, baselevel=1):
             return markdown(text, ["h1", "h2", "h3", "h4", "h5"], baselevel)
+
+    def static_resource(self, path):
+        """
+        Given /example.ext, hashes the file and returns /example.hash.ext
+        """
+        if not hasattr(self, "static_cache"):
+            self.static_cache = dict()
+        if path in self.static_cache:
+            return self.static_cache[path]
+        sha256 = hashlib.sha256()
+        with open(os.path.join(self.mod_path, path), "rb") as f:
+            sha256.update(f.read())
+        path, ext = os.path.splitext(path)
+        self.static_cache[path] = f"{path}.{sha256.hexdigest()[:8]}{ext}"
+        return self.static_cache[path]
 
     def configure_meta_auth(self,
             meta_client_id, meta_client_secret,
