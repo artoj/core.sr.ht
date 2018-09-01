@@ -60,7 +60,7 @@ def icon(i, cls=""):
     with open(path) as f:
         svg = f.read()
     icon_cache[i] = svg
-    if "fa_license" not in g:
+    if g and "fa_license" not in g:
         svg += fa_license
         g.fa_license = True
     return Markup(f'<span class="icon icon-{i} {cls}">{svg}</span>')
