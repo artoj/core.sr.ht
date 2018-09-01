@@ -4,8 +4,7 @@ import subprocess
 import glob
 import os
 
-if not os.path.exists("srht/node_modules"):
-    subprocess.call(["npm", "i"], cwd="srht")
+subprocess.call(["npm", "i"], cwd="srht")
 
 ver = os.environ.get("PKGVER") or subprocess.run(['git', 'describe', '--tags'],
       stdout=subprocess.PIPE).stdout.decode().strip()
