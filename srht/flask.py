@@ -151,6 +151,7 @@ class SrhtFlask(Flask):
                 'app': self,
                 'len': len,
                 'any': any,
+                'str': str,
                 'request': request,
                 'url_for': url_for,
                 'cfg': cfg,
