@@ -42,7 +42,7 @@ setup(
           'scss/bootstrap/LICENSE',
           'static/*'
       ] + [f[5:] for f in glob.glob('srht/node_modules/**', recursive=True)] \
-      ] + [f[5:] for f in glob.glob('srht/static/**', recursive=True)] \
+        + [f[5:] for f in glob.glob('srht/static/**', recursive=True)] \
         + [f[5:] for f in glob.glob('srht/scss/bootstrap/scss/**/*.scss', recursive=True)]
   }
 )
