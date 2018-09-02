@@ -14,7 +14,7 @@ smtp_port = cfgi("mail", "smtp-port", default=None)
 smtp_user = cfg("mail", "smtp-user", default=None)
 smtp_password = cfg("mail", "smtp-password", default=None)
 smtp_from = cfg("mail", "smtp-from", default=None)
-meta_url = cfg("network", "meta")
+meta_url = cfg("meta.sr.ht", "origin")
 
 def lookup_key(user, oauth_token):
     """

@@ -3,7 +3,7 @@ from flask import current_app, g
 from flask_login import LoginManager, current_user
 from functools import wraps
 from enum import Enum
-from srht.config import cfg, cfgi, cfgkeys
+from srht.config import cfg, cfgi, cfgkeys, config
 from srht.validation import Validation
 from srht.database import db
 from srht.markdown import markdown
@@ -94,7 +94,7 @@ class LoginConfig:
         self.base_scopes = base_scopes
 
     def oauth_url(self, return_to, scopes=[]):
-        meta_sr_ht = cfg("network", "meta")
+        meta_sr_ht = cfg("meta.sr.ht", "origin")
         return "{}/oauth/authorize?client_id={}&scopes={}&state={}".format(
             meta_sr_ht, self.client_id, ','.join(self.base_scopes + scopes),
             quote_plus(return_to))
@@ -131,12 +131,12 @@ class SrhtFlask(Flask):
         self.jinja_env.globals['pagination'] = pagination
         self.jinja_env.globals['icon'] = icon
         self.jinja_loader = ChoiceLoader(choices)
-        self.secret_key = cfg("server", "secret-key")
+        self.secret_key = cfg("sr.ht", "secret-key")
 
         self.login_manager = LoginManager()
         self.login_manager.init_app(self)
         self.login_manager.anonymous_user = lambda: None
-        self.login_config = None
+        self.login_config = login_config
 
         @self.teardown_appcontext
         def expire_db(err):
@@ -167,9 +167,8 @@ class SrhtFlask(Flask):
             user_class = (current_user._get_current_object().__class__
                     if current_user else None)
             ctx = {
-                'root': cfg("server", "protocol") + "://" + cfg("server", "domain"),
-                'domain': cfg("server", "domain"),
-                'protocol': cfg("server", "protocol"),
+                'root': cfg(self.site, "origin"),
+                'domain': urlparse(cfg(self.site, "origin")).netloc,
                 'app': self,
                 'len': len,
                 'any': any,
@@ -182,6 +181,7 @@ class SrhtFlask(Flask):
                 'valid': Validation(request),
                 'site': site,
                 'site_name': cfg("sr.ht", "site-name", default=None),
+                'network': self.get_network(),
                 'history': self.get_site_history(),
                 'current_user': (user_class.query
                     .filter(user_class.id == current_user.id)
@@ -230,6 +230,9 @@ class SrhtFlask(Flask):
                 meta_client_id, meta_client_secret, base_scopes)
         self.register_blueprint(oauth_blueprint)
 
+    def get_network(self):
+        return [s for s in config if s.endswith(".sr.ht")]
+
     def get_site_history(self):
         history = request.cookies.get("history")
         if history:
@@ -242,9 +245,10 @@ class SrhtFlask(Flask):
                 history = []
         else:
             history = []
-        history = [h for h in history if cfg("network", h, default=None)]
-        defaults = cfgkeys("network")
-        ndefaults = len(list(cfgkeys("network")))
+        history = [h for h in history if h in config]
+        defaults = self.get_network()
+        ndefaults = len(defaults)
+        defaults = iter(defaults)
         try:
             while len(history) < 5 or ndefaults > len(history):
                 n = next(defaults)
@@ -274,8 +278,7 @@ class SrhtFlask(Flask):
         response = super(SrhtFlask, self).make_response(response)
         history = self.get_site_history()
         history = [self.site] + [h for h in history if h != self.site]
-        response.set_cookie(
-                "history",
-                json.dumps(history),
-                domain="." + ".".join(cfg("server", "domain").split('.')[1:]))
+        domain = urlparse(cfg(self.site, "origin")).netloc
+        response.set_cookie("history", json.dumps(history),
+                domain="." + ".".join(domain.split('.')[1:]))
         return response

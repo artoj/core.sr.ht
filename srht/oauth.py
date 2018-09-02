@@ -178,7 +178,7 @@ def meta_delegated_exchange(token, client_id, client_secret, revocation_url):
     meta.sr.ht's responses: token, profile. Raises an OAuthError if anything
     goes wrong.
     """
-    meta_uri = cfg("network", "meta")
+    meta_uri = cfg("meta.sr.ht", "origin")
     try:
         r = requests.post("{}/oauth/token/{}".format(meta_uri, token), json={
             "client_id": client_id,
@@ -224,7 +224,7 @@ def oauth_callback():
         return render_template("oauth-error.html",
             details=("Expected an exchange token from meta.sr.ht. " +
                 "Something odd has happened, try again."))
-    meta_uri = cfg("network", "meta")
+    meta_uri = cfg("meta.sr.ht", "origin")
     r = requests.post(meta_uri + "/oauth/exchange", json={
         "client_id": current_app.login_config.client_id,
         "client_secret": current_app.login_config.client_secret,
