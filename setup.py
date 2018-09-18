@@ -30,7 +30,7 @@ setup(
       'requests',
       'BeautifulSoup4',
   ],
-  license = 'AGPL-3.0',
+  license = 'BSD-3-Clause',
   package_data={
       'srht': [
           'Makefile',
