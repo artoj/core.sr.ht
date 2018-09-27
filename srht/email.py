@@ -8,7 +8,9 @@ import requests
 
 # TODO: move this into celery worker
 
-site_key, _ = pgpy.PGPKey.from_file(cfg("mail", "pgp-privkey"))
+site_key = cfg("mail", "pgp-privkey", default=None)
+if site_key:
+    site_key, _ = pgpy.PGPKey.from_file(site_key)
 smtp_host = cfg("mail", "smtp-host", default=None)
 smtp_port = cfgi("mail", "smtp-port", default=None)
 smtp_user = cfg("mail", "smtp-user", default=None)

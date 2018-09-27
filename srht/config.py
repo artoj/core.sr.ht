@@ -29,7 +29,10 @@ def cfg(section, key, default=_throw):
     return default
 
 def cfgi(section, key, default=_throw):
-    return int(cfg(section, key, default))
+    v = cfg(section, key, default)
+    if not v or v is default:
+        return v
+    return int(v)
 
 def cfgkeys(section):
     for key in _config[section]:
