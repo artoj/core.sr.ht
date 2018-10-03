@@ -4,10 +4,11 @@ from flask_login import LoginManager, current_user
 from functools import wraps
 from enum import Enum
 from srht.config import cfg, cfgi, cfgkeys, config
-from srht.validation import Validation
+from srht.email import mail_exception
 from srht.database import db
 from srht.markdown import markdown
 from srht.oauth import oauth_blueprint
+from srht.validation import Validation
 from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
 from urllib.parse import urlparse, quote_plus
@@ -151,9 +152,10 @@ class SrhtFlask(Flask):
                 if hasattr(db, 'session'):
                     db.session.rollback()
                     db.session.close()
-            except:
+                mail_exception(e)
+            except Exception as e2:
                 # shit shit
-                sys.exit(1)
+                raise e2.with_traceback(e2.__traceback__)
             return render_template("internal_error.html"), 500
 
         @self.errorhandler(404)

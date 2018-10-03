@@ -1,12 +1,13 @@
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.message import Message
+from flask import request, has_request_context, has_app_context, current_app
 from srht.config import cfg, cfgi
+import base64
 import smtplib
 import pgpy
 import requests
-
-# TODO: move this into celery worker
+import traceback
 
 site_key = cfg("mail", "pgp-privkey", default=None)
 if site_key:
@@ -16,6 +17,8 @@ smtp_port = cfgi("mail", "smtp-port", default=None)
 smtp_user = cfg("mail", "smtp-user", default=None)
 smtp_password = cfg("mail", "smtp-password", default=None)
 smtp_from = cfg("mail", "smtp-from", default=None)
+error_to = cfg("mail", "error-to", default=None)
+error_from = cfg("mail", "error-from", default=None)
 meta_url = cfg("meta.sr.ht", "origin")
 
 def lookup_key(user, oauth_token):
@@ -86,3 +89,35 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
             wrapped[key] = headers[key]
         smtp.sendmail(smtp_user, [to], wrapped.as_string(unixfrom=True))
     smtp.quit()
+
+def mail_exception(ex):
+    if not error_to or not error_from:
+        print("Warning: no email configured for error emails")
+        return
+    try:
+        data = request.get_data() or b"(no request body)"
+    except:
+        data = "(error getting request data)"
+    try:
+        data = data.decode()
+    except:
+        data = base64.b64encode(data)
+    if "password" in data:
+        data = "(request body contains password)"
+    if has_request_context():
+        body = f"""
+Exception occured on {request.method} {request.url}
+
+{traceback.format_exc()}
+
+Request body:
+
+{data}"""
+    else:
+        body = f"""
+{traceback.format_exc()}"""
+    if has_app_context():
+        subject = f"[{current_app.site}] {ex.__class__.__name__}: {str(ex)}"
+    else:
+        subject = f"{ex.__class__.__name__} {str(ex)}"
+    send_email(body, error_to, subject, **{"From": error_from})

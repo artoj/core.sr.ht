@@ -14,6 +14,7 @@ def load_config():
         try:
             with open(path) as f:
                 _config.read_file(f)
+            break
         except FileNotFoundError:
             pass
 
