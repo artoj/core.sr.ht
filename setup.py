@@ -29,6 +29,7 @@ setup(
       'bleach',
       'requests',
       'BeautifulSoup4',
+      'pgpy',
   ],
   license = 'BSD-3-Clause',
   package_data={
