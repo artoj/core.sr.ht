@@ -2,11 +2,20 @@ from bs4 import BeautifulSoup
 from collections import namedtuple
 from jinja2 import Markup
 from markdown.extensions.toc import TocExtension
+from urlparse import urlparse
 import bleach
 import markdown as md
 import re
 
 urlregex = re.compile(r'(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?\xab\xbb\u201c\u201d\u2018\u2019]))')
+
+def _img_filter(tag, name, value):
+    if name in ["alt", "height", "width"]:
+        return True
+    if name == "src":
+        p = urlparse(value)
+        return p.scheme in ["http", "https"]
+    return False
 
 def _input_filter(tag, name, value):
     return name == "type" and value in ["check"]
@@ -33,6 +42,7 @@ def markdown(text, tags=[], baselevel=1):
         "h3": ["id"],
         "h4": ["id"],
         "h5": ["id"],
+        "img": _img_filter,
         "input": _input_filter,
         "*": _wildcard_filter,
     }
