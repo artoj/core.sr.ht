@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from collections import namedtuple
 from jinja2 import Markup
 from markdown.extensions.toc import TocExtension
-from urlparse import urlparse
+from urllib.parse import urlparse
 import bleach
 import markdown as md
 import re
