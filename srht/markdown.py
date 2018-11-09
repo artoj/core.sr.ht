@@ -2,6 +2,10 @@ from bs4 import BeautifulSoup
 from collections import namedtuple
 from jinja2 import Markup
 from markdown.extensions.toc import TocExtension
+from markdown.extensions.codehilite import CodeHiliteExtension
+from gfm import AutolinkExtension, AutomailExtension, SemiSaneListExtension
+from gfm import SpacedLinkExtension, StrikethroughExtension, TaskListExtension
+from pygments.formatters import HtmlFormatter
 from urllib.parse import urlparse
 import bleach
 import markdown as md
@@ -18,16 +22,12 @@ def _img_filter(tag, name, value):
     return False
 
 def _input_filter(tag, name, value):
-    return name == "type" and value in ["check"]
+    if name in ["checked", "disabled"]:
+        return True
+    return name == "type" and value in ["checkbox"]
 
 def _wildcard_filter(tag, name, value):
-    if name == "style":
-        return True
-    if name == "class":
-        return value in [
-            "row",
-            "form-control"
-        ] + ["col-md-{}".format(c) for c in range(1, 13)]
+    return name in ["style", "class"]
 
 def add_noopener(html):
     soup = BeautifulSoup(str(html), 'html.parser')
@@ -64,11 +64,25 @@ def markdown(text, tags=[], baselevel=1):
         + ["margin-{}".format(p) for p in ["left", "right", "bottom", "top"]],
         strip=True)
     html = md.markdown(text,
-        extensions=[TocExtension(baselevel=baselevel, marker="")])
+        extensions=[
+            AutolinkExtension(),
+            AutomailExtension(),
+            CodeHiliteExtension(
+                css_class="highlight",
+                guess_lang=False,
+                linenums=False,
+                use_pygments=True),
+            SemiSaneListExtension(),
+            SpacedLinkExtension(),
+            StrikethroughExtension(),
+            TaskListExtension(),
+            TocExtension(baselevel=baselevel, marker=""),
+            "fenced_code"
+        ])
     html = cleaner.clean(html)
-    linker = bleach.linkifier.Linker(skip_tags=["code", "pre"])
-    html = linker.linkify(html)
-    return Markup(add_noopener(html))
+    formatter = HtmlFormatter()
+    style = formatter.get_style_defs('.highlight')
+    return Markup(f"<style>{style}</style>" + add_noopener(html))
 
 Heading = namedtuple("Header", ["level", "name", "id", "children", "parent"])
 

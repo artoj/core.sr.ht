@@ -30,6 +30,7 @@ setup(
       'requests',
       'BeautifulSoup4',
       'pgpy',
+      'py-gfm',
   ],
   license = 'BSD-3-Clause',
   package_data={
