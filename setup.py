@@ -24,7 +24,7 @@ setup(
       'humanize',
       'sqlalchemy',
       'sqlalchemy-utils',
-      'psycopg2-binary',
+      'psycopg2',
       'markdown',
       'bleach',
       'requests',
