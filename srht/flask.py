@@ -149,10 +149,14 @@ class SrhtFlask(Flask):
         self.login_manager.init_app(self)
         self.login_manager.anonymous_user = lambda: None
         self.login_config = login_config
+        self.no_csrf_prefixes = ['/api']
 
         @self.before_request
         def _csrf_check():
-            if request.method == 'POST' and not request.path.startswith("/api"):
+            for prefix in self.no_csrf_prefixes:
+                if request.path.startswith(prefix):
+                    return
+            if request.method == 'POST':
                 token = session.get('_csrf_token_v2', None)
                 if not token or token != request.form.get('_csrf_token'):
                     abort(403)
