@@ -74,12 +74,12 @@ def pagination(context):
     return Markup(template.render(**context.parent))
 
 def csrf_token():
-    if '_csrf_token' not in session:
-        session['_csrf_token'] = str(binascii.hexlify(os.urandom(12)))
+    if '_csrf_token_v2' not in session:
+        session['_csrf_token_v2'] = binascii.hexlify(os.urandom(64)).decode()
     return Markup("""<input
         type='hidden'
         name='_csrf_token'
-        value='{}' />""".format(escape(session['_csrf_token'])))
+        value='{}' />""".format(escape(session['_csrf_token_v2'])))
 
 def paginate_query(query, results_per_page=15):
     page = request.args.get("page")
@@ -153,7 +153,7 @@ class SrhtFlask(Flask):
         @self.before_request
         def _csrf_check():
             if request.method == 'POST' and not request.path.startswith("/api"):
-                token = session.get('_csrf_token', None)
+                token = session.get('_csrf_token_v2', None)
                 if not token or token != request.form.get('_csrf_token'):
                     abort(403)
 
