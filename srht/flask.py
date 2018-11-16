@@ -1,5 +1,5 @@
 from flask import Flask, Response, request, url_for, render_template, redirect
-from flask import current_app, g
+from flask import current_app, g, abort, session
 from flask_login import LoginManager, current_user
 from functools import wraps
 from enum import Enum
@@ -11,7 +11,9 @@ from srht.oauth import oauth_blueprint
 from srht.validation import Validation
 from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
+from jinja2 import escape
 from urllib.parse import urlparse, quote_plus
+import binascii
 import hashlib
 import inspect
 import humanize
@@ -70,6 +72,14 @@ def icon(i, cls=""):
 def pagination(context):
     template = context.environment.get_template("pagination.html")
     return Markup(template.render(**context.parent))
+
+def csrf_token():
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = str(binascii.hexlify(os.urandom(12)))
+    return Markup("""<input
+        type='hidden'
+        name='_csrf_token'
+        value='{}' />""".format(escape(session['_csrf_token'])))
 
 def paginate_query(query, results_per_page=15):
     page = request.args.get("page")
@@ -131,6 +141,7 @@ class SrhtFlask(Flask):
         self.jinja_env.filters['date'] = datef
         self.jinja_env.globals['pagination'] = pagination
         self.jinja_env.globals['icon'] = icon
+        self.jinja_env.globals['csrf_token'] = csrf_token
         self.jinja_loader = ChoiceLoader(choices)
         self.secret_key = cfg("sr.ht", "secret-key")
 
@@ -138,6 +149,13 @@ class SrhtFlask(Flask):
         self.login_manager.init_app(self)
         self.login_manager.anonymous_user = lambda: None
         self.login_config = login_config
+
+        @self.before_request
+        def _csrf_check():
+            if request.method == 'POST' and not request.path.startswith("/api"):
+                token = session.get('_csrf_token', None)
+                if not token or token != request.form.get('_csrf_token'):
+                    abort(403)
 
         @self.teardown_appcontext
         def expire_db(err):
