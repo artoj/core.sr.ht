@@ -1,6 +1,7 @@
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.message import Message
+from email.utils import formatdate
 from flask import request, has_request_context, has_app_context, current_app
 from srht.config import cfg, cfgi
 import base64
@@ -63,6 +64,8 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
             multipart['From'] = smtp_from or smtp_user
         if 'To' not in headers:
             multipart['To'] = to
+        if 'Date' not in headers:
+            multipart['Date'] = formatdate()
         for key in headers:
             multipart[key] = headers[key]
         smtp.sendmail(smtp_user, [to], multipart.as_string(unixfrom=True))
@@ -85,6 +88,8 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
             wrapped['From'] = smtp_from or smtp_user
         if 'To' not in headers:
             wrapped['To'] = to
+        if 'Date' not in headers:
+            wrapped['Date'] = formatdate()
         for key in headers:
             wrapped[key] = headers[key]
         smtp.sendmail(smtp_user, [to], wrapped.as_string(unixfrom=True))
