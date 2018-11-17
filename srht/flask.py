@@ -206,7 +206,6 @@ class SrhtFlask(Flask):
                 'site': site,
                 'site_name': cfg("sr.ht", "site-name", default=None),
                 'network': self.get_network(),
-                'history': self.get_site_history(),
                 'current_user': (user_class.query
                     .filter(user_class.id == current_user.id)
                 ).one_or_none() if current_user else None,
@@ -257,31 +256,6 @@ class SrhtFlask(Flask):
     def get_network(self):
         return [s for s in config if s.endswith(".sr.ht")]
 
-    def get_site_history(self):
-        history = request.cookies.get("history")
-        if history:
-            try:
-                history = json.loads(history)
-                if (not isinstance(history, list) or
-                        not all([isinstance(h, str) for h in history])):
-                    history = []
-            except:
-                history = []
-        else:
-            history = []
-        history = [h for h in history if h in config]
-        defaults = self.get_network()
-        ndefaults = len(defaults)
-        defaults = iter(defaults)
-        try:
-            while len(history) < 5 or ndefaults > len(history):
-                n = next(defaults)
-                if n not in history:
-                    history += [n]
-        except StopIteration:
-            pass
-        return history
-
     def make_response(self, rv):
         # Converts responses from dicts to JSON response objects
         response = None
@@ -300,9 +274,4 @@ class SrhtFlask(Flask):
         else:
             response = rv
         response = super(SrhtFlask, self).make_response(response)
-        history = self.get_site_history()
-        history = [self.site] + [h for h in history if h != self.site]
-        domain = urlparse(cfg(self.site, "origin")).netloc
-        response.set_cookie("history", json.dumps(history),
-                domain="." + ".".join(domain.split('.')[1:]))
         return response
