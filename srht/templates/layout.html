@@ -27,14 +27,12 @@
       </a>
       <ul class="navbar-nav mr-auto d-none d-sm-flex">
         {% for _site in network %}
-        {% if _site != site %}
-        <li class="nav-item">
+        <li class="nav-item {{'active' if _site == site else ''}}">
           <a
             class="nav-link"
             href="{{cfg(_site, "origin")}}"
           >{{_site.split(".")[0]}}</a>
         </li>
-        {% endif %}
         {% endfor %}
       </ul>
       <div class="login">
