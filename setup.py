@@ -21,6 +21,7 @@ setup(
   url = 'https://git.sr.ht/~sircmpwn/srht',
   install_requires = [
       'flask',
+      'flask-login',
       'humanize',
       'sqlalchemy',
       'sqlalchemy-utils',
