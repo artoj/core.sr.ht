@@ -40,14 +40,7 @@ def lookup_key(user, oauth_token):
         return None
     return r.json()["key"]
 
-def send_email(body, to, subject, encrypt_key=None, **headers):
-    if smtp_host == "":
-        return
-    smtp = smtplib.SMTP(smtp_host, smtp_port)
-    smtp.ehlo()
-    if smtp_user and smtp_password:
-        smtp.starttls()
-        smtp.login(smtp_user, smtp_password)
+def prepare_email(body, to, subject, encrypt_key=None, **headers):
     multipart = MIMEMultipart(_subtype="signed", micalg="pgp-sha1",
         protocol="application/pgp-signature")
     text_part = MIMEText(body)
@@ -68,7 +61,7 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
             multipart['Date'] = formatdate()
         for key in headers:
             multipart[key] = headers[key]
-        smtp.sendmail(smtp_user, [to], multipart.as_string(unixfrom=True))
+        return multipart
     else:
         pubkey, _ = pgpy.PGPKey.from_blob(encrypt_key.replace('\r', '').encode())
         pgp_msg = pgpy.PGPMessage.new(multipart.as_string(unixfrom=True))
@@ -92,7 +85,18 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
             wrapped['Date'] = formatdate()
         for key in headers:
             wrapped[key] = headers[key]
-        smtp.sendmail(smtp_user, [to], wrapped.as_string(unixfrom=True))
+        return wrapped
+
+def send_email(body, to, subject, encrypt_key=None, **headers):
+    if smtp_host == "":
+        return
+    smtp = smtplib.SMTP(smtp_host, smtp_port)
+    smtp.ehlo()
+    if smtp_user and smtp_password:
+        smtp.starttls()
+        smtp.login(smtp_user, smtp_password)
+    message = prepare_email(body, to, subject, encrypt_key, **headers)
+    smtp.sendmail(smtp_user, [to], message.as_string(unixfrom=True))
     smtp.quit()
 
 def mail_exception(ex):
