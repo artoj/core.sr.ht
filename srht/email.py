@@ -43,22 +43,30 @@ def lookup_key(user, oauth_token):
 def prepare_email(body, to, subject, encrypt_key=None, **headers):
     multipart = MIMEMultipart(_subtype="signed", micalg="pgp-sha1",
         protocol="application/pgp-signature")
+
+    headers['Subject'] = subject
+    headers.setdefault('From', smtp_from or smtp_user)
+    headers.setdefault('To', to)
+    headers.setdefault('Date', formatdate())
+
     text_part = MIMEText(body)
-    signature = str(site_key.sign(text_part.as_string().replace('\n', '\r\n')))
-    sig_part = Message()
-    sig_part['Content-Type'] = 'application/pgp-signature; name="signature.asc"'
-    sig_part['Content-Description'] = 'OpenPGP digital signature'
-    sig_part.set_payload(signature)
-    multipart.attach(text_part)
-    multipart.attach(sig_part)
+
+    if site_key:
+        signature = str(site_key.sign(text_part.as_string().replace('\n', '\r\n')))
+        sig_part = Message()
+        sig_part['Content-Type'] = 'application/pgp-signature; name="signature.asc"'
+        sig_part['Content-Description'] = 'OpenPGP digital signature'
+        sig_part.set_payload(signature)
+
+        multipart = MIMEMultipart(_subtype="signed", micalg="pgp-sha1",
+            protocol="application/pgp-signature")
+        multipart.attach(text_part)
+        multipart.attach(sig_part)
+    else:
+        multipart = MIMEMultipart()
+        multipart.attach(text_part)
+
     if not encrypt_key:
-        multipart['Subject'] = subject
-        if 'From' not in headers:
-            multipart['From'] = smtp_from or smtp_user
-        if 'To' not in headers:
-            multipart['To'] = to
-        if 'Date' not in headers:
-            multipart['Date'] = formatdate()
         for key in headers:
             multipart[key] = headers[key]
         return multipart
@@ -76,13 +84,6 @@ def prepare_email(body, to, subject, encrypt_key=None, **headers):
         wrapped = MIMEMultipart(_subtype="encrypted", protocol="application/pgp-encrypted")
         wrapped.attach(ver_part)
         wrapped.attach(enc_part)
-        wrapped['Subject'] = subject
-        if 'From' not in headers:
-            wrapped['From'] = smtp_from or smtp_user
-        if 'To' not in headers:
-            wrapped['To'] = to
-        if 'Date' not in headers:
-            wrapped['Date'] = formatdate()
         for key in headers:
             wrapped[key] = headers[key]
         return wrapped
