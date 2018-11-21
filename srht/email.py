@@ -3,7 +3,7 @@ from email.mime.multipart import MIMEMultipart
 from email.message import Message
 from email.utils import formatdate
 from flask import request, has_request_context, has_app_context, current_app
-from srht.config import cfg, cfgi
+from srht.config import cfg, cfgi, cfgb
 import base64
 import smtplib
 import pgpy
@@ -20,6 +20,7 @@ smtp_password = cfg("mail", "smtp-password", default=None)
 smtp_from = cfg("mail", "smtp-from", default=None)
 error_to = cfg("mail", "error-to", default=None)
 error_from = cfg("mail", "error-from", default=None)
+use_unixfrom = cfgb("mail", "use_unixfrom", default=True)
 meta_url = cfg("meta.sr.ht", "origin")
 
 def lookup_key(user, oauth_token):
@@ -72,7 +73,7 @@ def prepare_email(body, to, subject, encrypt_key=None, **headers):
         return multipart
     else:
         pubkey, _ = pgpy.PGPKey.from_blob(encrypt_key.replace('\r', '').encode())
-        pgp_msg = pgpy.PGPMessage.new(multipart.as_string(unixfrom=True))
+        pgp_msg = pgpy.PGPMessage.new(multipart.as_string(unixfrom=use_unixfrom))
         encrypted = str(pubkey.encrypt(pgp_msg))
         ver_part = Message()
         ver_part['Content-Type'] = 'application/pgp-encrypted'
@@ -97,7 +98,7 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
         smtp.starttls()
         smtp.login(smtp_user, smtp_password)
     message = prepare_email(body, to, subject, encrypt_key, **headers)
-    smtp.sendmail(smtp_user, [to], message.as_string(unixfrom=True))
+    smtp.sendmail(smtp_user, [to], message.as_string(unixfrom=use_unixfrom))
     smtp.quit()
 
 def mail_exception(ex):

@@ -35,6 +35,19 @@ def cfgi(section, key, default=_throw):
         return v
     return int(v)
 
+def cfgb(section, key, default=_throw):
+    v = cfg(section, key, default)
+    if not v or v is default:
+        return v
+    if v.lower() in ['true', 'yes', 'on', '1']:
+        return True
+    if v.lower() in ['false', 'no', 'off', '0']:
+        return False
+    if default is _throw:
+        raise Exception("Config option [{}] {} isn't a boolean value.".format(
+            section, key))
+    return default
+
 def cfgkeys(section):
     for key in _config[section]:
         yield key
