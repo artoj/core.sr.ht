@@ -3,8 +3,8 @@ from collections import namedtuple
 from jinja2 import Markup
 from markdown.extensions.toc import TocExtension
 from markdown.extensions.codehilite import CodeHiliteExtension
-from gfm import AutolinkExtension, AutomailExtension, SemiSaneListExtension
-from gfm import SpacedLinkExtension, StrikethroughExtension, TaskListExtension
+from gfm import AutolinkExtension, SemiSaneListExtension SpacedLinkExtension
+from gfm import StrikethroughExtension, TaskListExtension
 from pygments.formatters import HtmlFormatter
 from urllib.parse import urlparse
 import bleach
@@ -66,7 +66,6 @@ def markdown(text, tags=[], baselevel=1):
     html = md.markdown(text,
         extensions=[
             AutolinkExtension(),
-            AutomailExtension(),
             CodeHiliteExtension(
                 css_class="highlight",
                 guess_lang=False,
