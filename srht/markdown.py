@@ -3,7 +3,7 @@ from collections import namedtuple
 from jinja2 import Markup
 from markdown.extensions.toc import TocExtension
 from markdown.extensions.codehilite import CodeHiliteExtension
-from gfm import AutolinkExtension, SemiSaneListExtension SpacedLinkExtension
+from gfm import AutolinkExtension, SemiSaneListExtension, SpacedLinkExtension
 from gfm import StrikethroughExtension, TaskListExtension
 from pygments.formatters import HtmlFormatter
 from urllib.parse import urlparse
