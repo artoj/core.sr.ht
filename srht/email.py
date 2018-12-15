@@ -1,7 +1,7 @@
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.message import Message
-from email.utils import formatdate
+from email.utils import formatdate, make_msgid
 from flask import request, has_request_context, has_app_context, current_app
 from srht.config import cfg, cfgi, cfgb
 import base64
@@ -49,6 +49,7 @@ def prepare_email(body, to, subject, encrypt_key=None, **headers):
     headers.setdefault('From', smtp_from or smtp_user)
     headers.setdefault('To', to)
     headers.setdefault('Date', formatdate())
+    headers.setdefault('Message-ID', make_msgid())
 
     text_part = MIMEText(body)
 
