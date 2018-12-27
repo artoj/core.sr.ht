@@ -1,15 +1,26 @@
 from bs4 import BeautifulSoup
 from collections import namedtuple
-from jinja2 import Markup
-from markdown.extensions.toc import TocExtension
-from markdown.extensions.codehilite import CodeHiliteExtension
-from gfm import AutolinkExtension, SemiSaneListExtension, SpacedLinkExtension
-from gfm import StrikethroughExtension, TaskListExtension
-from pygments.formatters import HtmlFormatter
+from jinja2 import Markup, escape
+from pygments import highlight
+from pygments.formatters import HtmlFormatter, ClassNotFound
+from pygments.lexers import get_lexer_by_name
 from urllib.parse import urlparse
 import bleach
-import markdown as md
+import misaka as m
 import re
+
+class HighlighterRenderer(m.HtmlRenderer):
+    def blockcode(self, text, lang):
+        try:
+            lexer = get_lexer_by_name(lang, stripall=True)
+        except ClassNotFound:
+            lexer = None
+        if lexer:
+            formatter = HtmlFormatter()
+            return highlight(text, lexer, formatter)
+        # default
+        return '\n<pre><code>{}</code></pre>\n'.format(
+                escape(text.strip()))
 
 urlregex = re.compile(r'(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?\xab\xbb\u201c\u201d\u2018\u2019]))')
 
@@ -63,21 +74,10 @@ def markdown(text, tags=[], baselevel=1):
         + ["padding-{}".format(p) for p in ["left", "right", "bottom", "top"]]
         + ["margin-{}".format(p) for p in ["left", "right", "bottom", "top"]],
         strip=True)
-    html = md.markdown(text,
-        extensions=[
-            AutolinkExtension(),
-            CodeHiliteExtension(
-                css_class="highlight",
-                guess_lang=False,
-                linenums=False,
-                use_pygments=True),
-            SemiSaneListExtension(),
-            SpacedLinkExtension(),
-            StrikethroughExtension(),
-            TaskListExtension(),
-            TocExtension(baselevel=baselevel, marker=""),
-            "fenced_code"
-        ])
+    renderer = md = m.Markdown(HighlighterRenderer(nesting_level=1), extensions=(
+        'tables', 'fenced-code', 'footnotes', 'strikethrough', 'highlight', 'quote'
+    ))
+    html = renderer(text)
     html = cleaner.clean(html)
     formatter = HtmlFormatter()
     style = formatter.get_style_defs('.highlight')
