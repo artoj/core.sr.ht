@@ -75,7 +75,8 @@ def markdown(text, tags=[], baselevel=1):
         + ["margin-{}".format(p) for p in ["left", "right", "bottom", "top"]],
         strip=True)
     renderer = md = m.Markdown(HighlighterRenderer(nesting_level=1), extensions=(
-        'tables', 'fenced-code', 'footnotes', 'strikethrough', 'highlight', 'quote'
+        'tables', 'fenced-code', 'footnotes', 'strikethrough', 'highlight',
+        'quote', 'autolink'
     ))
     html = renderer(text)
     html = cleaner.clean(html)
