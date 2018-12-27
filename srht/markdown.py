@@ -27,7 +27,7 @@ def _input_filter(tag, name, value):
     return name == "type" and value in ["checkbox"]
 
 def _wildcard_filter(tag, name, value):
-    return name in ["style", "class"]
+    return name in ["style", "class", "colspan", "rowspan"]
 
 def add_noopener(html):
     soup = BeautifulSoup(str(html), 'html.parser')
