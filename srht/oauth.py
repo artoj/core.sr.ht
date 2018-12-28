@@ -157,8 +157,11 @@ def oauth(scopes):
             token_hash = hashlib.sha512(token.encode()).hexdigest()
 
             try:
-                required = OAuthScope(scopes)
-                required.client_id = _base_service.get_client_id()
+                if scopes:
+                    required = OAuthScope(scopes)
+                    required.client_id = _base_service.get_client_id()
+                else:
+                    required = None
             except OAuthError as err:
                 return err.response
 
@@ -173,7 +176,7 @@ def oauth(scopes):
             g.current_oauth_token = oauth_token
 
             args = (oauth_token,) + args
-            if oauth_token.scopes == "*":
+            if oauth_token.scopes == "*" or scopes is None:
                 return f(*args, **kwargs)
 
             available = [OAuthScope(s) for s in oauth_token.scopes.split(',')]
