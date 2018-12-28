@@ -1,14 +1,18 @@
-import abc
-from functools import wraps
-from flask import Blueprint, request, redirect, render_template, current_app
-from flask_login import login_user, logout_user
 from datetime import datetime
+from flask import Blueprint, request, redirect, render_template, current_app, g
+from flask_login import login_user, logout_user
+from functools import wraps
+from werkzeug.local import LocalProxy
+import abc
 import hashlib
 import requests
 import urllib
 
 from srht.validation import Validation
 from srht.config import cfg
+
+current_token = LocalProxy(lambda:
+        g.current_oauth_token if "current_oauth_token" in g else None)
 
 class OAuthError(Exception):
     def __init__(self, err, *args, status=401, **kwargs):
@@ -142,32 +146,42 @@ def oauth(scopes):
             token = request.headers.get('Authorization')
             valid = Validation(request)
             if not token or not token.startswith('token '):
-                return valid.error("No authorization supplied (expected an " +
+                return valid.error("No authorization supplied (expected an "
                     "OAuth token)", status=401)
+
             token = token.split(' ')
             if len(token) != 2:
                 return valid.error("Invalid authorization supplied", status=401)
+
             token = token[1]
             token_hash = hashlib.sha512(token.encode()).hexdigest()
+
             try:
                 required = OAuthScope(scopes)
                 required.client_id = _base_service.get_client_id()
             except OAuthError as err:
                 return err.response
+
             try:
                 oauth_token = _base_service.get_token(token, token_hash, required)
             except OAuthError as err:
                 return err.response
+
             if not oauth_token:
                 return valid.error("Invalid or expired OAuth token", status=401)
+
+            g.current_oauth_token = oauth_token
+
             args = (oauth_token,) + args
             if oauth_token.scopes == "*":
                 return f(*args, **kwargs)
+
             available = [OAuthScope(s) for s in oauth_token.scopes.split(',')]
             applicable = [s for s in available if s.fulfills(required)]
             if not any(applicable):
                 return valid.error("Your OAuth token is not permitted to use " +
                     "this endpoint (needs {})".format(required), status=403)
+
             return f(*args, **kwargs)
         return wrapper
     return wrap
