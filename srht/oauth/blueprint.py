@@ -29,8 +29,8 @@ def oauth_callback():
                 "Something odd has happened, try again."))
     meta_uri = cfg("meta.sr.ht", "origin")
     r = requests.post(meta_uri + "/oauth/exchange", json={
-        "client_id": current_app.login_config.client_id,
-        "client_secret": current_app.login_config.client_secret,
+        "client_id": current_app.oauth_service.client_id,
+        "client_secret": current_app.oauth_service.client_secret,
         "exchange": exchange_token,
     })
     if r.status_code != 200:
@@ -53,7 +53,8 @@ def oauth_callback():
             details="Error occured retrieving account info. Try again.")
     
     profile = r.json()
-    user = current_app.lookup_or_register(exchange, profile, scopes)
+    user = current_app.oauth_service.lookup_or_register(
+            exchange, profile, scopes)
 
     login_user(user, remember=True)
     if not state or not state.startswith("/"):

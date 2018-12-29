@@ -1,8 +1,7 @@
-from flask import request, g
+from flask import current_app, request, g
 from functools import wraps
 from srht.oauth import OAuthError
 from srht.oauth.scope import OAuthScope
-from srht.oauth.interface import base_service
 from srht.validation import Validation
 import hashlib
 import requests
@@ -32,14 +31,15 @@ def oauth(scopes):
             try:
                 if scopes:
                     required = OAuthScope(scopes)
-                    required.client_id = base_service.client_id
+                    required.client_id = current_app.oauth_service.client_id
                 else:
                     required = None
             except OAuthError as err:
                 return err.response
 
             try:
-                oauth_token = base_service.get_token(token, token_hash, required)
+                oauth_token = current_app.oauth_service.get_token(
+                        token, token_hash, required)
             except OAuthError as err:
                 return err.response
 

@@ -114,13 +114,14 @@ def loginrequired(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if not current_user:
-            return redirect(current_app.login_config.oauth_url(request.url))
+            return redirect(current_app.oauth_service.oauth_url(request.url))
         else:
             return f(*args, **kwargs)
     return wrapper
 
 class SrhtFlask(Flask):
-    def __init__(self, site, name, login_config=None, *args, **kwargs):
+    def __init__(self, site, name,
+            oauth_service=None, oauth_provider=None, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
 
         self.site = site
@@ -145,10 +146,15 @@ class SrhtFlask(Flask):
         self.jinja_loader = ChoiceLoader(choices)
         self.secret_key = cfg("sr.ht", "secret-key")
 
+        self.oauth_service = oauth_service
+        self.oauth_provider = oauth_provider
+
+        if self.oauth_service:
+            self.register_blueprint(oauth_blueprint)
+
         self.login_manager = LoginManager()
         self.login_manager.init_app(self)
         self.login_manager.anonymous_user = lambda: None
-        self.login_config = login_config
         self.no_csrf_prefixes = ['/api']
 
         @self.before_request
@@ -211,9 +217,10 @@ class SrhtFlask(Flask):
                 ).one_or_none() if current_user else None,
                 'static_resource': self.static_resource,
             }
-            if self.login_config:
+            if self.oauth_service:
                 ctx.update({
-                    "oauth_url": self.login_config.oauth_url(request.full_path),
+                    "oauth_url": self.oauth_service.oauth_url(
+                        request.full_path),
                 })
             return ctx
 
@@ -244,14 +251,6 @@ class SrhtFlask(Flask):
         path, ext = os.path.splitext(path)
         self.static_cache[path] = f"{path}.{sha256.hexdigest()[:8]}{ext}"
         return self.static_cache[path]
-
-    def configure_meta_auth(self,
-            meta_client_id, meta_client_secret,
-            base_scopes=["profile"]):
-        assert hasattr(self, 'lookup_or_register')
-        self.login_config = LoginConfig(
-                meta_client_id, meta_client_secret, base_scopes)
-        self.register_blueprint(oauth_blueprint)
 
     def get_network(self):
         return [s for s in config if s.endswith(".sr.ht")]

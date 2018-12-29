@@ -2,7 +2,9 @@ import abc
 import requests
 from collections import namedtuple
 from srht.config import cfg
+from srht.oauth import OAuthError
 from werkzeug.local import LocalProxy
+from urllib.parse import quote_plus
 
 metasrht = cfg("meta.sr.ht", "origin")
 
@@ -14,9 +16,18 @@ class AbstractOAuthService(abc.ABC):
     Implements hooks that sr.ht can use to authorize clients to an
     OAuth-enabled API.
     """
-    def __init__(self, client_id, client_secret, delegated_scopes=[]):
+    def __init__(self, client_id, client_secret,
+            required_scopes=["profile"], delegated_scopes=[]):
+        """
+        required_scopes: list of scopes (in string form) to request from
+        meta.sr.ht when authenticating web users
+
+        delegated_scopes: list of DelegatedScopes for delegated OAuth with
+        meta.sr.ht when authenticating API clients
+        """
         self.client_id = client_id
         self.client_secret = client_secret
+        self.required_scopes = required_scopes
         self.delegated_scopes = delegated_scopes
         self._get = (lambda *args, **kwargs:
                 self._request("GET", *args, **kwargs))
@@ -60,13 +71,56 @@ class AbstractOAuthService(abc.ABC):
         })
         return requests.request(*args, headers=headers, **kwargs)
 
-    @abc.abstractmethod
     def get_token(self, token, token_hash, scopes):
         """
         Get or create an OAuthToken object. We don't do anything with it but
         hand it back to you; the type can be anything that you find useful.
         """
         pass
+
+    def lookup_or_register(self, exchange, profile, scopes):
+        """
+        Used to lookup or register web users authenticating via delegated OAuth.
+        Return the user object; it must fulfill flask_login's user class
+        contract.
+        """
+        pass
+
+    def exchange(self, token, revocation_url):
+        """
+        Validates an OAuth token with meta.sr.ht and returns a tuple of
+        meta.sr.ht's responses: token, profile. Raises an OAuthError if anything
+        goes wrong.
+        """
+        try:
+            r = requests.post("{}/oauth/token/{}".format(metasrht, token),
+                json={
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "revocation_url": revocation_url
+                })
+            _token = r.json()
+        except Exception as ex:
+            print(ex)
+            raise OAuthError("Temporary authentication failure", status=500)
+        if r.status_code != 200:
+            raise OAuthError(_token, status=r.status_code)
+        try:
+            r = requests.get("{}/api/user/profile".format(metasrht), headers={
+                "Authorization": "token {}".format(token)
+            })
+            profile = r.json()
+        except Exception as ex:
+            print(ex)
+            raise OAuthError("Temporary authentication failure", status=500)
+        if r.status_code != 200:
+            raise OAuthError(profile, status=r.status_code)
+        return _token, profile
+
+    def oauth_url(self, return_to, scopes=[]):
+        return "{}/oauth/authorize?client_id={}&scopes={}&state={}".format(
+            metasrht, self.client_id, ','.join(self.required_scopes + scopes),
+            quote_plus(return_to))
 
 class AbstractOAuthProvider(abc.ABC):
     """
@@ -89,16 +143,3 @@ class AbstractOAuthProvider(abc.ABC):
         Given a client_id alias, return the actual client_id (or None).
         """
         pass
-
-_base_service = None
-base_service = LocalProxy(lambda: _base_service)
-_base_provider = None
-base_provider = LocalProxy(lambda: _base_provider)
-
-def set_base_service(base_service):
-    global _base_service
-    _base_service = base_service
-
-def set_base_provider(base_provider):
-    global _base_provider
-    _base_provider = base_provider

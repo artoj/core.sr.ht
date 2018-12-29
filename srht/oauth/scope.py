@@ -1,4 +1,4 @@
-from srht.oauth.interface import base_provider
+from flask import current_app
 
 class OAuthScope:
     def __init__(self, scope, resolve=True):
@@ -18,14 +18,15 @@ class OAuthScope:
                 raise Exception('Invalid OAuth scope syntax')
             scope = s[0]
             access = s[1]
-        alias = base_provider and base_provider.get_alias(client_id)
+        oauth_provider = current_app.oauth_provider if current_app else None
+        alias = oauth_provider and oauth_provider.get_alias(client_id)
         if not access in ['read', 'write']:
             raise Exception('Invalid scope access {}'.format(access))
         self.client_id = alias or client_id
         self.scope = scope
         self.access = access
         if resolve:
-            base_provider and base_provider.resolve_scope(self)
+            oauth_provider and oauth_provider.resolve_scope(self)
 
     def __eq__(self, other):
         return self.client_id == other.client_id \
