@@ -27,6 +27,3 @@ from srht.oauth.exchange import delegated_exchange
 from srht.oauth.scope import OAuthScope
 from srht.oauth.interface import AbstractOAuthService, AbstractOAuthProvider
 from srht.oauth.interface import set_base_service, set_base_provider
-
-# TEMP (compatibility):
-meta_delegated_exchange = delegated_exchange
