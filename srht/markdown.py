@@ -10,6 +10,10 @@ import misaka as m
 import re
 
 class HighlighterRenderer(m.HtmlRenderer):
+    def __init__(self, *args, baselevel=1, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.baselevel = 1
+
     def blockcode(self, text, lang):
         try:
             lexer = get_lexer_by_name(lang, stripall=True)
@@ -21,6 +25,16 @@ class HighlighterRenderer(m.HtmlRenderer):
         # default
         return '\n<pre><code>{}</code></pre>\n'.format(
                 escape(text.strip()))
+
+    def header(self, content, level):
+        level += self.baselevel
+        if level > 6:
+            level = 6
+        _id = re.sub(r'[^a-z0-9-_]', '', content.lower().replace(" ", "-"))
+        print(content, level, _id)
+        return f'''\n<h{str(level)} id="{_id}">
+            {content}
+        </h{str(level)}>\n'''
 
 urlregex = re.compile(r'(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?\xab\xbb\u201c\u201d\u2018\u2019]))')
 
@@ -74,10 +88,10 @@ def markdown(text, tags=[], baselevel=1):
         + ["padding-{}".format(p) for p in ["left", "right", "bottom", "top"]]
         + ["margin-{}".format(p) for p in ["left", "right", "bottom", "top"]],
         strip=True)
-    renderer = md = m.Markdown(HighlighterRenderer(nesting_level=1), extensions=(
-        'tables', 'fenced-code', 'footnotes', 'strikethrough', 'highlight',
-        'quote', 'autolink'
-    ))
+    renderer = md = m.Markdown(
+        HighlighterRenderer(baselevel=baselevel), extensions=(
+            'tables', 'fenced-code', 'footnotes', 'strikethrough', 'highlight',
+            'quote', 'autolink'))
     html = renderer(text)
     html = cleaner.clean(html)
     formatter = HtmlFormatter()
