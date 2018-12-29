@@ -32,7 +32,7 @@ def oauth(scopes):
             try:
                 if scopes:
                     required = OAuthScope(scopes)
-                    required.client_id = base_service.get_client_id()
+                    required.client_id = base_service.client_id
                 else:
                     required = None
             except OAuthError as err:
