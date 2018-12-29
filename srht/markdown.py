@@ -31,7 +31,6 @@ class HighlighterRenderer(m.HtmlRenderer):
         if level > 6:
             level = 6
         _id = re.sub(r'[^a-z0-9-_]', '', content.lower().replace(" ", "-"))
-        print(content, level, _id)
         return f'''\n<h{str(level)} id="{_id}">
             {content}
         </h{str(level)}>\n'''
