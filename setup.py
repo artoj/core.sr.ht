@@ -13,7 +13,10 @@ ver = os.environ.get("PKGVER") or subprocess.run(['git', 'describe', '--tags'],
 
 setup(
   name = 'srht',
-  packages = ['srht'],
+  packages = [
+      'srht',
+      'srht.oauth',
+  ],
   version = ver,
   description = 'sr.ht core modules',
   author = 'Drew DeVault',
@@ -31,7 +34,7 @@ setup(
       'requests',
       'BeautifulSoup4',
       'pgpy',
-      'py-gfm',
+      'misaka',
   ],
   license = 'BSD-3-Clause',
   package_data={
