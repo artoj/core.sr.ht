@@ -1,0 +1,153 @@
+import re
+import sqlalchemy as sa
+import sqlalchemy_utils as sau
+import uuid
+from sqlalchemy.ext.declarative import declared_attr
+from srht.database import Base
+from enum import Enum
+from werkzeug.local import LocalProxy
+
+_webhooks = list()
+
+registered_webhooks = LocalProxy(lambda: _webhooks)
+
+# https://stackoverflow.com/a/1176023
+first_cap_re = re.compile('(.)([A-Z][a-z]+)')
+all_cap_re = re.compile('([a-z0-9])([A-Z])')
+def snake_case(name):
+    s1 = first_cap_re.sub(r'\1_\2', name)
+    return all_cap_re.sub(r'\1_\2', s1).lower()
+
+event_re = re.compile(r"""
+        (?P<resource>[a-z]+):(?P<events>[a-z+]+)
+        (\[(?P<ids>[0-9,]+)\])?""", re.X)
+
+class _SubscriptionMixin:
+    @declared_attr
+    def __tablename__(cls):
+        return snake_case(cls.__name__)
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    created = sa.Column(sa.DateTime, nullable=False)
+    url = sa.Column(sa.Unicode(2048), nullable=False)
+    _events = sa.Column(sa.Unicode, nullable=False, name="events")
+
+    def __init__(self, valid, client_id, user_id, *args, **kwargs):
+        self.client_id = client_id
+        self.user_id = user_id
+        self.url = valid.require("url")
+        self.events = valid.require("events")
+        for event in self.events:
+            valid.expect(event in self._Webhook.events,
+                    f"Unsupported event type '{event}'", field="events")
+        if hasattr(self._Webhook, "__init__"):
+            self._Webhook.__init__(self, *args, **kwargs)
+
+    @property
+    def events(self):
+        return self._events.split(",")
+
+    @events.setter
+    def events(self, val):
+        self._events = ",".join(val)
+
+    @declared_attr
+    def user_id(cls):
+        return sa.Column(sa.Integer,
+                sa.ForeignKey("user.id", ondelete="CASCADE"))
+
+    @declared_attr
+    def user(cls):
+        return sa.orm.relationship("User", cascade="all, delete")
+
+    @declared_attr
+    def client_id(cls):
+        return sa.Column(sa.Integer,
+                sa.ForeignKey("oauthclient.id", ondelete="CASCADE"))
+
+    @declared_attr
+    def client(cls):
+        return sa.orm.relationship("OAuthClient", cascade="all, delete")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "created": self.created,
+            "events": self.events,
+            "url": self.url,
+        }
+
+class _DeliveryMixin:
+    @declared_attr
+    def __tablename__(cls):
+        return snake_case(cls.__name__)
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    uuid = sa.Column(sau.UUIDType, nullable=False)
+    created = sa.Column(sa.DateTime, nullable=False)
+    event = sa.Column(sa.Unicode(256), nullable=False)
+    url = sa.Column(sa.Unicode(2048), nullable=False)
+    payload = sa.Column(sa.Unicode(16384), nullable=False)
+    payload_headers = sa.Column(sa.Unicode(16384), nullable=False)
+    response = sa.Column(sa.Unicode(16384))
+    response_status = sa.Column(sa.Integer, nullable=False)
+    response_headers = sa.Column(sa.Unicode(16384))
+
+    @declared_attr
+    def subscription_id(cls):
+        name = snake_case(cls.__name__.replace("Delivery", "Subscription"))
+        return sa.Column(sa.Integer,
+                sa.ForeignKey(name + '.id', ondelete="CASCADE"),
+                nullable=False)
+
+    @declared_attr
+    def subscription(cls):
+        cls_name = cls.__name__.replace("Delivery", "Subscription")
+        return sa.orm.relationship(cls_name,
+                backref=sa.orm.backref('deliveries', cascade='all, delete'))
+
+    def __init__(self):
+        self.uuid = uuid.uuid4()
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "created": self.created,
+            "event": self.event,
+            "url": self.url,
+            "payload": self.payload,
+            "payload_headers": self.payload_headers,
+            "response": self.response,
+            "response_status": self.response_status,
+            "response_headers": self.response_headers,
+        }
+
+class WebhookMeta(type):
+    def __new__(cls, name, bases, members):
+        base_members = dict()
+        subs_members = dict()
+        for key, value in members.items():
+            if isinstance(value, sa.Column):
+                subs_members[key] = value
+            else:
+                base_members[key] = value
+        events = base_members.get("events")
+        base_members.update({
+            "Subscription": type(name + "Subscription",
+                (_SubscriptionMixin, Base), subs_members),
+            "Delivery": type(name + "Delivery", (_DeliveryMixin, Base), dict()),
+        })
+        if events is not None:
+            base_members["Events"] = Enum(name + "Events",
+                    [(re.sub(r'[-:]', '_', ev), ev) for ev in events ])
+        cls = super().__new__(cls, name, bases, base_members)
+        if events is not None:
+            registered_webhooks.append(cls)
+            # This is gross
+            cls._deliver = cls.deliver
+            cls.deliver = lambda *args, **kwargs: cls._deliver(cls, *args, **kwargs)
+            cls._notify = cls.notify
+            cls.notify = lambda *args, **kwargs: cls._notify(cls, *args, **kwargs)
+        cls.Subscription._Webhook = cls
+        cls.Delivery._Webhook = cls
+        return cls

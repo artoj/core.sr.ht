@@ -16,6 +16,7 @@ setup(
   packages = [
       'srht',
       'srht.oauth',
+      'srht.webhook',
   ],
   version = ver,
   description = 'sr.ht core modules',
