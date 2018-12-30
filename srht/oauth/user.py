@@ -48,6 +48,9 @@ class UserMixin:
     def __repr__(self):
         return '<User {} {}>'.format(self.id, self.username)
 
+    def __str__(self):
+        return self.canonical_name
+
 class ExternalUserMixin(UserMixin):
     oauth_token = sa.Column(sa.String(256), nullable=False)
     oauth_token_expires = sa.Column(sa.DateTime, nullable=False)
