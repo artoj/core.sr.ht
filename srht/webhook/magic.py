@@ -2,9 +2,10 @@ import re
 import sqlalchemy as sa
 import sqlalchemy_utils as sau
 import uuid
+from enum import Enum
 from sqlalchemy.ext.declarative import declared_attr
 from srht.database import Base
-from enum import Enum
+from srht.oauth import OAuthScope
 from werkzeug.local import LocalProxy
 
 _webhooks = list()
@@ -138,8 +139,14 @@ class WebhookMeta(type):
             "Delivery": type(name + "Delivery", (_DeliveryMixin, Base), dict()),
         })
         if events is not None:
+            norm = lambda name: re.sub('[-:]', '_', name)
             base_members["Events"] = Enum(name + "Events",
-                    [(re.sub(r'[-:]', '_', ev), ev) for ev in events ])
+                    [(norm(ev.name), ev.name) for ev in events ])
+            base_members["event_scope"] = {
+                getattr(base_members["Events"],
+                    norm(ev.name)): OAuthScope(ev.scope) for ev in events
+            }
+            base_members["Events"]
         cls = super().__new__(cls, name, bases, base_members)
         if events is not None:
             registered_webhooks.append(cls)

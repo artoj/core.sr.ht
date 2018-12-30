@@ -25,7 +25,7 @@ class OAuthScope:
         self.client_id = alias or client_id
         self.scope = scope
         self.access = access
-        if resolve:
+        if resolve and scope != "*":
             oauth_provider and oauth_provider.resolve_scope(self)
 
     def __eq__(self, other):

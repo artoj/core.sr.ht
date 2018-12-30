@@ -1,8 +1,10 @@
 import abc
 import requests
 from collections import namedtuple
+from datetime import datetime
 from srht.config import cfg
-from srht.oauth import OAuthError
+from srht.database import db
+from srht.oauth import OAuthError, OAuthTokenMixin
 from werkzeug.local import LocalProxy
 from urllib.parse import quote_plus
 
@@ -17,7 +19,8 @@ class AbstractOAuthService(abc.ABC):
     OAuth-enabled API.
     """
     def __init__(self, client_id, client_secret,
-            required_scopes=["profile"], delegated_scopes=[]):
+            required_scopes=["profile"], delegated_scopes=[],
+            token_class=None, user_class=None):
         """
         required_scopes: list of scopes (in string form) to request from
         meta.sr.ht when authenticating web users
@@ -29,12 +32,16 @@ class AbstractOAuthService(abc.ABC):
         self.client_secret = client_secret
         self.required_scopes = required_scopes
         self.delegated_scopes = delegated_scopes
+        self.OAuthToken = token_class
+        self.User = user_class
+
         self._get = (lambda *args, **kwargs:
                 self._request("GET", *args, **kwargs))
         self._post = (lambda *args, **kwargs:
                 self._request("POST", *args, **kwargs))
         self._delete = (lambda *args, **kwargs:
                 self._request("DELETE", *args, **kwargs))
+
         if any(self.delegated_scopes):
             self._ensure_delegated()
 
@@ -72,11 +79,16 @@ class AbstractOAuthService(abc.ABC):
         return requests.request(*args, headers=headers, **kwargs)
 
     def get_token(self, token, token_hash, scopes):
-        """
-        Get or create an OAuthToken object. We don't do anything with it but
-        hand it back to you; the type can be anything that you find useful.
-        """
-        pass
+        """Fetch an OAuth token given the provided token & token_hash."""
+        now = datetime.utcnow()
+        oauth_token = (self.OAuthToken.query
+            .filter(self.OAuthToken.token_hash == token_hash)
+            .filter(self.OAuthToken.expires > now)
+        ).first()
+        if oauth_token:
+            oauth_token.updated = now
+            db.session.commit()
+        return oauth_token
 
     def lookup_or_register(self, exchange, profile, scopes):
         """

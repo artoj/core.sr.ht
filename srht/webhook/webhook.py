@@ -47,6 +47,7 @@ class Webhook(metaclass=WebhookMeta):
     def notify(cls, sub, event, payload):
         """Notifies a single subscriber of a webhook event."""
         # TODO: Override this with a CeleryWebhook class
+        # TODO: Validate OAuth scopes
         payload = json.dumps(payload, indent='\t')
         delivery = cls.Delivery()
         delivery.event = event.value

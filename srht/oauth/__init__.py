@@ -21,6 +21,10 @@ class OAuthError(Exception):
             self.response = valid.response
         self.status = status
 
+from srht.oauth.client import OAuthClientMixin
+from srht.oauth.token import OAuthTokenMixin
+from srht.oauth.user import UserMixin, UserType
+
 from srht.oauth.blueprint import oauth_blueprint
 from srht.oauth.decorator import oauth
 from srht.oauth.scope import OAuthScope
