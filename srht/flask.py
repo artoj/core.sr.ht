@@ -154,8 +154,16 @@ class SrhtFlask(Flask):
         self.login_manager = LoginManager()
         self.login_manager.init_app(self)
         self.login_manager.anonymous_user = lambda: None
-        self.no_csrf_prefixes = ['/api']
 
+        if self.oauth_service and self.oauth_service.User:
+            @self.login_manager.user_loader
+            def user_loader(username):
+                User = self.oauth_service.User
+                # TODO: Switch to a session token
+                return User.query.filter(
+                        User.username == username).one_or_none()
+
+        self.no_csrf_prefixes = ['/api']
         @self.before_request
         def _csrf_check():
             for prefix in self.no_csrf_prefixes:

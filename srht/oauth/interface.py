@@ -5,7 +5,7 @@ from datetime import datetime
 from srht.config import cfg
 from srht.database import db
 from srht.flask import DATE_FORMAT
-from srht.oauth import OAuthError, ExternalUserMixin, UserType
+from srht.oauth import OAuthError, ExternalUserMixin, UserType, OAuthScope
 from werkzeug.local import LocalProxy
 from urllib.parse import quote_plus
 
@@ -111,7 +111,7 @@ class AbstractOAuthService(abc.ABC):
             db.session.add(user)
             db.session.flush()
         oauth_token = self.OAuthToken(user, token, expires)
-        oauth_token.scopes = ",".join(str(s) for s in scopes)
+        oauth_token.scopes = scopes
         db.session.add(oauth_token)
         db.session.commit()
         return oauth_token
@@ -145,9 +145,10 @@ class AbstractOAuthService(abc.ABC):
         try:
             r = requests.post("{}/oauth/token/{}".format(metasrht, token),
                 json={
-                    "client_id": client_id,
-                    "client_secret": client_secret,
-                    "revocation_url": revocation_url
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret,
+                    # TODO: Revocation URLs
+                    "revocation_url": "http://example.org"
                 })
             _token = r.json()
         except Exception as ex:

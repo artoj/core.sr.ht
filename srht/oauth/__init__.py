@@ -1,4 +1,4 @@
-from flask import g
+from flask import g, request
 from srht.validation import Validation
 from werkzeug.local import LocalProxy
 

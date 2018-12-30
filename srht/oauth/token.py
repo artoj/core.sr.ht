@@ -1,8 +1,11 @@
-import sqlalchemy as sa
+from datetime import datetime, timedelta
 from sqlalchemy.ext.declarative import declared_attr
 from srht.oauth.scope import OAuthScope
+import binascii
+import hashlib
+import sqlalchemy as sa
 
-class ExternalOAuthTokenMixin:
+class BaseOAuthTokenMixin:
     @declared_attr
     def __tablename__(cls):
         return "oauthtoken"
@@ -36,7 +39,14 @@ class ExternalOAuthTokenMixin:
     def authorized_for(self, scope):
         return any(s.fulfills(scope) for s in self.scopes)
 
-class OAuthTokenMixin(ExternalOAuthTokenMixin):
+class ExternalOAuthTokenMixin(BaseOAuthTokenMixin):
+    def __init__(self, user, token, expires):
+        self.user_id = user.id
+        self.expires = datetime.now() + timedelta(days=365)
+        self.token_partial = token[:8]
+        self.token_hash = hashlib.sha512(token.encode()).hexdigest()
+
+class OAuthTokenMixin(BaseOAuthTokenMixin):
     @declared_attr
     def __table_args__(cls):
         return (sa.UniqueConstraint('client_id', 'user_id',
