@@ -1,4 +1,5 @@
 import abc
+import hashlib
 import requests
 from collections import namedtuple
 from datetime import datetime
@@ -110,7 +111,11 @@ class AbstractOAuthService(abc.ABC):
             user.oauth_token_expires = expires
             db.session.add(user)
             db.session.flush()
-        oauth_token = self.OAuthToken(user, token, expires)
+        oauth_token = self.OAuthToken()
+        oauth_token.user_id = user.id
+        oauth_token.expires = expires
+        oauth_token.token_partial = token[:8]
+        oauth_token.token_hash = hashlib.sha512(token.encode()).hexdigest()
         oauth_token.scopes = scopes
         db.session.add(oauth_token)
         db.session.commit()
