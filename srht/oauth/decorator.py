@@ -51,8 +51,7 @@ def oauth(scopes):
             if oauth_token.scopes == "*" or scopes is None:
                 return f(*args, **kwargs)
 
-            available = [OAuthScope(s) for s in oauth_token.scopes.split(',')]
-            applicable = [s for s in available if s.fulfills(required)]
+            applicable = [s for s in oauth_token.scopes if s.fulfills(required)]
             if not any(applicable):
                 return valid.error("Your OAuth token is not permitted to use " +
                     "this endpoint (needs {})".format(required), status=403)

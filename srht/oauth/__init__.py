@@ -22,8 +22,8 @@ class OAuthError(Exception):
         self.status = status
 
 from srht.oauth.client import OAuthClientMixin
-from srht.oauth.token import OAuthTokenMixin
-from srht.oauth.user import UserMixin, UserType
+from srht.oauth.token import OAuthTokenMixin, ExternalOAuthTokenMixin
+from srht.oauth.user import UserMixin, UserType, ExternalUserMixin
 
 from srht.oauth.blueprint import oauth_blueprint
 from srht.oauth.decorator import oauth

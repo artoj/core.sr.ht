@@ -2,15 +2,10 @@ import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declared_attr
 from srht.oauth.scope import OAuthScope
 
-class OAuthTokenMixin:
+class ExternalOAuthTokenMixin:
     @declared_attr
     def __tablename__(cls):
         return "oauthtoken"
-
-    @declared_attr
-    def __table_args__(cls):
-        return (sa.UniqueConstraint('client_id', 'user_id',
-                name='client_user_unique'),)
 
     id = sa.Column(sa.Integer, primary_key=True)
     created = sa.Column(sa.DateTime, nullable=False)
@@ -26,6 +21,7 @@ class OAuthTokenMixin:
 
     @scopes.setter
     def scopes(self, value):
+        assert all(isinstance(s, OAuthScope) for s in value)
         self._scopes = ",".join(str(s) for s in value)
 
     @declared_attr
@@ -37,6 +33,15 @@ class OAuthTokenMixin:
         return sa.orm.relationship('User',
             backref=sa.orm.backref('oauth_tokens'))
 
+    def authorized_for(self, scope):
+        return any(s.fulfills(scope) for s in self.scopes)
+
+class OAuthTokenMixin(ExternalOAuthTokenMixin):
+    @declared_attr
+    def __table_args__(cls):
+        return (sa.UniqueConstraint('client_id', 'user_id',
+                name='client_user_unique'),)
+
     @declared_attr
     def client_id(cls):
         return sa.Column(sa.Integer,
@@ -46,6 +51,3 @@ class OAuthTokenMixin:
     def client(cls):
         return sa.orm.relationship('OAuthClient',
             backref=sa.orm.backref('tokens', cascade='all, delete'))
-
-    def authorized_for(self, scope):
-        return any(s.fulfills(scope) for s in self.scopes)

@@ -4,7 +4,8 @@ from collections import namedtuple
 from datetime import datetime
 from srht.config import cfg
 from srht.database import db
-from srht.oauth import OAuthError, OAuthTokenMixin
+from srht.flask import DATE_FORMAT
+from srht.oauth import OAuthError, ExternalUserMixin, UserType
 from werkzeug.local import LocalProxy
 from urllib.parse import quote_plus
 
@@ -80,14 +81,39 @@ class AbstractOAuthService(abc.ABC):
 
     def get_token(self, token, token_hash, scopes):
         """Fetch an OAuth token given the provided token & token_hash."""
+        # TODO: rig up webhook(?)
         now = datetime.utcnow()
         oauth_token = (self.OAuthToken.query
             .filter(self.OAuthToken.token_hash == token_hash)
             .filter(self.OAuthToken.expires > now)
-        ).first()
+        ).one_or_none()
         if oauth_token:
             oauth_token.updated = now
             db.session.commit()
+        if not self.User or not issubclass(self.User, ExternalUserMixin):
+            return oauth_token
+        # TODO: Revocation
+        _token, profile = self.delegated_exchange(token, "http://example.org")
+        expires = datetime.strptime(_token["expires"], DATE_FORMAT)
+        scopes = set(OAuthScope(s) for s in _token["scopes"].split(","))
+        user = self.User.query.filter(
+                self.User.username == profile["name"]).first()
+        if not user:
+            user = self.User()
+            user.username = profile["username"]
+            user.email = profile["email"]
+            user.user_type = UserType(profile["user_type"])
+            user.bio = profile["bio"]
+            user.location = profile["location"]
+            user.url = profile["url"]
+            user.oauth_token = token
+            user.oauth_token_expires = expires
+            db.session.add(user)
+            db.session.flush()
+        oauth_token = self.OAuthToken(user, token, expires)
+        oauth_token.scopes = ",".join(str(s) for s in scopes)
+        db.session.add(oauth_token)
+        db.session.commit()
         return oauth_token
 
     def lookup_or_register(self, exchange, profile, scopes):
@@ -96,9 +122,21 @@ class AbstractOAuthService(abc.ABC):
         Return the user object; it must fulfill flask_login's user class
         contract.
         """
-        pass
+        user = self.User.query.filter(
+                self.User.username == profile["name"]).one_or_none()
+        if not user:
+            user = self.User()
+            db.session.add(user)
+        user.username = profile["name"]
+        user.email = profile["email"]
+        user.user_type = UserType(profile["user_type"])
+        user.oauth_token = exchange["token"]
+        user.oauth_token_expires = exchange["expires"]
+        user.oauth_token_scopes = scopes
+        db.session.commit()
+        return user
 
-    def exchange(self, token, revocation_url):
+    def delegated_exchange(self, token, revocation_url):
         """
         Validates an OAuth token with meta.sr.ht and returns a tuple of
         meta.sr.ht's responses: token, profile. Raises an OAuthError if anything
