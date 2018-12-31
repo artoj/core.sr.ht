@@ -57,7 +57,7 @@ def alembic(site, alembic_module):
     if options.auto:
         if cfg(site, "migrate-on-upgrade", default="no") != "yes":
             print("Skipping automatic database migrations")
-            print("Set [git.sr.ht]migrations-on-upgrade=yes in config.ini to enable")
+            print(f"Set [{site}]migrate-on-upgrade=yes in config.ini to enable")
             sys.exit(0)
 
     config = Config()
