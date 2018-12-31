@@ -91,6 +91,7 @@ class AbstractOAuthService(abc.ABC):
         if oauth_token:
             oauth_token.updated = now
             db.session.commit()
+            return oauth_token
         if not self.User or not issubclass(self.User, ExternalUserMixin):
             return oauth_token
         # TODO: Revocation
