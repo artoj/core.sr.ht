@@ -63,7 +63,8 @@ def alembic(site, alembic_module):
     config = Config()
     script_location = list(alembic_module.__path__)[0]
     config.set_main_option("script_location", script_location)
-    config.set_main_option("sqlalchemy.url", cfg(site, "connection-string"))
+    if site != "core.sr.ht":
+        config.set_main_option("sqlalchemy.url", cfg(site, "connection-string"))
 
     dictConfig({
         "root": { "level": "WARN", "handlers": ["console"] },
@@ -90,14 +91,16 @@ def alembic(site, alembic_module):
 
     cmdline.run_cmd(config, options)
 
-def alembic_env():
+def alembic_env(version_table="alembic_version"):
     target_metadata = Base.metadata
     config = context.config
 
     def run_migrations_offline():
         url = config.get_main_option("sqlalchemy.url")
         context.configure(url=url,
-                target_metadata=target_metadata, include_schemas=True)
+                target_metadata=target_metadata,
+                include_schemas=True,
+                version_table=version_table)
 
         with context.begin_transaction():
             context.run_migrations()
@@ -109,7 +112,9 @@ def alembic_env():
 
         connection = engine.connect()
         context.configure(connection=connection,
-            target_metadata=target_metadata, include_schemas=True)
+            target_metadata=target_metadata,
+            include_schemas=True,
+            version_table=version_table)
 
         try:
             with context.begin_transaction():

@@ -1,8 +1,10 @@
 import abc
 import hashlib
+import os
 import requests
 from collections import namedtuple
 from datetime import datetime
+from flask import current_app, url_for
 from srht.config import cfg
 from srht.database import db
 from srht.flask import DATE_FORMAT
@@ -94,8 +96,11 @@ class AbstractOAuthService(abc.ABC):
             return oauth_token
         if not self.User or not issubclass(self.User, ExternalUserMixin):
             return oauth_token
-        # TODO: Revocation
-        _token, profile = self.delegated_exchange(token, "http://example.org")
+        revocation_token = hashlib.sha512(os.urandom(16)).hexdigest()
+        origin = cfg(current_app.site, "origin")
+        revocation_url = origin + url_for("srht.oauth.revoke",
+                revocation_token=revocation_token)
+        _token, profile = self.delegated_exchange(token, revocation_url)
         expires = datetime.strptime(_token["expires"], DATE_FORMAT)
         scopes = set(OAuthScope(s) for s in _token["scopes"].split(","))
         user = self.User.query.filter(
@@ -112,6 +117,7 @@ class AbstractOAuthService(abc.ABC):
             user.oauth_token_expires = expires
             db.session.add(user)
             db.session.flush()
+        user.oauth_revocation_token = revocation_token
         oauth_token = self.OAuthToken()
         oauth_token.user_id = user.id
         oauth_token.expires = expires
@@ -153,8 +159,7 @@ class AbstractOAuthService(abc.ABC):
                 json={
                     "client_id": self.client_id,
                     "client_secret": self.client_secret,
-                    # TODO: Revocation URLs
-                    "revocation_url": "http://example.org"
+                    "revocation_url": revocation_url,
                 })
             _token = r.json()
         except Exception as ex:

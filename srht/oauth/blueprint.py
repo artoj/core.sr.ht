@@ -2,6 +2,7 @@ from datetime import datetime
 from flask import Blueprint, request, redirect, render_template, current_app
 from flask_login import login_user, logout_user
 from srht.config import cfg
+from srht.database import db
 from srht.oauth.scope import OAuthScope
 import requests
 import urllib
@@ -66,3 +67,15 @@ def oauth_callback():
 def logout():
     logout_user()
     return redirect(request.headers.get("Referer") or "/")
+
+@oauth_blueprint.route("/oauth/revoke/<revocation_token>")
+def revoke(revocation_token):
+    OAuthToken = current_app.oauth_service.OAuthToken
+    User = current_app.oauth_service.User
+    user = User.query.filter(
+            User.oauth_revocation_token == revocation_token).one_or_none()
+    if not user:
+        abort(404)
+    OAuthToken.query.filter(OAuthToken.user_id == user.id).delete()
+    db.session.commit()
+    return {}

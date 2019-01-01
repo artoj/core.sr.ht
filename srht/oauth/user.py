@@ -55,3 +55,4 @@ class ExternalUserMixin(UserMixin):
     oauth_token = sa.Column(sa.String(256), nullable=False)
     oauth_token_expires = sa.Column(sa.DateTime, nullable=False)
     oauth_token_scopes = sa.Column(sa.String, nullable=False, default="")
+    oauth_revocation_token = sa.Column(sa.String(256), nullable=False)
