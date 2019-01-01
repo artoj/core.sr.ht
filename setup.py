@@ -16,6 +16,7 @@ setup(
   packages = [
       'srht',
       'srht.alembic',
+      'srht.alembic.versions',
       'srht.oauth',
       'srht.webhook',
   ],
