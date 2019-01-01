@@ -117,6 +117,8 @@ def mail_exception(ex):
     if "password" in data:
         data = "(request body contains password)"
     if has_request_context():
+        headers = "\n".join(
+            key + ": " + value for key, value in request.headers.items())
         body = f"""
 Exception occured on {request.method} {request.url}
 
@@ -124,7 +126,11 @@ Exception occured on {request.method} {request.url}
 
 Request body:
 
-{data}"""
+{data}
+
+Request headers:
+    
+{headers}"""
     else:
         body = f"""
 {traceback.format_exc()}"""
