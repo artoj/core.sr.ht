@@ -38,6 +38,7 @@ setup(
       'BeautifulSoup4',
       'pgpy',
       'misaka',
+      'pygments',
   ],
   license = 'BSD-3-Clause',
   package_data={
