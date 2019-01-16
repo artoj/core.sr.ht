@@ -38,4 +38,10 @@
   button.nav-link {
     background: inherit;
   }
+
+  @include media-breakpoint-down(xs) {
+    & .nav-tabs {
+      padding-left: 0;
+    }
+  }
 }
