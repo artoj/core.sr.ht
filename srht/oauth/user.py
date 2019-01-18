@@ -10,6 +10,7 @@ class UserType(Enum):
     active_paying = "active_paying"
     active_delinquent = "active_delinquent"
     admin = "admin"
+    unknown = "unknown"
 
 class UserMixin:
     @declared_attr

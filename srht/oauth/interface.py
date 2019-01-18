@@ -82,6 +82,17 @@ class AbstractOAuthService(abc.ABC):
         })
         return requests.request(*args, headers=headers, **kwargs)
 
+    def _preauthorized_warning(self):
+        print(f"""
+Warning: unable to determine user_type from meta.sr.ht.
+
+If you are the admin of {metasrht}, run the following SQL to correct this:
+
+    UPDATE oauthclient
+    SET preauthorized = 't'
+    WHERE client_id = '{self.client_id}';
+""")
+
     def get_token(self, token, token_hash, scopes):
         """Fetch an OAuth token given the provided token & token_hash."""
         # TODO: rig up webhook(?)
@@ -109,7 +120,11 @@ class AbstractOAuthService(abc.ABC):
             user = self.User()
             user.username = profile["username"]
             user.email = profile["email"]
-            user.user_type = UserType(profile["user_type"])
+            if "user_type" in profile:
+                user.user_type = UserType(profile["user_type"])
+            else:
+                self._preauthorized_warning()
+                user.user_type = UserType.unknown
             user.bio = profile["bio"]
             user.location = profile["location"]
             user.url = profile["url"]
@@ -141,7 +156,11 @@ class AbstractOAuthService(abc.ABC):
             db.session.add(user)
         user.username = profile["name"]
         user.email = profile["email"]
-        user.user_type = UserType(profile["user_type"])
+        if "user_type" in profile:
+            user.user_type = UserType(profile["user_type"])
+        else:
+            self._preauthorized_warning()
+            user.user_type = UserType.unknown
         user.oauth_token = exchange["token"]
         user.oauth_token_expires = exchange["expires"]
         user.oauth_token_scopes = scopes
