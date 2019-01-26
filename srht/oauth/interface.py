@@ -118,7 +118,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
                 self.User.username == profile["name"]).first()
         if not user:
             user = self.User()
-            user.username = profile["username"]
+            user.username = profile["name"]
             user.email = profile["email"]
             if "user_type" in profile:
                 user.user_type = UserType(profile["user_type"])
