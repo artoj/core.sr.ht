@@ -260,7 +260,37 @@ class SrhtFlask(Flask):
         return self.static_cache[path]
 
     def get_network(self):
-        return [s for s in config if s.endswith(".sr.ht")]
+        sites = [s for s in config if s.endswith(".sr.ht")]
+        categories = dict()
+        for site in sites:
+            if "servicecategory" in config[site]:
+                cat = cfg(site, "servicecategory")
+                members = categories.setdefault(cat, list())
+                categories[cat].append(site)
+        if not hasattr(self, "network_prefs") and len(categories) != 0:
+            self.network_prefs = {}
+        for cat, members in categories.items():
+            prefs = { site: cfgi(site, "serviceweight") for site in members }
+            try:
+                prefs.update(json.loads(
+                    request.cookies.get(f"{cat}-preference", "{}")))
+                assert all(isinstance(k, str) for k in prefs.keys())
+                assert all(isinstance(v, int) for v in prefs.values())
+            except:
+                prefs = { site: 0 for site in members }
+            if self.site in members:
+                prefs[self.site] += 1
+                self.network_prefs[cat] = {k: v for k, v in prefs.items()}
+                prefs[self.site] = 10000000
+            else:
+                self.network_prefs[cat] = prefs
+            prefs = sorted(((k, v) for k, v in prefs.items()),
+                    key=lambda t: t[1], reverse=True)
+            sites = [
+                site for site in sites
+                if site not in members or prefs[0][0] == site
+            ]
+        return sites
 
     def make_response(self, rv):
         # Converts responses from dicts to JSON response objects
@@ -280,4 +310,12 @@ class SrhtFlask(Flask):
         else:
             response = rv
         response = super(SrhtFlask, self).make_response(response)
+
+        if hasattr(self, "network_prefs"):
+            for key, value in self.network_prefs.items():
+                response.set_cookie(f"{key}-preference",
+                        json.dumps(value),
+                        domain="." + cfg("sr.ht", "site-name"),
+                        max_age=60 * 60 * 24 * 365)
+
         return response
