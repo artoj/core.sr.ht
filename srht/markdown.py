@@ -78,6 +78,7 @@ def markdown(text, tags=[], baselevel=1):
             "table", "thead", "tbody", "tr", "th", "td",
             "input",
             "img",
+            "q",
         ] + tags,
         attributes=attrs,
         styles=bleach.sanitizer.ALLOWED_STYLES + [
