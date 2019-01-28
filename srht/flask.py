@@ -14,6 +14,8 @@ from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
 from jinja2 import escape
 from urllib.parse import urlparse, quote_plus
+from werkzeug.routing import UnicodeConverter
+from werkzeug.urls import url_quote
 import binascii
 import hashlib
 import inspect
@@ -118,12 +120,20 @@ def loginrequired(f):
             return f(*args, **kwargs)
     return wrapper
 
+class ModifiedUnicodeConverter(UnicodeConverter):
+    """Added ~ and ^ to safe URL characters, otherwise no changes."""
+    def to_url(self, value):
+        return url_quote(value, charset=self.map.charset, safe='/:~^')
+
 class SrhtFlask(Flask):
     def __init__(self, site, name,
             oauth_service=None, oauth_provider=None, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
 
         self.site = site
+
+        self.url_map.converters['default'] = ModifiedUnicodeConverter
+        self.url_map.converters['string'] = ModifiedUnicodeConverter
 
         choices = [FileSystemLoader("templates")]
 
