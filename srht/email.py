@@ -91,7 +91,7 @@ def prepare_email(body, to, subject, encrypt_key=None, **headers):
         return wrapped
 
 def send_email(body, to, subject, encrypt_key=None, **headers):
-    if smtp_host == "":
+    if not smtp_host:
         return
     smtp = smtplib.SMTP(smtp_host, smtp_port)
     smtp.ehlo()
@@ -129,7 +129,7 @@ Request body:
 {data}
 
 Request headers:
-    
+
 {headers}"""
     else:
         body = f"""
