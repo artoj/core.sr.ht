@@ -5,7 +5,6 @@ def search(query, terms, default_props, prop_map):
     # TODO: OR, case-sensitivity(?)
     terms = shlex.split(terms)
     for term in terms:
-        term = term.lower()
         if ":" in term:
             parts = term.split(":")
             prop = parts[0]
@@ -26,5 +25,6 @@ def search(query, terms, default_props, prop_map):
         elif None in prop_map:
             query = prop_map[None](query, prop, value)
         else:
+            # TODO: Should we let the user know this happened?
             query = query.filter(False)
     return query
