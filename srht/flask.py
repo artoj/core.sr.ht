@@ -1,6 +1,6 @@
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 from flask import Flask, Response, request, url_for, render_template, redirect
-from flask import current_app, g, abort, session
+from flask import Blueprint, current_app, g, abort, session
 from flask_login import LoginManager, current_user
 from functools import wraps
 from enum import Enum
@@ -81,6 +81,17 @@ def csrf_token():
         type='hidden'
         name='_csrf_token'
         value='{}' />""".format(escape(session['_csrf_token_v2'])))
+
+_csrf_bypass_views = set()
+_csrf_bypass_blueprints = set()
+
+def csrf_bypass(f):
+    if isinstance(f, Blueprint):
+        _csrf_bypass_blueprints.update([f])
+    else:
+        view = '.'.join((f.__module__, f.__name__))
+        _csrf_bypass_views.update([view])
+    return f
 
 def paginate_query(query, results_per_page=15):
     page = request.args.get("page")
@@ -173,16 +184,26 @@ class SrhtFlask(Flask):
                 return User.query.filter(
                         User.username == username).one_or_none()
 
+        # TODO: Remove
         self.no_csrf_prefixes = ['/api']
+
         @self.before_request
         def _csrf_check():
+            if request.method != 'POST':
+                return
+            if request.blueprint in _csrf_bypass_blueprints:
+                return
+            view = self.view_functions.get(request.endpoint)
+            view = "{0}.{1}".format(view.__module__, view.__name__)
+            if view in _csrf_bypass_views:
+                return
+            # TODO: Remove
             for prefix in self.no_csrf_prefixes:
                 if request.path.startswith(prefix):
                     return
-            if request.method == 'POST':
-                token = session.get('_csrf_token_v2', None)
-                if not token or token != request.form.get('_csrf_token'):
-                    abort(403)
+            token = session.get('_csrf_token_v2', None)
+            if not token or token != request.form.get('_csrf_token'):
+                abort(403)
 
         @self.teardown_appcontext
         def expire_db(err):
