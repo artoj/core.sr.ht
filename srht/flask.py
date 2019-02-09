@@ -194,6 +194,8 @@ class SrhtFlask(Flask):
             if request.blueprint in _csrf_bypass_blueprints:
                 return
             view = self.view_functions.get(request.endpoint)
+            if not view:
+                return
             view = "{0}.{1}".format(view.__module__, view.__name__)
             if view in _csrf_bypass_views:
                 return
