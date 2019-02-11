@@ -3,7 +3,10 @@ from sqlalchemy import or_
 
 def search(query, terms, default_props, prop_map):
     # TODO: OR, case-sensitivity(?)
-    terms = shlex.split(terms)
+    try:
+        terms = shlex.split(terms)
+    except ValueError:
+        terms = terms.split(" ")
     for term in terms:
         if ":" in term:
             parts = term.split(":")
