@@ -1,0 +1,38 @@
+<a class="navbar-brand" href="/">
+  {{site_name}}
+  <span class="text-danger">{{site.split(".")[0]}}</span>
+</a>
+<ul class="navbar-nav mr-auto d-none d-sm-flex">
+  {% for _site in network %}
+  <li class="nav-item {{'active' if _site == site else ''}}">
+    <a
+      class="nav-link"
+      href="{{cfg(_site, "origin")}}"
+    >{{_site.split(".")[0]}}</a>
+  </li>
+  {% endfor %}
+</ul>
+<div class="login">
+  {% if current_user %}
+  <span class="navbar-text">
+    Logged in as
+    <a href="{{cfg("meta.sr.ht", "origin")}}/profile">
+      {{current_user.username}}
+    </a>
+    &mdash;
+    <a href="/logout">Log out</a>
+  </span>
+  {% else %}
+  <span class="navbar-text">
+    {% if site == 'meta.sr.ht' %}
+    <a href="/login">Log in</a>
+    &mdash;
+    <a href="/">Register</a>
+    {% else %}
+    <a href="{{ oauth_url }}">Log in</a>
+    &mdash;
+    <a href="{{cfg("meta.sr.ht", "origin")}}">Register</a>
+    {% endif %}
+  </span>
+  {% endif %}
+</div>
