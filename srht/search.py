@@ -17,6 +17,7 @@ def search(query, terms, default_props, prop_map):
         if prop is None:
             query = query.filter(or_(*[
                     p.ilike("%" + value + "%")
+                    if not callable(p) else p(value)
                 for p in default_props]))
             continue
         if prop in prop_map:
