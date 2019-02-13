@@ -112,27 +112,11 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         origin = cfg(current_app.site, "origin")
         revocation_url = origin + url_for("srht.oauth.revoke",
                 revocation_token=revocation_token)
-        _token, profile = self.delegated_exchange(token, revocation_url)
+        _token = self.delegated_exchange(token, revocation_url)
         expires = datetime.strptime(_token["expires"], DATE_FORMAT)
         scopes = set(OAuthScope(s) for s in _token["scopes"].split(","))
-        user = self.User.query.filter(
-                self.User.username == profile["name"]).first()
-        if not user:
-            user = self.User()
-            user.username = profile["name"]
-            user.email = profile["email"]
-            if "user_type" in profile:
-                user.user_type = UserType(profile["user_type"])
-            else:
-                self._preauthorized_warning()
-                user.user_type = UserType.unknown
-            user.bio = profile["bio"]
-            user.location = profile["location"]
-            user.url = profile["url"]
-            user.oauth_token = token
-            user.oauth_token_expires = expires
-            db.session.add(user)
-            db.session.flush()
+        user = self.lookup_or_register(token, expires, _token["scopes"])
+        db.session.flush()
         user.oauth_revocation_token = revocation_token
         oauth_token = self.OAuthToken()
         oauth_token.user_id = user.id
@@ -235,17 +219,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
             raise OAuthError("Temporary authentication failure", status=500)
         if r.status_code != 200:
             raise OAuthError(_token, status=r.status_code)
-        try:
-            r = requests.get("{}/api/user/profile".format(metasrht), headers={
-                "Authorization": "token {}".format(token)
-            })
-            profile = r.json()
-        except Exception as ex:
-            print(ex)
-            raise OAuthError("Temporary authentication failure", status=500)
-        if r.status_code != 200:
-            raise OAuthError(profile, status=r.status_code)
-        return _token, profile
+        return _token
 
     def oauth_url(self, return_to, scopes=[]):
         return "{}/oauth/authorize?client_id={}&scopes={}&state={}".format(
