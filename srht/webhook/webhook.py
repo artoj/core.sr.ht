@@ -70,7 +70,8 @@ class Webhook(metaclass=WebhookMeta):
 
     def process_delivery(cls, delivery, headers):
         try:
-            r = requests.post(sub.url, data=payload, timeout=5, headers=headers)
+            r = requests.post(delivery.url, data=delivery.payload,
+                    timeout=5, headers=headers)
             delivery.response = r.text
             delivery.response_status = r.status_code
             delivery.response_headers = "\n".join(
