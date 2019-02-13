@@ -144,28 +144,76 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         db.session.commit()
         return oauth_token
 
-    def lookup_or_register(self, exchange, profile, scopes):
-        """
-        Used to lookup or register web users authenticating via delegated OAuth.
-        Return the user object; it must fulfill flask_login's user class
-        contract.
-        """
-        user = self.User.query.filter(
-                self.User.username == profile["name"]).one_or_none()
+    def ensure_webhook(self, user):
+        origin = cfg(current_app.site, "origin")
+        webhook_url = origin + url_for("srht.oauth.profile_update")
+        events = ["profile:update"]
+        response = {"next": -1}
+        while response.get("next") is not None:
+            url = f"{metasrht}/api/user/webhooks?start={response['next']}"
+            r = requests.get(url, headers={
+                "Authorization": f"token {user.oauth_token}",
+            })
+            response = r.json()
+            for webhook in response["results"]:
+                print(webhook)
+                if webhook["url"] != webhook_url:
+                    continue
+                if webhook["events"] == events:
+                    return # Webhook already configured
+                # This webhook is set up incorrectly, delete it
+                url = f"{metasrht}/api/user/webhooks/{webhook['id']}"
+                r = requests.delete(url, headers={
+                    "Authorization": f"token {user.oauth_token}",
+                })
+                if r.status_code != 200:
+                    print("Warning: failed to remove invalid webhook for "
+                        f"{user.username}: {r.text}")
+                    return
+        r = requests.post(f"{metasrht}/api/user/webhooks", headers={
+            "Authorization": f"token {user.oauth_token}",
+        }, json={
+            "events": events,
+            "url": webhook_url,
+        })
+        if r.status_code != 200:
+            print(f"Warning: failed to create webhook for {user.username}: "
+                    f"{r.text}")
+
+    def lookup_or_register(self, token, token_expires, scopes):
+        User = self.User
+        try:
+            r = requests.get(f"{metasrht}/api/user/profile", headers={
+                "Authorization": f"token {token}",
+            })
+            profile = r.json()
+        except Exception as ex:
+            print(ex)
+            raise OAuthError("Temporary authentication failure", status=500)
+        if r.status_code != 200:
+            raise OAuthError(profile, status=r.status_code)
+
+        user = User.query.filter(User.username == profile["name"]).one_or_none()
         if not user:
-            user = self.User()
+            user = User()
+            user.username = profile["name"]
             db.session.add(user)
-        user.username = profile["name"]
-        user.email = profile["email"]
         if "user_type" in profile:
             user.user_type = UserType(profile["user_type"])
         else:
             self._preauthorized_warning()
             user.user_type = UserType.unknown
-        user.oauth_token = exchange["token"]
-        user.oauth_token_expires = exchange["expires"]
+        user.email = profile["email"]
+        user.bio = profile["bio"]
+        user.location = profile["location"]
+        user.url = profile["url"]
+        user.oauth_token = token
+        user.oauth_token_expires = token_expires
         user.oauth_token_scopes = scopes
-        db.session.commit()
+        try:
+            self.ensure_webhook(user)
+        except Exception as ex:
+            print("Error ensuring webhook for {user.username}: {str(ex)}")
         return user
 
     def delegated_exchange(self, token, revocation_url):

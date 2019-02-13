@@ -81,7 +81,7 @@ class _SubscriptionMixin:
         return {
             "id": self.id,
             "created": self.created,
-            "events": self.events,
+            "events": [e.value for e in self.events],
             "url": self.url,
         }
 

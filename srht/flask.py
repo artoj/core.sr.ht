@@ -8,7 +8,6 @@ from srht.config import cfg, cfgi, cfgkeys, config
 from srht.email import mail_exception
 from srht.database import db
 from srht.markdown import markdown
-from srht.oauth import oauth_blueprint
 from srht.validation import Validation
 from datetime import datetime
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
@@ -170,6 +169,7 @@ class SrhtFlask(Flask):
         self.oauth_provider = oauth_provider
 
         if self.oauth_service:
+            from srht.oauth import oauth_blueprint
             self.register_blueprint(oauth_blueprint)
 
         self.login_manager = LoginManager()

@@ -3,7 +3,9 @@ from flask import Blueprint, request, redirect, render_template, current_app
 from flask_login import login_user, logout_user
 from srht.config import cfg
 from srht.database import db
+from srht.flask import csrf_bypass
 from srht.oauth.scope import OAuthScope
+import json
 import requests
 import urllib
 
@@ -43,20 +45,15 @@ def oauth_callback():
     if not token or not expires:
         return render_template("oauth-error.html",
             details="Error occured retrieving OAuth token. Try again.")
-    from srht.flask import DATE_FORMAT
-    expires = datetime.strptime(expires, DATE_FORMAT)
 
-    r = requests.get(meta_uri + "/api/user/profile", headers={
-        "Authorization": "token " + token
-    })
-    if r.status_code != 200:
+    try:
+        user = current_app.oauth_service.lookup_or_register(
+                token, expires, scopes)
+    except OAuthError:
         return render_template("oauth-error.html",
             details="Error occured retrieving account info. Try again.")
-    
-    profile = r.json()
-    user = current_app.oauth_service.lookup_or_register(
-            exchange, profile, scopes)
 
+    db.session.commit()
     login_user(user, remember=True)
     if not state or not state.startswith("/"):
         return redirect("/")
@@ -79,3 +76,20 @@ def revoke(revocation_token):
     OAuthToken.query.filter(OAuthToken.user_id == user.id).delete()
     db.session.commit()
     return {}
+
+@oauth_blueprint.route("/oauth/webhook/profile-update", methods=["POST"])
+@csrf_bypass
+def profile_update():
+    profile = json.loads(request.data.decode('utf-8'))
+    User = current_app.oauth_service.User
+    user = User.query.filter(User.username == profile["name"]).one_or_none()
+    if not user:
+        return "Unknown user.", 404
+    if "user_type" in profile:
+        user.user_type = UserType(profile["user_type"])
+    user.email = profile["email"]
+    user.bio = profile["bio"]
+    user.location = profile["location"]
+    user.url = profile["url"]
+    db.session.commit()
+    return f"Profile updated for {user.username}."
