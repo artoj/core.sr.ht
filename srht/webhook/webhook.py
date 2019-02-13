@@ -50,7 +50,6 @@ class Webhook(metaclass=WebhookMeta):
 
     def notify(cls, sub, event, payload):
         """Notifies a single subscriber of a webhook event."""
-        # TODO: Override this with a CeleryWebhook class
         payload = json.dumps(payload, default=date_handler)
         delivery = cls.Delivery()
         delivery.event = event.value
@@ -64,16 +63,21 @@ class Webhook(metaclass=WebhookMeta):
         }
         delivery.payload_headers = "\n".join(
                 f"{key}: {value}" for key, value in headers.items())
+        delivery.response_status = -2
+        db.session.add(delivery)
+        db.session.commit()
+        cls.process_delivery(delivery, headers)
+
+    def process_delivery(cls, delivery, headers):
         try:
             r = requests.post(sub.url, data=payload, timeout=5, headers=headers)
             delivery.response = r.text
             delivery.response_status = r.status_code
             delivery.response_headers = "\n".join(
                     f"{key}: {value}" for key, value in r.headers.items())
-        except Exception as ex:
-            delivery.response = str(ex)
+        except requests.exceptions.ReadTimeout:
+            delivery.response = "Request timeed out after 5 seconds."
             delivery.response_status = -1
-        db.session.add(delivery)
         db.session.commit()
 
     def api_routes(cls, blueprint, prefix):
