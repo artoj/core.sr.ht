@@ -4,6 +4,7 @@ from enum import Enum
 from flask import request, current_app, abort
 from srht.api import paginated_response
 from srht.database import db
+from srht.flask import date_handler
 from srht.oauth import oauth, current_token
 from srht.validation import Validation
 from srht.webhook.magic import WebhookMeta
@@ -50,7 +51,7 @@ class Webhook(metaclass=WebhookMeta):
     def notify(cls, sub, event, payload):
         """Notifies a single subscriber of a webhook event."""
         # TODO: Override this with a CeleryWebhook class
-        payload = json.dumps(payload, indent='\t')
+        payload = json.dumps(payload, default=date_handler)
         delivery = cls.Delivery()
         delivery.event = event.value
         delivery.subscription_id = sub.id
