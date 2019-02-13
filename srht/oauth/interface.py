@@ -196,7 +196,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         try:
             self.ensure_webhook(user)
         except Exception as ex:
-            print("Error ensuring webhook for {user.username}: {str(ex)}")
+            print(f"Error ensuring webhook for {user.username}: {str(ex)}")
         return user
 
     def delegated_exchange(self, token, revocation_url):

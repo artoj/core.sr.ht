@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+import sys
+import os
+sys.path.append(os.getcwd())
+site = sys.argv[1]
+app = __import__(site.replace(".", "") + ".app").app.app # disgusting hack
+from srht.config import cfg
+from srht.database import db, DbSession
+db = DbSession(cfg(site, "connection-string"))
+db.init()
+
+svc = app.oauth_service
+users = svc.User.query.all()
+for i, user in enumerate(users):
+    print(f"Updating {user.username} ({i+1}/{len(users)})")
+    try:
+        with app.test_request_context():
+            svc.lookup_or_register(user.oauth_token,
+                    user.oauth_token_expires, user.oauth_token_scopes)
+    except Exception as ex:
+        print(f"Update failed: {str(ex)}")
+    db.session.commit()
