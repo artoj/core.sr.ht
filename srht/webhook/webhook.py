@@ -1,7 +1,11 @@
 import json
 import requests
 from enum import Enum
+from flask import request, current_app, abort
+from srht.api import paginated_response
 from srht.database import db
+from srht.oauth import oauth, current_token
+from srht.validation import Validation
 from srht.webhook.magic import WebhookMeta
 
 class Webhook(metaclass=WebhookMeta):
@@ -40,14 +44,12 @@ class Webhook(metaclass=WebhookMeta):
         for f in filters:
             subs = subs.filter(f)
         for sub in subs.all():
-            # TODO: Parse the event list properly and make sure that they're
-            # subscribed to the right event
-            cls.notify(sub, event, payload)
+            if event in sub.events:
+                cls.notify(sub, event, payload)
 
     def notify(cls, sub, event, payload):
         """Notifies a single subscriber of a webhook event."""
         # TODO: Override this with a CeleryWebhook class
-        # TODO: Validate OAuth scopes
         payload = json.dumps(payload, indent='\t')
         delivery = cls.Delivery()
         delivery.event = event.value
@@ -72,3 +74,89 @@ class Webhook(metaclass=WebhookMeta):
             delivery.response_status = -1
         db.session.add(delivery)
         db.session.commit()
+
+    def api_routes(cls, blueprint, prefix):
+        Delivery = cls.Delivery
+        Subscription = cls.Subscription 
+
+        @blueprint.route(f"{prefix}/webhooks",
+                endpoint=f"{cls.__name__}_webhooks_GET")
+        @oauth(None)
+        def webhooks_GET():
+            query = (Subscription.query
+                .filter(Subscription.token_id == current_token.id)
+                .filter(Subscription.user_id == current_token.user_id))
+            return paginated_response(Subscription.id, query)
+
+        @blueprint.route(f"{prefix}/webhooks", methods=["POST"],
+                endpoint=f"{cls.__name__}_webhooks_POST")
+        @oauth(None)
+        def webhooks_POST():
+            valid = Validation(request)
+            sub = Subscription(valid, current_token)
+            if not valid.ok:
+                return valid.response
+            db.session.add(sub)
+            db.session.commit()
+            return sub.to_dict()
+
+        @blueprint.route("/api/user/webhooks/<sub_id>",
+                endpoint=f"{cls.__name__}_webhooks_by_id_GET")
+        @oauth(None)
+        def webhooks_by_id_GET(sub_id):
+            valid = Validation(request)
+            sub = Subscription.query.filter(
+                Subscription.id == sub_id).one_or_none()
+            if not sub:
+                abort(404)
+            if sub.token_id != current_token.id:
+                abort(401)
+            return sub.to_dict()
+
+        @blueprint.route("/api/user/webhooks/<sub_id>", methods=["DELETE"],
+                endpoint=f"{cls.__name__}_webhooks_by_id_DELETE")
+        @oauth(None)
+        def webhooks_by_id_DELETE(sub_id):
+            valid = Validation(request)
+            sub = Subscription.query.filter(
+                    Subscription.id == sub_id).one_or_none()
+            if not sub:
+                abort(404)
+            if sub.token_id != current_token.id:
+                abort(401)
+            db.session.delete(sub)
+            db.session.commit()
+            return {}
+
+        @blueprint.route("/api/user/webhooks/<sub_id>/deliveries",
+                endpoint=f"{cls.__name__}_deliveries_GET")
+        @oauth(None)
+        def deliveries_GET(sub_id):
+            valid = Validation(request)
+            sub = Subscription.query.filter(
+                Subscription.id == sub_id).one_or_none()
+            if not sub:
+                abort(404)
+            if sub.token_id != current_token.id:
+                abort(401)
+            query = (Delivery.query
+                .filter(Delivery.subscription_id == sub.id))
+            return paginated_response(Delivery.id, query)
+
+        @blueprint.route("/api/user/webhooks/<sub_id>/deliveries/<delivery_id>",
+                endpoint=f"{cls.__name__}_deliveries_by_id_GET")
+        @oauth(None)
+        def deliveries_by_id_GET(sub_id, delivery_id):
+            valid = Validation(request)
+            sub = Subscription.query.filter(
+                Subscription.id == sub_id).one_or_none()
+            if not sub:
+                abort(404)
+            if sub.token_id != current_token.id:
+                abort(401)
+            delivery = (Delivery.query
+                .filter(Delivery.subscription_id == sub_id)
+                .filter(Delivery.id == delivery_id)).one_or_none()
+            if not delivery:
+                abort(404)
+            return delivery.to_dict()

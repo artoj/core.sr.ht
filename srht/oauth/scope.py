@@ -60,3 +60,6 @@ class OAuthScope:
 
     def friendly(self):
         return self.description if hasattr(self, "description") else self.scope
+
+
+OAuthScope.all = OAuthScope("*")

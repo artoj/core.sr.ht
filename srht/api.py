@@ -3,7 +3,7 @@ from flask import request
 _default = 1
 
 def paginated_response(id_col, query,
-        order_by=_default, serialize=_default, per_page=25):
+        order_by=_default, serialize=_default, per_page=50):
     """
     Returns a standard paginated response for a given SQLAlchemy query result.
     The id_col should be the column to paginate by (generally the primary key),

@@ -33,24 +33,31 @@ class _SubscriptionMixin:
     url = sa.Column(sa.Unicode(2048), nullable=False)
     _events = sa.Column(sa.Unicode, nullable=False, name="events")
 
-    def __init__(self, valid, client_id, user_id, *args, **kwargs):
-        self.client_id = client_id
-        self.user_id = user_id
+    def __init__(self, valid, token, *args, **kwargs):
+        self.token_id = token.id
+        self.user_id = token.user_id
         self.url = valid.require("url")
-        self.events = valid.require("events")
-        for event in self.events:
-            valid.expect(event in self._Webhook.events,
-                    f"Unsupported event type '{event}'", field="events")
+        events = valid.require("events")
+        try:
+            self.events = set(self._Webhook.Events(event)
+                    for event in events)
+        except ValueError:
+            valid.expect(False,
+                    f"Unsupported event type", field="events")
+        valid.expect(OAuthScope.all in token.scopes or
+            all(self._Webhook.event_scope[ev] in token.scopes
+                for ev in self.events),
+            "Permission denied - does your token have the appropriate scopes?")
         if hasattr(self._Webhook, "__init__"):
             self._Webhook.__init__(self, *args, **kwargs)
 
     @property
     def events(self):
-        return self._events.split(",")
+        return [self._Webhook.Events(e) for e in self._events.split(",")]
 
     @events.setter
     def events(self, val):
-        self._events = ",".join(val)
+        self._events = ",".join(v.value for v in val)
 
     @declared_attr
     def user_id(cls):
@@ -59,16 +66,16 @@ class _SubscriptionMixin:
 
     @declared_attr
     def user(cls):
-        return sa.orm.relationship("User", cascade="all, delete")
+        return sa.orm.relationship("User")
 
     @declared_attr
-    def client_id(cls):
+    def token_id(cls):
         return sa.Column(sa.Integer,
-                sa.ForeignKey("oauthclient.id", ondelete="CASCADE"))
+                sa.ForeignKey("oauthtoken.id", ondelete="CASCADE"))
 
     @declared_attr
-    def client(cls):
-        return sa.orm.relationship("OAuthClient", cascade="all, delete")
+    def token(cls):
+        return sa.orm.relationship("OAuthToken")
 
     def to_dict(self):
         return {
@@ -155,6 +162,8 @@ class WebhookMeta(type):
             cls.deliver = lambda *args, **kwargs: cls._deliver(cls, *args, **kwargs)
             cls._notify = cls.notify
             cls.notify = lambda *args, **kwargs: cls._notify(cls, *args, **kwargs)
+            cls._api_routes = cls.api_routes
+            cls.api_routes = lambda *args, **kwargs: cls._api_routes(cls, *args, **kwargs)
         cls.Subscription._Webhook = cls
         cls.Delivery._Webhook = cls
         return cls
