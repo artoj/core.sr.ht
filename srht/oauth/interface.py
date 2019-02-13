@@ -140,7 +140,6 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
             })
             response = r.json()
             for webhook in response["results"]:
-                print(webhook)
                 if webhook["url"] != webhook_url:
                     continue
                 if webhook["events"] == events:
