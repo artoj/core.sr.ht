@@ -344,7 +344,8 @@ class SrhtFlask(Flask):
             response = rv
         response = super(SrhtFlask, self).make_response(response)
 
-        if hasattr(self, "network_prefs"):
+        path = request.path
+        if hasattr(self, "network_prefs") and not path.startswith("/api"):
             for key, value in self.network_prefs.items():
                 response.set_cookie(f"{key}-preference",
                         json.dumps(value),
