@@ -10,7 +10,11 @@ import requests
 worker = Celery('webhooks', broker='redis://')
 
 @worker.task
-def _celery_dispatch(delivery_table, delivery_id, url, payload, headers):
+def async_request(url, payload, headers, delivery_table=None, delivery_id=None):
+    """
+    Performs an HTTP POST asyncronously, and updates the delivery row if a
+    table & id is specified.
+    """
     try:
         r = requests.post(url, data=payload, timeout=5, headers=headers)
         response = r.text
@@ -21,23 +25,24 @@ def _celery_dispatch(delivery_table, delivery_id, url, payload, headers):
         response = "Request timeed out after 5 seconds."
         response_status = -1
         response_headers = None
-    db.session.execute(
-        f"""
-        UPDATE {delivery_table}
-        SET response = :response,
-            response_status = :status,
-            response_headers = :headers
-        WHERE id = :delivery_id
-        """, {
-            "response": response,
-            "status": response_status,
-            "headers": response_headers,
-            "delivery_id": delivery_id
-        })
-    db.session.commit()
+    if delivery_table and delivery_id:
+        db.session.execute(
+            f"""
+            UPDATE {delivery_table}
+            SET response = :response,
+                response_status = :status,
+                response_headers = :headers
+            WHERE id = :delivery_id
+            """, {
+                "response": response,
+                "status": response_status,
+                "headers": response_headers,
+                "delivery_id": delivery_id
+            })
+        db.session.commit()
 
 class CeleryWebhook(Webhook):
     def process_delivery(cls, delivery, headers):
         Delivery = cls.Delivery
-        _celery_dispatch.delay(Delivery.__tablename__,
-                delivery.id, delivery.url, delivery.payload, headers)
+        async_request.delay(delivery.url, delivery.payload, headers,
+                delivery_table=Delivery.__tablename__, delivery_id=delivery.id)
