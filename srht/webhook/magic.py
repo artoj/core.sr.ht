@@ -95,9 +95,9 @@ class _DeliveryMixin:
     created = sa.Column(sa.DateTime, nullable=False)
     event = sa.Column(sa.Unicode(256), nullable=False)
     url = sa.Column(sa.Unicode(2048), nullable=False)
-    payload = sa.Column(sa.Unicode(16384), nullable=False)
+    payload = sa.Column(sa.Unicode(65536), nullable=False)
     payload_headers = sa.Column(sa.Unicode(16384), nullable=False)
-    response = sa.Column(sa.Unicode(16384))
+    response = sa.Column(sa.Unicode(65536))
     response_status = sa.Column(sa.Integer, nullable=False)
     response_headers = sa.Column(sa.Unicode(16384))
 
