@@ -9,7 +9,7 @@ from srht.email import mail_exception
 from srht.database import db
 from srht.markdown import markdown
 from srht.validation import Validation
-from datetime import datetime
+from datetime import datetime, timedelta
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
 from jinja2 import escape
 from urllib.parse import urlparse, quote_plus
@@ -45,6 +45,9 @@ def date_handler(obj):
 def datef(d):
     if not d:
         return 'Never'
+    if isinstance(d, timedelta):
+        return Markup('<span title="{}">{}</span>'.format(
+            f'{d.seconds} seconds', humanize.naturaltime(d).rstrip(" ago")))
     return Markup('<span title="{}">{}</span>'.format(
         d.strftime('%Y-%m-%d %H:%M:%S UTC'),
         humanize.naturaltime(d)))
