@@ -6,6 +6,7 @@ from collections import namedtuple
 from datetime import datetime
 from flask import current_app, url_for
 from srht.config import cfg
+from srht.api import get_results
 from srht.database import db
 from srht.flask import DATE_FORMAT
 from srht.oauth import OAuthError, ExternalUserMixin, UserType, OAuthScope
@@ -132,27 +133,21 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         origin = cfg(current_app.site, "origin")
         webhook_url = origin + url_for("srht.oauth.profile_update")
         events = ["profile:update"]
-        response = {"next": -1}
-        while response.get("next") is not None:
-            url = f"{metasrht}/api/user/webhooks?start={response['next']}"
-            r = requests.get(url, headers={
+        for webhook in get_results(f"{metasrht}/api/user/webhooks",
+                user.oauth_token):
+            if webhook["url"] != webhook_url:
+                continue
+            if webhook["events"] == events:
+                return # Webhook already configured
+            # This webhook is set up incorrectly, delete it
+            url = f"{metasrht}/api/user/webhooks/{webhook['id']}"
+            r = requests.delete(url, headers={
                 "Authorization": f"token {user.oauth_token}",
             })
-            response = r.json()
-            for webhook in response["results"]:
-                if webhook["url"] != webhook_url:
-                    continue
-                if webhook["events"] == events:
-                    return # Webhook already configured
-                # This webhook is set up incorrectly, delete it
-                url = f"{metasrht}/api/user/webhooks/{webhook['id']}"
-                r = requests.delete(url, headers={
-                    "Authorization": f"token {user.oauth_token}",
-                })
-                if r.status_code != 200:
-                    print("Warning: failed to remove invalid webhook for "
-                        f"{user.username}: {r.text}")
-                    return
+            if r.status_code != 200:
+                print("Warning: failed to remove invalid webhook for "
+                    f"{user.username}: {r.text}")
+                return
         r = requests.post(f"{metasrht}/api/user/webhooks", headers={
             "Authorization": f"token {user.oauth_token}",
         }, json={

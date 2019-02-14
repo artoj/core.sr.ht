@@ -1,3 +1,4 @@
+import requests
 from flask import request
 
 _default = 1
@@ -41,3 +42,13 @@ def paginated_response(id_col, query,
         "total": total,
         "results_per_page": per_page,
     }
+
+def get_results(url, token):
+    response = {"next": -1}
+    while response.get("next") is not None:
+        url = f"{url}?start={response['next']}"
+        r = requests.get(url, headers={"Authorization": f"token {token}"})
+        if r.status_code != 200:
+            raise Exception(r.json())
+        response = r.json()
+        yield from response["results"]
