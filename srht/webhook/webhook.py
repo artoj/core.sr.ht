@@ -55,7 +55,7 @@ class Webhook(metaclass=WebhookMeta):
         delivery.event = event.value
         delivery.subscription_id = sub.id
         delivery.url = sub.url
-        delivery.payload = payload
+        delivery.payload = payload[:65536]
         headers = {
             "Content-Type": "application/json",
             "X-Webhook-Event": event.value,
@@ -72,7 +72,7 @@ class Webhook(metaclass=WebhookMeta):
         try:
             r = requests.post(delivery.url, data=delivery.payload,
                     timeout=5, headers=headers)
-            delivery.response = r.text
+            delivery.response = r.text[:65536]
             delivery.response_status = r.status_code
             delivery.response_headers = "\n".join(
                     f"{key}: {value}" for key, value in r.headers.items())
