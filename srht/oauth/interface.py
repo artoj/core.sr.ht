@@ -129,16 +129,20 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         db.session.commit()
         return oauth_token
 
-    def ensure_webhook(self, user):
-        origin = cfg(current_app.site, "origin")
-        webhook_url = origin + url_for("srht.oauth.profile_update")
-        events = ["profile:update"]
-        for webhook in get_results(f"{metasrht}/api/user/webhooks",
-                user.oauth_token):
-            if webhook["url"] != webhook_url:
+    def ensure_meta_webhooks(self, user, webhooks):
+        """
+        Ensures that the given webhooks are rigged up with meta.sr.ht for this
+        user. Webhooks should be a dict whose key is the webhook URL and whose
+        values are the list of events to send to that URL.
+        """
+        for webhook in get_results(
+                f"{metasrht}/api/user/webhooks", user.oauth_token):
+            url = webhook["url"]
+            if url not in webhooks:
                 continue
-            if webhook["events"] == events:
-                return # Webhook already configured
+            if webhook["events"] == webhooks[url]:
+                del webhooks[url]
+                continue # This webhook already configured
             # This webhook is set up incorrectly, delete it
             url = f"{metasrht}/api/user/webhooks/{webhook['id']}"
             r = requests.delete(url, headers={
@@ -148,15 +152,13 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
                 print("Warning: failed to remove invalid webhook for "
                     f"{user.username}: {r.text}")
                 return
-        r = requests.post(f"{metasrht}/api/user/webhooks", headers={
-            "Authorization": f"token {user.oauth_token}",
-        }, json={
-            "events": events,
-            "url": webhook_url,
-        })
-        if r.status_code != 200:
-            print(f"Warning: failed to create webhook for {user.username}: "
-                    f"{r.text}")
+        for url, events in webhooks.items():
+            r = requests.post(f"{metasrht}/api/user/webhooks", headers={
+                "Authorization": f"token {user.oauth_token}",
+            }, json={"events": events, "url": url})
+            if r.status_code != 200:
+                print(f"Warning: failed to create webhook for {user.username}: "
+                        f"{r.text}")
 
     def lookup_or_register(self, token, token_expires, scopes):
         User = self.User
@@ -188,10 +190,11 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         user.oauth_token = token
         user.oauth_token_expires = token_expires
         user.oauth_token_scopes = scopes
-        try:
-            self.ensure_webhook(user)
-        except Exception as ex:
-            print(f"Error ensuring webhook for {user.username}: {str(ex)}")
+        origin = cfg(current_app.site, "origin")
+        webhook_url = origin + url_for("srht.oauth.profile_update")
+        self.ensure_meta_webhooks(user, {
+            webhook_url: ["profile:update"],
+        })
         return user
 
     def delegated_exchange(self, token, revocation_url):

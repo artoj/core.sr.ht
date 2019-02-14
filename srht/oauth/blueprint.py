@@ -5,6 +5,7 @@ from srht.config import cfg
 from srht.database import db
 from srht.flask import csrf_bypass
 from srht.oauth.scope import OAuthScope
+from srht.oauth import OAuthError
 import json
 import requests
 import urllib
