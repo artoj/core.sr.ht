@@ -104,7 +104,7 @@ class Webhook(metaclass=WebhookMeta):
                 return valid.response
             db.session.add(sub)
             db.session.commit()
-            return sub.to_dict()
+            return sub.to_dict(), 201
 
         @blueprint.route("/api/user/webhooks/<sub_id>",
                 endpoint=f"{cls.__name__}_webhooks_by_id_GET")
@@ -132,7 +132,7 @@ class Webhook(metaclass=WebhookMeta):
                 abort(401)
             db.session.delete(sub)
             db.session.commit()
-            return {}
+            return {}, 204
 
         @blueprint.route("/api/user/webhooks/<sub_id>/deliveries",
                 endpoint=f"{cls.__name__}_deliveries_GET")

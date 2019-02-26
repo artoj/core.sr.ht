@@ -148,7 +148,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
             r = requests.delete(url, headers={
                 "Authorization": f"token {user.oauth_token}",
             })
-            if r.status_code != 200:
+            if r.status_code != 204:
                 print("Warning: failed to remove invalid webhook for "
                     f"{user.username}: {r.text}")
                 return
@@ -156,7 +156,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
             r = requests.post(f"{metasrht}/api/user/webhooks", headers={
                 "Authorization": f"token {user.oauth_token}",
             }, json={"events": events, "url": url})
-            if r.status_code != 200:
+            if r.status_code != 201:
                 print(f"Warning: failed to create webhook for {user.username}: "
                         f"{r.text}")
 
