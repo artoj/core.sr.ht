@@ -4,11 +4,9 @@ import sys
 import argparse
 import importlib
 
-
 _auto_set_static_folder = object()
 
-
-def run_service(app, *, static_folder=_auto_set_static_folder):
+def configure_static_folder(app, static_folder=_auto_set_static_folder):
     if static_folder:
         if static_folder is _auto_set_static_folder:
             mod = sys.modules[app.__module__]
@@ -18,14 +16,13 @@ def run_service(app, *, static_folder=_auto_set_static_folder):
         else:
             app.static_folder = static_folder
 
-    parser = argparse.ArgumentParser(
-        description='Development server for %s' % app.site)
+def configure_static_arguments(parser):
     parser.add_argument(
         '--static',
         action='store_true',
         help="Serve static assets through the development server.")
-    args = parser.parse_args()
 
+def configure_static_serving(app, args):
     if args.static and app.static_folder:
         from werkzeug.wsgi import SharedDataMiddleware
 
@@ -34,7 +31,21 @@ def run_service(app, *, static_folder=_auto_set_static_folder):
             '/static': app.static_folder
         })
 
+def build_parser(app):
+    parser = argparse.ArgumentParser(
+        description='Development server for %s' % app.site)
+    return parser
+
+def run_app(app):
     cfg_section = app.site
     app.run(host=cfg(cfg_section, "debug-host"),
             port=cfgi(cfg_section, "debug-port"),
             debug=True)
+
+def run_service(app, *, static_folder=_auto_set_static_folder):
+    configure_static_folder(app, static_folder)
+    parser = build_parser(app)
+    configure_static_arguments(parser)
+    args = parser.parse_args()
+    configure_static_serving(app, args)
+    run_app(app)
