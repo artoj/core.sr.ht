@@ -52,6 +52,18 @@ class UserMixin:
     def __str__(self):
         return self.canonical_name
 
+    def to_dict(self, short=False):
+        return {
+            "canonical_name": self.canonical_name,
+            "name": self.username,
+            **({
+                "email": self.email,
+                "url": self.url,
+                "location": self.location,
+                "bio": self.bio,
+            } if not short else {})
+        }
+
 class ExternalUserMixin(UserMixin):
     oauth_token = sa.Column(sa.String(256), nullable=False)
     oauth_token_expires = sa.Column(sa.DateTime, nullable=False)
