@@ -1,4 +1,4 @@
-DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+00:00"
 from flask import Flask, Response, request, url_for, render_template, redirect
 from flask import Blueprint, current_app, g, abort, session
 from flask_login import LoginManager, current_user
