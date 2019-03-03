@@ -8,6 +8,7 @@ from srht.flask import date_handler
 from srht.oauth import oauth, current_token
 from srht.validation import Validation
 from srht.webhook.magic import WebhookMeta
+from uuid import UUID
 
 class Webhook(metaclass=WebhookMeta):
     """
@@ -162,7 +163,7 @@ class Webhook(metaclass=WebhookMeta):
                 abort(401)
             delivery = (Delivery.query
                 .filter(Delivery.subscription_id == sub_id)
-                .filter(Delivery.id == delivery_id)).one_or_none()
+                .filter(Delivery.uuid == UUID(delivery_id))).one_or_none()
             if not delivery:
                 abort(404)
             return delivery.to_dict()

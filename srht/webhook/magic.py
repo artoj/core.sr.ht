@@ -121,7 +121,7 @@ class _DeliveryMixin:
 
     def to_dict(self):
         return {
-            "id": self.id,
+            "id": str(self.uuid),
             "created": self.created,
             "event": self.event,
             "url": self.url,
