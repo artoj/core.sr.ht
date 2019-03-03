@@ -106,7 +106,7 @@ class Webhook(metaclass=WebhookMeta):
             db.session.commit()
             return sub.to_dict(), 201
 
-        @blueprint.route("/api/user/webhooks/<sub_id>",
+        @blueprint.route(f"{prefix}/webhooks/<sub_id>",
                 endpoint=f"{cls.__name__}_webhooks_by_id_GET")
         @oauth(None)
         def webhooks_by_id_GET(sub_id):
@@ -119,7 +119,7 @@ class Webhook(metaclass=WebhookMeta):
                 abort(401)
             return sub.to_dict()
 
-        @blueprint.route("/api/user/webhooks/<sub_id>", methods=["DELETE"],
+        @blueprint.route(f"{prefix}/webhooks/<sub_id>", methods=["DELETE"],
                 endpoint=f"{cls.__name__}_webhooks_by_id_DELETE")
         @oauth(None)
         def webhooks_by_id_DELETE(sub_id):
@@ -134,7 +134,7 @@ class Webhook(metaclass=WebhookMeta):
             db.session.commit()
             return {}, 204
 
-        @blueprint.route("/api/user/webhooks/<sub_id>/deliveries",
+        @blueprint.route(f"{prefix}/webhooks/<sub_id>/deliveries",
                 endpoint=f"{cls.__name__}_deliveries_GET")
         @oauth(None)
         def deliveries_GET(sub_id):
@@ -149,7 +149,7 @@ class Webhook(metaclass=WebhookMeta):
                 .filter(Delivery.subscription_id == sub.id))
             return paginated_response(Delivery.id, query)
 
-        @blueprint.route("/api/user/webhooks/<sub_id>/deliveries/<delivery_id>",
+        @blueprint.route(f"{prefix}/webhooks/<sub_id>/deliveries/<delivery_id>",
                 endpoint=f"{cls.__name__}_deliveries_by_id_GET")
         @oauth(None)
         def deliveries_by_id_GET(sub_id, delivery_id):

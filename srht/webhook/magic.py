@@ -38,6 +38,8 @@ class _SubscriptionMixin:
         self.user_id = token.user_id
         self.url = valid.require("url")
         events = valid.require("events")
+        if not valid.ok:
+            return
         try:
             self.events = set(self._Webhook.Events(event)
                     for event in events)
