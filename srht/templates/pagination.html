@@ -6,7 +6,7 @@
       class="btn btn-default"
       href="?page={{ page - 1 }}{{ '&search=' + search if search else '' }}"
     >
-      <i class="fa fa-caret-left"></i>
+      {{icon('caret-left')}}
       prev
     </a>
   {% endif %}
@@ -21,7 +21,7 @@
       href="?page={{ page + 1 }}{{ '&search=' + search if search else '' }}"
     >
       next
-      <i class="fa fa-caret-right"></i>
+      {{icon('caret-right')}}
     </a>
   {% endif %}
   </div>
