@@ -119,9 +119,9 @@ class Validation:
             self.error('{} is required'.format(friendly_name), field=name)
         return value
 
-    def expect(self, condition, message, field=None):
+    def expect(self, condition, message, field=None, **kwargs):
         if not condition:
-            self.error(message, field)
+            self.error(message, field, **kwargs)
 
     def copy(self, valid, field=None):
         for err in self.errors:
