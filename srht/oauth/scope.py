@@ -29,9 +29,9 @@ class OAuthScope:
             oauth_provider and oauth_provider.resolve_scope(self)
 
     def __eq__(self, other):
-        return self.client_id == other.client_id \
-                and self.access == other.access \
-                and self.scope == other.scope
+        return (self.client_id == other.client_id
+                and self.access == other.access
+                and self.scope == other.scope)
 
     def __repr__(self):
         if self.client_id:
