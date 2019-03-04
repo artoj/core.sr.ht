@@ -82,25 +82,28 @@ class Webhook(metaclass=WebhookMeta):
             delivery.response_status = -1
         db.session.commit()
 
-    def api_routes(cls, blueprint, prefix):
+    def api_routes(cls, blueprint, prefix,
+            filters=lambda q: q, create=lambda s, v: s):
         Delivery = cls.Delivery
         Subscription = cls.Subscription 
 
         @blueprint.route(f"{prefix}/webhooks",
                 endpoint=f"{cls.__name__}_webhooks_GET")
         @oauth(None)
-        def webhooks_GET():
+        def webhooks_GET(**kwargs):
             query = (Subscription.query
                 .filter(Subscription.token_id == current_token.id)
                 .filter(Subscription.user_id == current_token.user_id))
+            query = filters(query, **kwargs)
             return paginated_response(Subscription.id, query)
 
         @blueprint.route(f"{prefix}/webhooks", methods=["POST"],
                 endpoint=f"{cls.__name__}_webhooks_POST")
         @oauth(None)
-        def webhooks_POST():
+        def webhooks_POST(**kwargs):
             valid = Validation(request)
             sub = Subscription(valid, current_token)
+            sub = create(sub, valid, **kwargs)
             if not valid.ok:
                 return valid.response
             db.session.add(sub)
@@ -110,10 +113,10 @@ class Webhook(metaclass=WebhookMeta):
         @blueprint.route(f"{prefix}/webhooks/<sub_id>",
                 endpoint=f"{cls.__name__}_webhooks_by_id_GET")
         @oauth(None)
-        def webhooks_by_id_GET(sub_id):
+        def webhooks_by_id_GET(sub_id, **kwargs):
             valid = Validation(request)
-            sub = Subscription.query.filter(
-                Subscription.id == sub_id).one_or_none()
+            sub = Subscription.query.filter(Subscription.id == sub_id)
+            sub = filters(sub, **kwargs).one_or_none()
             if not sub:
                 abort(404)
             if sub.token_id != current_token.id:
@@ -123,10 +126,10 @@ class Webhook(metaclass=WebhookMeta):
         @blueprint.route(f"{prefix}/webhooks/<sub_id>", methods=["DELETE"],
                 endpoint=f"{cls.__name__}_webhooks_by_id_DELETE")
         @oauth(None)
-        def webhooks_by_id_DELETE(sub_id):
+        def webhooks_by_id_DELETE(sub_id, **kwargs):
             valid = Validation(request)
-            sub = Subscription.query.filter(
-                    Subscription.id == sub_id).one_or_none()
+            sub = Subscription.query.filter(Subscription.id == sub_id)
+            sub = filters(sub, **kwargs).one_or_none()
             if not sub:
                 abort(404)
             if sub.token_id != current_token.id:
@@ -138,10 +141,10 @@ class Webhook(metaclass=WebhookMeta):
         @blueprint.route(f"{prefix}/webhooks/<sub_id>/deliveries",
                 endpoint=f"{cls.__name__}_deliveries_GET")
         @oauth(None)
-        def deliveries_GET(sub_id):
+        def deliveries_GET(sub_id, **kwargs):
             valid = Validation(request)
-            sub = Subscription.query.filter(
-                Subscription.id == sub_id).one_or_none()
+            sub = Subscription.query.filter(Subscription.id == sub_id)
+            sub = filters(sub, **kwargs).one_or_none()
             if not sub:
                 abort(404)
             if sub.token_id != current_token.id:
@@ -153,10 +156,10 @@ class Webhook(metaclass=WebhookMeta):
         @blueprint.route(f"{prefix}/webhooks/<sub_id>/deliveries/<delivery_id>",
                 endpoint=f"{cls.__name__}_deliveries_by_id_GET")
         @oauth(None)
-        def deliveries_by_id_GET(sub_id, delivery_id):
+        def deliveries_by_id_GET(sub_id, delivery_id, **kwargs):
             valid = Validation(request)
-            sub = Subscription.query.filter(
-                Subscription.id == sub_id).one_or_none()
+            sub = Subscription.query.filter(Subscription.id == sub_id)
+            sub = filters(sub, **kwargs).one_or_none()
             if not sub:
                 abort(404)
             if sub.token_id != current_token.id:
