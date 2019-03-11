@@ -58,8 +58,10 @@ class AbstractOAuthService(abc.ABC):
         while resp["next"] is not None:
             r = self._get(f"{metasrht}/api/delegate/scopes")
             if r.status_code != 200:
-                raise Exception("Unable to ensure delegated scopes are " +
+                print("Unable to ensure delegated scopes are " +
                     f"provisioned. Is {metasrht} reachable?")
+                print("This may render the API unusable.")
+                return
             resp = r.json()
             for scope in resp["results"]:
                 ids[scope["name"]] = scope["id"]
