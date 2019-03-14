@@ -84,10 +84,10 @@ class Validation:
                         value = fbytes
                 else:
                     value = value.read()
-        if not value:
-            if name in self.source and value is None and not allow_none:
+        if value is None:
+            if name in self.source and not allow_none:
                 self.error('{} may not be null'.format(name), field=name)
-            elif name in self.source and value is None and allow_none:
+            elif name in self.source and allow_none:
                 pass
             else:
                 value = default
