@@ -57,5 +57,6 @@ setup(
   },
   scripts = [
       'srht-update-profiles',
+      'srht-migrate',
   ]
 )
