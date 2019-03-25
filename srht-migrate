@@ -2,4 +2,4 @@
 import srht.alembic
 import sys
 from srht.database import alembic
-alembic(sys.argv[1], srht.alembic)
+alembic(sys.argv[1], srht.alembic, sys.argv[2:])

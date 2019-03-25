@@ -43,7 +43,7 @@ class DbSession():
     def create(self):
         Base.metadata.create_all(bind=self.engine)
 
-def alembic(site, alembic_module):
+def alembic(site, alembic_module, argv=None):
     """
     Automatically rigs up the Alembic config and shells out to it.
     """
@@ -53,7 +53,9 @@ def alembic(site, alembic_module):
         help="Specify -a to check config for automatic migrations and abort if "
             "unset (generally only package post-upgrade scripts will specify "
             "this)")
-    options = cmdline.parser.parse_args(sys.argv[1:])
+    if argv == None:
+        argv = sys.argv[1:]
+    options = cmdline.parser.parse_args(argv)
     if options.auto:
         if cfg(site, "migrate-on-upgrade", default="no") != "yes":
             print("Skipping automatic database migrations")
