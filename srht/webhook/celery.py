@@ -5,7 +5,11 @@ Import this module only after configuring your database.
 from celery import Celery
 from srht.database import db
 from srht.webhook import Webhook
+from werkzeug.local import LocalProxy
 import requests
+
+_async_request = None
+async_request = LocalProxy(lambda: _async_request)
 
 def make_worker(broker='redis://'):
     worker = Celery('webhooks', broker=broker)
@@ -42,6 +46,8 @@ def make_worker(broker='redis://'):
                 })
             db.session.commit()
 
+    global _async_request
+    _async_request = async_request
     return worker
 
 class CeleryWebhook(Webhook):
