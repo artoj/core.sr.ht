@@ -1,3 +1,5 @@
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from datetime import datetime
 from flask import Blueprint, request, redirect, render_template, current_app
 from flask_login import login_user, logout_user
@@ -12,6 +14,20 @@ import requests
 import urllib
 
 oauth_blueprint = Blueprint('srht.oauth', __name__)
+
+private_key = cfg("webhooks", "private-key", default=None)
+private_key = Ed25519PrivateKey.from_private_bytes(
+        base64.b64decode(private_key))
+public_key = private_key.public_key()
+
+def verify_payload(payload, signature, nonce):
+    signature = base64.b64decode(signature)
+    nonce = nonce.encode()
+    try:
+        public_key.verify(signature, payload + nonce)
+        return True
+    except:
+        return False
 
 @oauth_blueprint.route("/oauth/callback")
 def oauth_callback():
@@ -82,7 +98,6 @@ def revoke(revocation_token):
 @oauth_blueprint.route("/oauth/webhook/profile-update", methods=["POST"])
 @csrf_bypass
 def profile_update():
-    from srht.webhook import verify_payload
     payload = request.data
     signature = request.headers.get("X-Payload-Signature")
     nonce = request.headers.get("X-Payload-Nonce")

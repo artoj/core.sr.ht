@@ -1,4 +1,4 @@
 from collections import namedtuple
-from srht.webhook.webhook import Webhook, verify_payload
+from srht.webhook.webhook import Webhook
 
 Event = namedtuple("Event", ["name", "scope"])

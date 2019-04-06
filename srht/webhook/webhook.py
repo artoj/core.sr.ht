@@ -21,15 +21,6 @@ private_key = Ed25519PrivateKey.from_private_bytes(
         base64.b64decode(private_key))
 public_key = private_key.public_key()
 
-def verify_payload(payload, signature, nonce):
-    signature = base64.b64decode(signature)
-    nonce = nonce.encode()
-    try:
-        public_key.verify(signature, payload + nonce)
-        return True
-    except:
-        return False
-
 class Webhook(metaclass=WebhookMeta):
     """
     Magic webhook base class. Derived classes will automatically have the
