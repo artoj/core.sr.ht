@@ -58,5 +58,6 @@ setup(
   scripts = [
       'srht-update-profiles',
       'srht-migrate',
+      'srht-webhook-keygen',
   ]
 )

@@ -6,6 +6,7 @@ from srht.database import db
 from srht.flask import csrf_bypass
 from srht.oauth.scope import OAuthScope
 from srht.oauth import OAuthError
+import base64
 import json
 import requests
 import urllib
@@ -81,7 +82,26 @@ def revoke(revocation_token):
 @oauth_blueprint.route("/oauth/webhook/profile-update", methods=["POST"])
 @csrf_bypass
 def profile_update():
-    profile = json.loads(request.data.decode('utf-8'))
+    from srht.webhook import public_key
+    payload = request.data
+    if public_key:
+        signature = request.headers.get("X-Payload-Signature")
+        if not signature:
+            return {
+                "errors": [
+                    { "reason": "Expected payload to be signed." },
+                ]
+            }, 403
+        signature = base64.b64decode(signature)
+        try:
+            public_key.verify(signature, payload)
+        except:
+            return {
+                "errors": [
+                    { "reason": "Invalid payload signature." },
+                ]
+            }, 403
+    profile = json.loads(payload.decode('utf-8'))
     User = current_app.oauth_service.User
     user = User.query.filter(User.username == profile["name"]).one_or_none()
     if not user:

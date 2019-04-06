@@ -1,14 +1,25 @@
+import base64
 import json
 import requests
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from enum import Enum
 from flask import request, current_app, abort
 from srht.api import paginated_response
+from srht.config import cfg
 from srht.database import db
 from srht.flask import date_handler
 from srht.oauth import oauth, current_token
 from srht.validation import Validation
 from srht.webhook.magic import WebhookMeta
 from uuid import UUID
+
+private_key = cfg("webhooks", "private-key", default=None)
+public_key = None
+if private_key:
+    private_key = Ed25519PrivateKey.from_private_bytes(
+            base64.b64decode(private_key))
+    public_key = private_key.public_key()
 
 class Webhook(metaclass=WebhookMeta):
     """
@@ -62,6 +73,10 @@ class Webhook(metaclass=WebhookMeta):
             "X-Webhook-Event": event.value,
             "X-Webhook-Delivery": str(delivery.uuid),
         }
+        if private_key:
+            signature = private_key.sign(delivery.payload.encode())
+            signature = base64.b64encode(signature).decode()
+            headers["X-Payload-Signature"] = signature
         delivery.payload_headers = "\n".join(
                 f"{key}: {value}" for key, value in headers.items())
         delivery.response_status = -2
