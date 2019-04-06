@@ -1,5 +1,7 @@
 import base64
+import binascii
 import json
+import os
 import requests
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -15,11 +17,18 @@ from srht.webhook.magic import WebhookMeta
 from uuid import UUID
 
 private_key = cfg("webhooks", "private-key", default=None)
-public_key = None
-if private_key:
-    private_key = Ed25519PrivateKey.from_private_bytes(
-            base64.b64decode(private_key))
-    public_key = private_key.public_key()
+private_key = Ed25519PrivateKey.from_private_bytes(
+        base64.b64decode(private_key))
+public_key = private_key.public_key()
+
+def verify_payload(payload, signature, nonce):
+    signature = base64.b64decode(signature)
+    nonce = nonce.encode()
+    try:
+        public_key.verify(signature, payload + nonce)
+        return True
+    except:
+        return False
 
 class Webhook(metaclass=WebhookMeta):
     """
@@ -74,9 +83,11 @@ class Webhook(metaclass=WebhookMeta):
             "X-Webhook-Delivery": str(delivery.uuid),
         }
         if private_key:
-            signature = private_key.sign(delivery.payload.encode())
+            nonce = binascii.hexlify(os.urandom(8))
+            signature = private_key.sign(delivery.payload.encode() + nonce)
             signature = base64.b64encode(signature).decode()
             headers["X-Payload-Signature"] = signature
+            headers["X-Payload-Nonce"] = nonce.decode()
         delivery.payload_headers = "\n".join(
                 f"{key}: {value}" for key, value in headers.items())
         delivery.response_status = -2
