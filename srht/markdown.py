@@ -1,13 +1,27 @@
 from bs4 import BeautifulSoup
 from collections import namedtuple
 from jinja2 import Markup, escape
+from posixpath import join
 from pygments import highlight
 from pygments.formatters import HtmlFormatter, ClassNotFound
 from pygments.lexers import get_lexer_by_name
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 import bleach
 import misaka as m
 import re
+
+class RelativeLinkPrefixRenderer(m.HtmlRenderer):
+    def __init__(self, *args, link_prefix=None, **kwargs):
+        super().__init__(args, **kwargs)
+        self.link_prefix = link_prefix
+
+    def link(self, content, url, title=''):
+        p = urlparse(url)
+        if not p.netloc and not p.scheme and self.link_prefix:
+            path = join(self.link_prefix, p.path)
+            url = urlunparse(('', '', path, p.params, p.query, p.fragment))
+        maybe_title = f' title="{m.escape_html(title)}"' if title else ''
+        return f'<a href="{url}"{maybe_title}>{content}</a>'
 
 class HighlighterRenderer(m.HtmlRenderer):
     def __init__(self, *args, baselevel=1, **kwargs):
@@ -35,6 +49,9 @@ class HighlighterRenderer(m.HtmlRenderer):
             {content}
         </h{str(level)}>\n'''
 
+class CustomRenderer(RelativeLinkPrefixRenderer, HighlighterRenderer):
+    pass
+
 urlregex = re.compile(r'(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?\xab\xbb\u201c\u201d\u2018\u2019]))')
 
 def _img_filter(tag, name, value):
@@ -59,7 +76,7 @@ def add_noopener(html):
         a['rel'] = 'nofollow noopener'
     return str(soup)
 
-def markdown(text, tags=[], baselevel=1):
+def markdown(text, tags=[], baselevel=1, link_prefix=None):
     attrs = {
         "h1": ["id"],
         "h2": ["id"],
@@ -89,7 +106,8 @@ def markdown(text, tags=[], baselevel=1):
         + ["margin-{}".format(p) for p in ["left", "right", "bottom", "top"]],
         strip=True)
     renderer = md = m.Markdown(
-        HighlighterRenderer(baselevel=baselevel), extensions=(
+        CustomRenderer(baselevel=baselevel, link_prefix=link_prefix),
+        extensions=(
             'tables', 'fenced-code', 'footnotes', 'strikethrough', 'highlight',
             'quote', 'autolink'))
     html = renderer(text)
