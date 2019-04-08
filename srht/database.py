@@ -30,6 +30,8 @@ class DbSession():
     def init(self):
         @event.listens_for(Base, 'before_insert', propagate=True)
         def before_insert(mapper, connection, target):
+            if hasattr(target, '_no_autoupdate'):
+                return
             if hasattr(target, 'created'):
                 target.created = datetime.utcnow()
             if hasattr(target, 'updated'):
@@ -37,6 +39,8 @@ class DbSession():
 
         @event.listens_for(Base, 'before_update', propagate=True)
         def before_update(mapper, connection, target):
+            if hasattr(target, '_no_autoupdate'):
+                return
             if hasattr(target, 'updated'):
                 target.updated = datetime.utcnow()
 
