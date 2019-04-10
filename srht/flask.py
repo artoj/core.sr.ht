@@ -154,6 +154,8 @@ class SrhtFlask(Flask):
         if hasattr(mod, "__path__"):
             path = list(mod.__path__)[0]
             self.mod_path = path
+            choices.append(FileSystemLoader(
+                os.path.join("/etc", self.site, "templates")))
             choices.append(FileSystemLoader(os.path.join(path, "templates")))
             choices.append(FileSystemLoader(os.path.join(
                 os.path.dirname(__file__),
