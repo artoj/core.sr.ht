@@ -112,7 +112,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         if not self.User or not issubclass(self.User, ExternalUserMixin):
             return oauth_token
         revocation_token = hashlib.sha512(os.urandom(16)).hexdigest()
-        origin = cfg(current_app.site, "origin")
+        origin = get_origin(current_app.site)
         revocation_url = origin + url_for("srht.oauth.revoke",
                 revocation_token=revocation_token)
         _token = self.delegated_exchange(token, revocation_url)
@@ -192,7 +192,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         user.oauth_token = token
         user.oauth_token_expires = token_expires
         user.oauth_token_scopes = scopes
-        origin = cfg(current_app.site, "origin")
+        origin = get_origin(current_app.site)
         webhook_url = origin + url_for("srht.oauth.profile_update")
         self.ensure_meta_webhooks(user, {
             webhook_url: ["profile:update"],
