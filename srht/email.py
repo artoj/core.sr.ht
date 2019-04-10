@@ -3,7 +3,7 @@ from email.mime.multipart import MIMEMultipart
 from email.message import Message
 from email.utils import formatdate, make_msgid
 from flask import request, has_request_context, has_app_context, current_app
-from srht.config import cfg, cfgi, cfgb
+from srht.config import cfg, cfgi, cfgb, get_origin
 import base64
 import smtplib
 import pgpy
@@ -21,7 +21,7 @@ smtp_from = cfg("mail", "smtp-from", default=None)
 error_to = cfg("mail", "error-to", default=None)
 error_from = cfg("mail", "error-from", default=None)
 use_unixfrom = cfgb("mail", "use_unixfrom", default=True)
-meta_url = cfg("meta.sr.ht", "origin")
+meta_url = get_origin("meta.sr.ht")
 
 def lookup_key(user, oauth_token):
     """

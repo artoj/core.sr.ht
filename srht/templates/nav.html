@@ -16,7 +16,7 @@
   {% if current_user %}
   <span class="navbar-text">
     Logged in as
-    <a href="{{cfg("meta.sr.ht", "origin")}}/profile">
+    <a href="{{get_origin("meta.sr.ht")}}/profile">
       {{current_user.username}}</a>
     &mdash;
     <a href="/logout">Log out</a>
@@ -30,7 +30,7 @@
     {% else %}
     <a href="{{ oauth_url }}">Log in</a>
     &mdash;
-    <a href="{{cfg("meta.sr.ht", "origin")}}">Register</a>
+    <a href="{{get_origin("meta.sr.ht")}}">Register</a>
     {% endif %}
   </span>
   {% endif %}

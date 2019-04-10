@@ -3,7 +3,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from datetime import datetime
 from flask import Blueprint, request, redirect, render_template, current_app
 from flask_login import login_user, logout_user
-from srht.config import cfg
+from srht.config import cfg, get_origin
 from srht.database import db
 from srht.flask import csrf_bypass
 from srht.oauth.scope import OAuthScope
@@ -48,7 +48,7 @@ def oauth_callback():
         return render_template("oauth-error.html",
             details=("Expected an exchange token from meta.sr.ht. " +
                 "Something odd has happened, try again."))
-    meta_uri = cfg("meta.sr.ht", "origin")
+    meta_uri = get_origin("meta.sr.ht")
     r = requests.post(meta_uri + "/oauth/exchange", json={
         "client_id": current_app.oauth_service.client_id,
         "client_secret": current_app.oauth_service.client_secret,

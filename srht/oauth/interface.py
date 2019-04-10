@@ -5,7 +5,7 @@ import requests
 from collections import namedtuple
 from datetime import datetime
 from flask import current_app, url_for
-from srht.config import cfg
+from srht.config import cfg, get_origin
 from srht.api import get_results
 from srht.database import db
 from srht.flask import DATE_FORMAT
@@ -13,7 +13,7 @@ from srht.oauth import OAuthError, ExternalUserMixin, UserType, OAuthScope
 from werkzeug.local import LocalProxy
 from urllib.parse import quote_plus
 
-metasrht = cfg("meta.sr.ht", "origin")
+metasrht = get_origin("meta.sr.ht")
 
 DelegatedScope = namedtuple("DelegatedScope",
         ["name", "description", "writable"])
@@ -222,8 +222,8 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
 
     def oauth_url(self, return_to, scopes=[]):
         return "{}/oauth/authorize?client_id={}&scopes={}&state={}".format(
-            metasrht, self.client_id, ','.join(self.required_scopes + scopes),
-            quote_plus(return_to))
+            get_origin("meta.sr.ht", external=True), self.client_id,
+            ','.join(self.required_scopes + scopes), quote_plus(return_to))
 
 class AbstractOAuthProvider(abc.ABC):
     """

@@ -4,7 +4,7 @@ from flask import Blueprint, current_app, g, abort, session
 from flask_login import LoginManager, current_user
 from functools import wraps
 from enum import Enum
-from srht.config import cfg, cfgi, cfgkeys, config
+from srht.config import cfg, cfgi, cfgkeys, config, get_origin
 from srht.email import mail_exception
 from srht.database import db
 from srht.markdown import markdown
@@ -119,7 +119,7 @@ class LoginConfig:
         self.base_scopes = base_scopes
 
     def oauth_url(self, return_to, scopes=[]):
-        meta_sr_ht = cfg("meta.sr.ht", "origin")
+        meta_sr_ht = get_origin("meta.sr.ht", external=True)
         return "{}/oauth/authorize?client_id={}&scopes={}&state={}".format(
             meta_sr_ht, self.client_id, ','.join(self.base_scopes + scopes),
             quote_plus(return_to))
@@ -251,6 +251,7 @@ class SrhtFlask(Flask):
                 'cfg': cfg,
                 'cfgi': cfgi,
                 'cfgkeys': cfgkeys,
+                'get_origin': get_origin,
                 'valid': Validation(request),
                 'site': site,
                 'site_name': cfg("sr.ht", "site-name", default=None),
