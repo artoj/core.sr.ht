@@ -7,7 +7,7 @@
   <li class="nav-item {{'active' if _site == site else ''}}">
     <a
       class="nav-link"
-      href="{{cfg(_site, "origin")}}"
+      href="{{get_origin(_site, external=True)}}"
     >{{_site.split(".")[0]}}</a>
   </li>
   {% endfor %}
@@ -16,7 +16,7 @@
   {% if current_user %}
   <span class="navbar-text">
     Logged in as
-    <a href="{{get_origin("meta.sr.ht")}}/profile">
+    <a href="{{get_origin("meta.sr.ht", external=True)}}/profile">
       {{current_user.username}}</a>
     &mdash;
     <a href="/logout">Log out</a>
@@ -30,7 +30,7 @@
     {% else %}
     <a href="{{ oauth_url }}">Log in</a>
     &mdash;
-    <a href="{{get_origin("meta.sr.ht")}}">Register</a>
+    <a href="{{get_origin("meta.sr.ht", external=True)}}">Register</a>
     {% endif %}
   </span>
   {% endif %}
