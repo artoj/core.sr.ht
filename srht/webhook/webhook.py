@@ -60,17 +60,10 @@ class Webhook(metaclass=WebhookMeta):
             if event in sub.events:
                 cls.notify(sub, event, payload)
 
-    def notify(cls, sub, event, payload):
-        """Notifies a single subscriber of a webhook event."""
-        payload = json.dumps(payload, default=date_handler)
-        delivery = cls.Delivery()
-        delivery.event = event.value
-        delivery.subscription_id = sub.id
-        delivery.url = sub.url
-        delivery.payload = payload[:65536]
+    def prepare_headers(cls, delivery):
         headers = {
             "Content-Type": "application/json",
-            "X-Webhook-Event": event.value,
+            "X-Webhook-Event": delivery.event,
             "X-Webhook-Delivery": str(delivery.uuid),
         }
         if private_key:
@@ -79,6 +72,17 @@ class Webhook(metaclass=WebhookMeta):
             signature = base64.b64encode(signature).decode()
             headers["X-Payload-Signature"] = signature
             headers["X-Payload-Nonce"] = nonce.decode()
+        return headers
+
+    def notify(cls, sub, event, payload):
+        """Notifies a single subscriber of a webhook event."""
+        payload = json.dumps(payload, default=date_handler)
+        delivery = cls.Delivery()
+        delivery.event = event.value
+        delivery.subscription_id = sub.id
+        delivery.url = sub.url
+        delivery.payload = payload[:65536]
+        headers = cls.prepare_headers(delivery)
         delivery.payload_headers = "\n".join(
                 f"{key}: {value}" for key, value in headers.items())
         delivery.response_status = -2
@@ -187,3 +191,24 @@ class Webhook(metaclass=WebhookMeta):
             if not delivery:
                 abort(404)
             return delivery.to_dict()
+
+        @blueprint.route(f"{prefix}/webhooks/<sub_id>/deliveries/<delivery_id>/redeliver",
+                endpoint=f"{cls.__name__}_deliveries_by_id_redeliver_POST",
+                methods=["POST"])
+        @oauth(None)
+        def deliveries_by_id_redeliver_POST(sub_id, delivery_id, **kwargs):
+            valid = Validation(request)
+            sub = Subscription.query.filter(Subscription.id == sub_id)
+            sub = filters(sub, **kwargs).one_or_none()
+            if not sub:
+                abort(404)
+            if sub.token_id != current_token.id:
+                abort(401)
+            delivery = (Delivery.query
+                .filter(Delivery.subscription_id == sub_id)
+                .filter(Delivery.uuid == UUID(delivery_id))).one_or_none()
+            if not delivery:
+                abort(404)
+            headers = cls.prepare_headers(delivery)
+            cls.process_delivery(delivery, headers)
+            return {}

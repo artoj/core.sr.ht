@@ -164,6 +164,8 @@ class WebhookMeta(type):
             cls.deliver = lambda *args, **kwargs: cls._deliver(cls, *args, **kwargs)
             cls._notify = cls.notify
             cls.notify = lambda *args, **kwargs: cls._notify(cls, *args, **kwargs)
+            cls._prepare_headers = cls.prepare_headers
+            cls.prepare_headers = lambda *args, **kwargs: cls._prepare_headers(cls, *args, **kwargs)
             cls._process_delivery = cls.process_delivery
             cls.process_delivery = lambda *args, **kwargs: cls._process_delivery(cls, *args, **kwargs)
             cls._api_routes = cls.api_routes
