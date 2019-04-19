@@ -15,7 +15,7 @@ import urllib
 
 oauth_blueprint = Blueprint('srht.oauth', __name__)
 
-private_key = cfg("webhooks", "private-key", default=None)
+private_key = cfg("webhooks", "private-key")
 private_key = Ed25519PrivateKey.from_private_bytes(
         base64.b64decode(private_key))
 public_key = private_key.public_key()
