@@ -225,6 +225,15 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
             get_origin("meta.sr.ht", external=True), self.client_id,
             ','.join(self.required_scopes + scopes), quote_plus(return_to))
 
+    def profile_update_hook(self, user, payload):
+        if "user_type" in payload:
+            user.user_type = UserType(payload["user_type"])
+        user.email = payload["email"]
+        user.bio = payload["bio"]
+        user.location = payload["location"]
+        user.url = payload["url"]
+        db.session.commit()
+
 class AbstractOAuthProvider(abc.ABC):
     """
     Implements hooks that sr.ht can use to resolve OAuth tokens issued by a

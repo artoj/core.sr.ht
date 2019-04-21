@@ -112,11 +112,5 @@ def profile_update():
     user = User.query.filter(User.username == profile["name"]).one_or_none()
     if not user:
         return "Unknown user.", 404
-    if "user_type" in profile:
-        user.user_type = UserType(profile["user_type"])
-    user.email = profile["email"]
-    user.bio = profile["bio"]
-    user.location = profile["location"]
-    user.url = profile["url"]
-    db.session.commit()
+    current_app.oauth_service.profile_update_hook(user, profile)
     return f"Profile updated for {user.username}."
