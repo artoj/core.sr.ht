@@ -39,6 +39,7 @@ setup(
       'pgpy',
       'misaka',
       'pygments',
+      'cryptography',
   ],
   license = 'BSD-3-Clause',
   package_data={
