@@ -15,19 +15,21 @@ def make_worker(broker='redis://'):
     worker = Celery('webhooks', broker=broker)
 
     @worker.task
-    def async_request(url, payload, headers, delivery_table=None, delivery_id=None):
+    def async_request(url, payload, headers,
+            delivery_table=None, delivery_id=None, timeout=5):
         """
         Performs an HTTP POST asyncronously, and updates the delivery row if a
         table & id is specified.
         """
+        r = None
         try:
-            r = requests.post(url, data=payload, timeout=5, headers=headers)
+            r = requests.post(url, data=payload, timeout=timeout, headers=headers)
             response = r.text
             response_status = r.status_code
             response_headers = "\n".join(
                     f"{key}: {value}" for key, value in r.headers.items())
         except requests.exceptions.ReadTimeout:
-            response = "Request timeed out after 5 seconds."
+            response = "Request timed out after 5 seconds."
             response_status = -1
             response_headers = None
         if delivery_table and delivery_id:
@@ -45,13 +47,23 @@ def make_worker(broker='redis://'):
                     "delivery_id": delivery_id
                 })
             db.session.commit()
+        return r
 
     global _async_request
     _async_request = async_request
     return worker
 
 class CeleryWebhook(Webhook):
-    def process_delivery(cls, delivery, headers):
+    def process_delivery(cls, delivery, headers, delay=True, timeout=5):
+        """
+        Delivers the webhook via celery (or immediately if delay=True).
+        """
         Delivery = cls.Delivery
-        async_request.delay(delivery.url, delivery.payload, headers,
-                delivery_table=Delivery.__tablename__, delivery_id=delivery.id)
+        if delay:
+            async_request.delay(delivery.url, delivery.payload, headers,
+                    timeout=timeout, delivery_table=Delivery.__tablename__,
+                    delivery_id=delivery.id)
+        else:
+            return async_request(delivery.url, delivery.payload, headers,
+                    timeout=timeout, delivery_table=Delivery.__tablename__,
+                    delivery_id=delivery.id)

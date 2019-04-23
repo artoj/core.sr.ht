@@ -43,7 +43,7 @@ class Webhook(metaclass=WebhookMeta):
     MyClass.Subscription.
     """
 
-    def deliver(cls, event: Enum, payload: dict, *filters):
+    def deliver(cls, event: Enum, payload: dict, *filters, **kwargs):
         """
         Delivers the specified event to all subscribers. Filter subscribers down
         to your custom columns if necessary by passing SQLAlchemy filter
@@ -56,9 +56,11 @@ class Webhook(metaclass=WebhookMeta):
             Subscription._events.like("%" + event.value + "%"))
         for f in filters:
             subs = subs.filter(f)
+        responses = list()
         for sub in subs.all():
             if event in sub.events:
-                cls.notify(sub, event, payload)
+                responses.append(cls.notify(sub, event, payload, **kwargs))
+        return responses
 
     def prepare_headers(cls, delivery):
         headers = {
@@ -74,7 +76,7 @@ class Webhook(metaclass=WebhookMeta):
             headers["X-Payload-Nonce"] = nonce.decode()
         return headers
 
-    def notify(cls, sub, event, payload):
+    def notify(cls, sub, event, payload, **kwargs):
         """Notifies a single subscriber of a webhook event."""
         payload = json.dumps(payload, default=date_handler)
         delivery = cls.Delivery()
@@ -88,7 +90,7 @@ class Webhook(metaclass=WebhookMeta):
         delivery.response_status = -2
         db.session.add(delivery)
         db.session.commit()
-        cls.process_delivery(delivery, headers)
+        return cls.process_delivery(delivery, headers, **kwargs)
 
     def process_delivery(cls, delivery, headers):
         try:
@@ -102,6 +104,7 @@ class Webhook(metaclass=WebhookMeta):
             delivery.response = "Request timeed out after 5 seconds."
             delivery.response_status = -1
         db.session.commit()
+        return r
 
     def api_routes(cls, blueprint, prefix,
             filters=lambda q: q, create=lambda s, v: s):
