@@ -28,7 +28,7 @@
     &mdash;
     <a href="/">Register</a>
     {% else %}
-    <a href="{{ oauth_url }}">Log in</a>
+    <a href="{{ oauth_url }}" rel="nofollow">Log in</a>
     &mdash;
     <a href="{{get_origin("meta.sr.ht", external=True)}}">Register</a>
     {% endif %}
