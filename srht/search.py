@@ -29,6 +29,8 @@ def search(query, terms, default_props, prop_map):
         elif None in prop_map:
             query = prop_map[None](query, prop, value)
         else:
-            # TODO: Should we let the user know this happened?
-            query = query.filter(False)
+            query = query.filter(or_(*[
+                    p.ilike("%" + f"{prop}:{value}" + "%")
+                    if not callable(p) else p(value)
+                for p in default_props]))
     return query
