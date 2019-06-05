@@ -16,7 +16,7 @@ def paginated_response(id_col, query,
     serialize is a function which will serialize each record into a dict. The
     default is lambda r: r.to_dict().
 
-    per_page is the number of results per page to return. Default is 25.
+    per_page is the number of results per page to return. Default is 50.
     """
     total = query.count()
     start = request.args.get('start') or -1
