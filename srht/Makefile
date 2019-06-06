@@ -4,7 +4,6 @@
 .PHONY: all static watch clean
 
 SRHT_PATH?=/usr/lib/python3.7/site-packages/srht
-SHA256SUM?=sha256sum --tag
 
 SCRIPTS+=$(patsubst js/%.js,$(MODULE)static/%.js,$(wildcard js/*.js))
 _STATIC:=$(patsubst _static/%,$(MODULE)static/%,$(wildcard _static/*))
@@ -27,7 +26,7 @@ $(MODULE)static/main.min.css: $(MODULE)static/main.css
 		-o static/main.min.css \
 		static/main.css
 	cp static/main.min.css \
-		static/main.min.$$(${SHA256SUM} static/main.min.css | cut -f4 -d " " | cut -c1-8).css
+		static/main.min.$$(sha256sum static/main.min.css | cut -c1-8).css
 
 $(MODULE)static/%.js: js/%.js
 	@mkdir -p $(MODULE)static/
