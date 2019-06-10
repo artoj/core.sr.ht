@@ -257,6 +257,7 @@ class SrhtFlask(Flask):
                 'valid': Validation(request),
                 'site': site,
                 'site_name': cfg("sr.ht", "site-name", default=None),
+                'environment': cfg("sr.ht", "environment", default="production"),
                 'network': self.get_network(),
                 'current_user': (user_class.query
                     .filter(user_class.id == current_user.id)
