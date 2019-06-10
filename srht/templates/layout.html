@@ -19,8 +19,15 @@
     {% endblock %}
   </head>
   <body>
-    {% if environment != "production" %}
-    <div style="background: #dd0000; color: white; font-weight: bold; width: 100%; text-align: center">
+    {% if environment != "production" or
+      (current_user and current_user.user_type.value == 'admin' )%}
+    <div style="
+        {% if environment == "production" %}
+        background: #cc0022;
+        {% else %}
+        background: #228800;
+        {% endif %}
+        color: white; font-weight: bold; width: 100%; text-align: center">
       {{environment.upper()}} ENVIRONMENT
     </div>
     {% endif %}
