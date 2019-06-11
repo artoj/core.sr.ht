@@ -113,7 +113,7 @@ def markdown(text, tags=[], baselevel=1, link_prefix=None):
     html = renderer(text)
     html = cleaner.clean(html)
     formatter = HtmlFormatter()
-    style = formatter.get_style_defs('.highlight')
+    style = formatter.get_style_defs('.highlight') + " .highlight { background: inherit; }"
     return Markup(f"<style>{style}</style>" + add_noopener(html))
 
 Heading = namedtuple("Header", ["level", "name", "id", "children", "parent"])
