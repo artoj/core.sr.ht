@@ -27,7 +27,10 @@ def paginated_response(id_col, query,
     if order_by is _default:
         order_by = id_col.desc()
     if order_by is not None:
-        query = query.order_by(order_by)
+        if isinstance(order_by, tuple):
+            query = query.order_by(*order_by)
+        else:
+            query = query.order_by(order_by)
     records = query.limit(per_page + 1).all()
     if len(records) != per_page + 1:
         next_id = None
