@@ -1,4 +1,12 @@
 from flask import current_app
+from werkzeug.local import LocalProxy
+
+_client_id = None
+client_id = LocalProxy(lambda: _client_id)
+
+def set_client_id(id_):
+    global _client_id
+    _client_id = id_
 
 class OAuthScope:
     def __init__(self, scope, resolve=True):

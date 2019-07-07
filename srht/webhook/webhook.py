@@ -6,7 +6,7 @@ import requests
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from enum import Enum
-from flask import request, current_app, abort
+from flask import request, abort
 from srht.api import paginated_response
 from srht.config import cfg
 from srht.database import db

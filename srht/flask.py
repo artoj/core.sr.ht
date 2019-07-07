@@ -9,6 +9,7 @@ from srht.email import mail_exception
 from srht.database import db
 from srht.markdown import markdown
 from srht.validation import Validation
+from srht.oauth.scope import set_client_id
 from datetime import datetime, timedelta
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
 from jinja2 import escape
@@ -176,6 +177,8 @@ class SrhtFlask(Flask):
         if self.oauth_service:
             from srht.oauth import oauth_blueprint
             self.register_blueprint(oauth_blueprint)
+
+            set_client_id(self.oauth_service.client_id)
 
         self.login_manager = LoginManager()
         self.login_manager.init_app(self)

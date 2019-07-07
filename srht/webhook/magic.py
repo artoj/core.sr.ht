@@ -6,6 +6,7 @@ from enum import Enum
 from sqlalchemy.ext.declarative import declared_attr
 from srht.database import Base
 from srht.oauth import OAuthScope
+from srht.oauth.scope import client_id
 from werkzeug.local import LocalProxy
 
 _webhooks = list()
@@ -151,10 +152,14 @@ class WebhookMeta(type):
             norm = lambda name: re.sub('[-:]', '_', name)
             base_members["Events"] = Enum(name + "Events",
                     [(norm(ev.name), ev.name) for ev in events ])
-            base_members["event_scope"] = {
+            scopes = {
                 getattr(base_members["Events"],
                     norm(ev.name)): OAuthScope(ev.scope) for ev in events
             }
+            if client_id:
+                for scope in scopes.values():
+                    scope.client_id = client_id
+            base_members["event_scope"] = scopes
             base_members["Events"]
         cls = super().__new__(cls, name, bases, base_members)
         if events is not None:
