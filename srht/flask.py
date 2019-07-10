@@ -111,7 +111,11 @@ def paginate_query(query, results_per_page=15):
     else:
         page = 0
     query = query.limit(results_per_page).all()
-    return query, { "total_pages": total_pages, "page": page + 1 }
+    return query, {
+        "total_pages": total_pages,
+        "page": page + 1,
+        "total_results": total_results
+    }
 
 class LoginConfig:
     def __init__(self, client_id, client_secret, base_scopes):
