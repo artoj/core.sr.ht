@@ -135,14 +135,18 @@ class SrhtFlask(Flask):
         def _csrf_check():
             if request.method != 'POST':
                 return
-            if request.blueprint in csrf_bypass_blueprints:
+            if request.blueprint in _csrf_bypass_blueprints:
                 return
             view = self.view_functions.get(request.endpoint)
             if not view:
                 return
             view = "{0}.{1}".format(view.__module__, view.__name__)
-            if view in csrf_bypass_views:
+            if view in _csrf_bypass_views:
                 return
+            # TODO: Remove
+            for prefix in self.no_csrf_prefixes:
+                if request.path.startswith(prefix):
+                    return
             token = session.get('_csrf_token_v2', None)
             if not token or token != request.form.get('_csrf_token'):
                 abort(403)
