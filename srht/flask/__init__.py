@@ -8,3 +8,4 @@ except:
 from .flask import DATE_FORMAT
 from .flask import SrhtFlask, date_handler, paginate_query
 from .decorators import csrf_bypass, loginrequired
+from .session import session
