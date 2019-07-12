@@ -113,10 +113,10 @@ class SrhtFlask(Flask):
         meta = get_origin("meta.sr.ht", external=True)
         meta_url = urlparse(meta)
         cookie_domain = meta_url.netloc[meta_url.netloc.index("."):]
-        self.config['REMEMBER_COOKIE_DOMAIN'] = cookie_domain
-        self.config['REMEMBER_COOKIE_NAME'] = "srht_login_v1"
         self.config['REMEMBER_COOKIE_HTTPONLY'] = True
-        self.config['SESSION_COOKIE_DOMAIN'] = cookie_domain
+        #self.config['REMEMBER_COOKIE_DOMAIN'] = cookie_domain
+        #self.config['REMEMBER_COOKIE_NAME'] = "srht_login_v1"
+        #self.config['SESSION_COOKIE_DOMAIN'] = cookie_domain
 
         self.login_manager = LoginManager()
         self.login_manager.init_app(self)
