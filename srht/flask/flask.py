@@ -1,38 +1,24 @@
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+00:00"
-from flask import Flask, Response, request, url_for, render_template, redirect
-from flask import Blueprint, current_app, g, abort, session
+from flask import Flask, Response, request, url_for, render_template
+from flask import Blueprint, current_app, abort, session
 from flask_login import LoginManager, current_user
-from functools import wraps
 from enum import Enum
 from srht.config import cfg, cfgi, cfgkeys, config, get_origin
 from srht.email import mail_exception
 from srht.database import db
 from srht.markdown import markdown
-from srht.validation import Validation
 from srht.oauth.scope import set_client_id
-from datetime import datetime, timedelta
-from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
-from jinja2 import escape
+from srht.validation import Validation
+from jinja2 import Markup, FileSystemLoader, ChoiceLoader
 from urllib.parse import urlparse, quote_plus
 from werkzeug.routing import UnicodeConverter
 from werkzeug.urls import url_quote
-import binascii
+from .decorators import csrf_bypass_views, csrf_bypass_blueprints
+from .jinja import datef, icon, pagination, csrf_token
 import hashlib
-import inspect
-import humanize
 import decimal
-import bleach
 import json
-import locale
-import sys
 import os
-
-humanize.time._now = lambda: datetime.utcnow()
-
-try:
-    locale.setlocale(locale.LC_ALL, 'en_US')
-except:
-    pass
 
 def date_handler(obj):
     if hasattr(obj, 'strftime'):
@@ -43,59 +29,7 @@ def date_handler(obj):
         return obj.name
     return obj
 
-def datef(d):
-    if not d:
-        return 'Never'
-    if isinstance(d, timedelta):
-        return Markup('<span title="{}">{}</span>'.format(
-            f'{d.seconds} seconds', humanize.naturaltime(d).rstrip(" ago")))
-    return Markup('<span title="{}">{}</span>'.format(
-        d.strftime('%Y-%m-%d %H:%M:%S UTC'),
-        humanize.naturaltime(d)))
-
-icon_cache = {}
-
-def icon(i, cls=""):
-    if i in icon_cache:
-        svg = icon_cache[i]
-        return Markup(f'<span class="icon icon-{i} {cls}">{svg}</span>')
-    fa_license = """<!--
-        Font Awesome Free 5.3.1 by @fontawesome - https://fontawesome.com
-        License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
-    -->"""
-    path = os.path.join(current_app.mod_path, 'static', 'icons', i + '.svg')
-    with open(path) as f:
-        svg = f.read()
-    icon_cache[i] = svg
-    if g and "fa_license" not in g:
-        svg += fa_license
-        g.fa_license = True
-    return Markup(f'<span class="icon icon-{i} {cls}">{svg}</span>')
-
-@contextfunction
-def pagination(context):
-    template = context.environment.get_template("pagination.html")
-    return Markup(template.render(**context.parent))
-
-def csrf_token():
-    if '_csrf_token_v2' not in session:
-        session['_csrf_token_v2'] = binascii.hexlify(os.urandom(64)).decode()
-    return Markup("""<input
-        type='hidden'
-        name='_csrf_token'
-        value='{}' />""".format(escape(session['_csrf_token_v2'])))
-
-_csrf_bypass_views = set()
-_csrf_bypass_blueprints = set()
-
-def csrf_bypass(f):
-    if isinstance(f, Blueprint):
-        _csrf_bypass_blueprints.update([f])
-    else:
-        view = '.'.join((f.__module__, f.__name__))
-        _csrf_bypass_views.update([view])
-    return f
-
+# TODO: move to srht.db
 def paginate_query(query, results_per_page=15):
     page = request.args.get("page")
     total_results = query.count()
@@ -129,15 +63,6 @@ class LoginConfig:
             meta_sr_ht, self.client_id, ','.join(self.base_scopes + scopes),
             quote_plus(return_to))
 
-def loginrequired(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not current_user:
-            return redirect(current_app.oauth_service.oauth_url(request.url))
-        else:
-            return f(*args, **kwargs)
-    return wrapper
-
 class ModifiedUnicodeConverter(UnicodeConverter):
     """Added ~ and ^ to safe URL characters, otherwise no changes."""
     def to_url(self, value):
@@ -164,6 +89,7 @@ class SrhtFlask(Flask):
             choices.append(FileSystemLoader(os.path.join(path, "templates")))
             choices.append(FileSystemLoader(os.path.join(
                 os.path.dirname(__file__),
+                "..",
                 "templates"
             )))
 
@@ -204,9 +130,6 @@ class SrhtFlask(Flask):
                 # TODO: Switch to a session token
                 return User.query.filter(
                         User.username == username).one_or_none()
-
-        # TODO: Remove
-        self.no_csrf_prefixes = ['/api']
 
         @self.before_request
         def _csrf_check():
@@ -258,27 +181,27 @@ class SrhtFlask(Flask):
             user_class = (current_user._get_current_object().__class__
                     if current_user else None)
             ctx = {
-                'root': cfg(self.site, "origin"),
-                'domain': urlparse(cfg(self.site, "origin")).netloc,
-                'app': self,
-                'len': len,
                 'any': any,
-                'str': str,
-                'request': request,
-                'url_for': url_for,
+                'app': self,
                 'cfg': cfg,
                 'cfgi': cfgi,
                 'cfgkeys': cfgkeys,
-                'get_origin': get_origin,
-                'valid': Validation(request),
-                'site': site,
-                'site_name': cfg("sr.ht", "site-name", default=None),
-                'environment': cfg("sr.ht", "environment", default="production"),
-                'network': self.get_network(),
                 'current_user': (user_class.query
                     .filter(user_class.id == current_user.id)
                 ).one_or_none() if current_user else None,
+                'domain': urlparse(cfg(self.site, "origin")).netloc,
+                'environment': cfg("sr.ht", "environment", default="production"),
+                'get_origin': get_origin,
+                'len': len,
+                'network': self.get_network(),
+                'request': request,
+                'root': cfg(self.site, "origin"),
+                'site': site,
+                'site_name': cfg("sr.ht", "site-name", default=None),
                 'static_resource': self.static_resource,
+                'str': str,
+                'url_for': url_for,
+                'valid': Validation(request), # TODO: Remove
             }
             if self.oauth_service:
                 ctx.update({
