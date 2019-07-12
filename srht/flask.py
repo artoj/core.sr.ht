@@ -184,9 +184,18 @@ class SrhtFlask(Flask):
 
             set_client_id(self.oauth_service.client_id)
 
+        meta = get_origin("meta.sr.ht", external=True)
+        meta_url = urlparse(meta)
+        cookie_domain = meta_url.netloc[meta_url.netloc.index("."):]
+        self.config['REMEMBER_COOKIE_DOMAIN'] = cookie_domain
+        self.config['REMEMBER_COOKIE_NAME'] = "srht_login_v1"
+        self.config['REMEMBER_COOKIE_HTTPONLY'] = True
+        self.config['SESSION_COOKIE_DOMAIN'] = cookie_domain
+
         self.login_manager = LoginManager()
         self.login_manager.init_app(self)
         self.login_manager.anonymous_user = lambda: None
+        self.login_manager.session_protection = "strong"
 
         if self.oauth_service and self.oauth_service.User:
             @self.login_manager.user_loader
