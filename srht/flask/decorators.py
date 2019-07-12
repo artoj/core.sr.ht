@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, redirect, request
+from flask import Blueprint, current_app, redirect
 from flask_login import current_user
 from functools import wraps
 from werkzeug.local import LocalProxy
