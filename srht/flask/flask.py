@@ -121,7 +121,6 @@ class SrhtFlask(Flask):
         self.login_manager = LoginManager()
         self.login_manager.init_app(self)
         self.login_manager.anonymous_user = lambda: None
-        self.login_manager.session_protection = "strong"
 
         if self.oauth_service and self.oauth_service.User:
             @self.login_manager.user_loader
