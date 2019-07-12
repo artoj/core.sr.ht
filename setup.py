@@ -17,6 +17,7 @@ setup(
       'srht',
       'srht.alembic',
       'srht.alembic.versions',
+      'srht.flask',
       'srht.oauth',
       'srht.webhook',
   ],
