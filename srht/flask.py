@@ -1,6 +1,6 @@
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+00:00"
 from flask import Flask, Response, request, url_for, render_template, redirect
-from flask import Blueprint, current_app, g, abort, session
+from flask import Blueprint, current_app, g, abort, session as flask_session
 from flask_login import LoginManager, current_user
 from functools import wraps
 from enum import Enum
@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
 from jinja2 import escape
 from urllib.parse import urlparse, quote_plus
+from werkzeug.local import LocalProxy
 from werkzeug.routing import UnicodeConverter
 from werkzeug.urls import url_quote
 import binascii
@@ -26,6 +27,29 @@ import json
 import locale
 import sys
 import os
+
+class NamespacedSession:
+    def __getitem__(self, key):
+        return flask_session[f"{current_app.site}:{key}"]
+
+    def __setitem__(self, key, value):
+        flask_session[f"{current_app.site}:{key}"] = value
+
+    def __delitem__(self, key):
+        del flask_session[f"{current_app.site}:{key}"]
+
+    def get(self, key, **kwargs):
+        return flask_session.get(f"{current_app.site}:{key}", **kwargs)
+
+    def set(self, key, *args, **kwargs):
+        return flask_session.set(f"{current_app.site}:{key}", *args, **kwargs)
+
+    def setdefault(self, key, *args, **kwargs):
+        return flask_session.setdefault(
+                f"{current_app.site}:{key}", *args, **kwargs)
+
+_session = NamespacedSession()
+session = LocalProxy(lambda: _session)
 
 humanize.time._now = lambda: datetime.utcnow()
 
@@ -78,12 +102,12 @@ def pagination(context):
     return Markup(template.render(**context.parent))
 
 def csrf_token():
-    if '_csrf_token_v2' not in session:
-        session['_csrf_token_v2'] = binascii.hexlify(os.urandom(64)).decode()
+    if '_csrf_token_v2' not in flask_session:
+        flask_session['_csrf_token_v2'] = binascii.hexlify(os.urandom(64)).decode()
     return Markup("""<input
         type='hidden'
         name='_csrf_token'
-        value='{}' />""".format(escape(session['_csrf_token_v2'])))
+        value='{}' />""".format(escape(flask_session['_csrf_token_v2'])))
 
 _csrf_bypass_views = set()
 _csrf_bypass_blueprints = set()
@@ -184,18 +208,9 @@ class SrhtFlask(Flask):
 
             set_client_id(self.oauth_service.client_id)
 
-        meta = get_origin("meta.sr.ht", external=True)
-        meta_url = urlparse(meta)
-        cookie_domain = meta_url.netloc[meta_url.netloc.index("."):]
-        self.config['REMEMBER_COOKIE_DOMAIN'] = cookie_domain
-        self.config['REMEMBER_COOKIE_NAME'] = "srht_login_v1"
-        self.config['REMEMBER_COOKIE_HTTPONLY'] = True
-        self.config['SESSION_COOKIE_DOMAIN'] = cookie_domain
-
         self.login_manager = LoginManager()
         self.login_manager.init_app(self)
         self.login_manager.anonymous_user = lambda: None
-        self.login_manager.session_protection = "strong"
 
         if self.oauth_service and self.oauth_service.User:
             @self.login_manager.user_loader
@@ -224,7 +239,7 @@ class SrhtFlask(Flask):
             for prefix in self.no_csrf_prefixes:
                 if request.path.startswith(prefix):
                     return
-            token = session.get('_csrf_token_v2', None)
+            token = flask_session.get('_csrf_token_v2', None)
             if not token or token != request.form.get('_csrf_token'):
                 abort(403)
 
