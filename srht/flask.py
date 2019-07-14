@@ -37,8 +37,8 @@ class NamespacedSession:
     def __delitem__(self, key):
         del flask_session[f"{current_app.site}:{key}"]
 
-    def get(self, key, **kwargs):
-        return flask_session.get(f"{current_app.site}:{key}", **kwargs)
+    def get(self, key, *args, **kwargs):
+        return flask_session.get(f"{current_app.site}:{key}", *args, **kwargs)
 
     def set(self, key, *args, **kwargs):
         return flask_session.set(f"{current_app.site}:{key}", *args, **kwargs)
@@ -46,6 +46,9 @@ class NamespacedSession:
     def setdefault(self, key, *args, **kwargs):
         return flask_session.setdefault(
                 f"{current_app.site}:{key}", *args, **kwargs)
+
+    def pop(self, key, *args, **kwargs):
+        return flask_session.pop(f"{current_app.site}:{key}", *args, **kwargs)
 
 _session = NamespacedSession()
 session = LocalProxy(lambda: _session)
