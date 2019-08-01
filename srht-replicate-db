@@ -1,0 +1,51 @@
+#!/bin/sh -eu
+# This is a local development tool which sanitizes a production database
+# locally.
+#
+# Usage:
+#
+# ssh prod.database pg_dump database-name \
+# 		| ./srht-replicate-db [-e <email-domain>] database-name
+
+email_domain=example.org
+while getopts e: name
+do
+	case $name in
+		e)
+			email_domain="$OPTARG"
+			;;
+		?)
+			echo "Invalid usage" >&2
+			exit 1
+			;;
+	esac
+done
+shift $((OPTIND-1))
+
+if [ $# -ne 1 ]
+then
+	echo "Invalid usage" >&2
+	exit 1
+fi
+
+database="$1"
+
+dropdb "$1" </dev/null
+createdb "$1" </dev/null
+psql -d "$1"
+
+# Change emails so we don't accidentally send test emails to prod users
+psql -d "$1" <<EOF
+UPDATE "user" SET email = CONCAT("user".username, '@', '$email_domain');
+EOF
+
+if [ "$database" = "meta.sr.ht" ]
+then
+	# Sets all passwords to "password" and clears sensitive info
+	psql -d "$1" <<-"EOF"
+	UPDATE "user" SET password = '$2b$12$nujoTspVHan1mWeZp.Fs3egKXRnWKS3nRkh3alKrpTTDYmvJNH2Gq';
+	UPDATE "user" SET reset_hash = null;
+	UPDATE "user" SET stripe_customer = null;
+	DELETE FROM user_auth_factor;
+	EOF
+fi
