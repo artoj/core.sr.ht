@@ -6,7 +6,7 @@ from collections import namedtuple
 from datetime import datetime
 from flask import current_app, url_for
 from srht.config import cfg, get_origin
-from srht.api import get_results
+from srht.api import get_results, ensure_webhooks
 from srht.database import db
 from srht.flask import DATE_FORMAT
 from srht.oauth import OAuthError, ExternalUserMixin, UserType, OAuthScope
@@ -137,30 +137,11 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         user. Webhooks should be a dict whose key is the webhook URL and whose
         values are the list of events to send to that URL.
         """
-        for webhook in get_results(
-                f"{metasrht}/api/user/webhooks", user.oauth_token):
-            url = webhook["url"]
-            if url not in webhooks:
-                continue
-            if webhook["events"] == webhooks[url]:
-                del webhooks[url]
-                continue # This webhook already configured
-            # This webhook is set up incorrectly, delete it
-            url = f"{metasrht}/api/user/webhooks/{webhook['id']}"
-            r = requests.delete(url, headers={
-                "Authorization": f"token {user.oauth_token}",
-            })
-            if r.status_code != 204:
-                print("Warning: failed to remove invalid webhook for "
-                    f"{user.username}: {r.text}")
-                return
-        for url, events in webhooks.items():
-            r = requests.post(f"{metasrht}/api/user/webhooks", headers={
-                "Authorization": f"token {user.oauth_token}",
-            }, json={"events": events, "url": url})
-            if r.status_code != 201:
-                print(f"Warning: failed to create webhook for {user.username}: "
-                        f"{r.text}")
+        try:
+            ensure_webhooks(user.oauth_token,
+                    f"{metasrht}/api/user/webhooks", webhooks)
+        except:
+            print(f"Warning: failed to ensure meta webhooks")
 
     def lookup_or_register(self, token, token_expires, scopes):
         User = self.User

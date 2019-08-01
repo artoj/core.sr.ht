@@ -55,3 +55,32 @@ def get_results(url, token):
             raise Exception(r.json())
         response = r.json()
         yield from response["results"]
+
+def ensure_webhooks(token, baseurl, webhooks):
+    """
+    Ensures that the specified webhooks are rigged up. Webhooks should be a
+    dict whose key is the webhook URL and whose values are the list of events
+    to send to that URL, or None to unconfigure this webhook.
+    """
+    for webhook in get_results(baseurl, token):
+        url = webhook["url"]
+        if url not in webhooks:
+            continue
+        if webhook["events"] == webhooks[url]:
+            del webhooks[url]
+            continue # This webhook already configured
+        # This webhook is set up incorrectly, delete it
+        url = f"{baseurl}/{webhook['id']}"
+        r = requests.delete(url, headers={
+            "Authorization": f"token {token}",
+        })
+        if r.status_code != 204:
+            raise Exception(f"Failed to remove invalid webhook: {r.text}")
+        if webhooks[url] is None:
+            del webhooks[url]
+    for url, events in webhooks.items():
+        r = requests.post(baseurl, headers={
+            "Authorization": f"token {token}",
+        }, json={"events": events, "url": url})
+        if r.status_code != 201:
+            raise Exception(f"Failed to create webhook: {r.text}")
