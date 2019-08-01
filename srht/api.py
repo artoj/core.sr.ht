@@ -76,7 +76,7 @@ def ensure_webhooks(token, baseurl, webhooks):
         })
         if r.status_code != 204:
             raise Exception(f"Failed to remove invalid webhook: {r.text}")
-        if webhooks[url] is None:
+        if webhook[url] is None:
             del webhooks[url]
     for url, events in webhooks.items():
         r = requests.post(baseurl, headers={

@@ -47,10 +47,11 @@ class _SubscriptionMixin:
         except ValueError:
             valid.expect(False,
                     f"Unsupported event type", field="events")
+        needs = set((self._Webhook.event_scope[ev] for ev in self.events))
         valid.expect(OAuthScope.all in token.scopes or
-            all(self._Webhook.event_scope[ev] in token.scopes
-                for ev in self.events),
-            "Permission denied - does your token have the appropriate scopes?")
+            all(any(has.fulfills(need) for has in token.scopes) for need in needs),
+            "Permission denied - does your token have the appropriate scopes? " +
+            f"(needs {needs}, has {token.scopes})")
         if hasattr(self._Webhook, "__init__"):
             self._Webhook.__init__(self, *args, **kwargs)
 
