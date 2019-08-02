@@ -49,8 +49,8 @@ def paginated_response(id_col, query,
 def get_results(url, token):
     response = {"next": -1}
     while response.get("next") is not None:
-        url = f"{url}?start={response['next']}"
-        r = requests.get(url, headers={"Authorization": f"token {token}"})
+        rurl = f"{url}?start={response['next']}"
+        r = requests.get(rurl, headers={"Authorization": f"token {token}"})
         if r.status_code != 200:
             raise Exception(r.json())
         response = r.json()
@@ -76,7 +76,7 @@ def ensure_webhooks(token, baseurl, webhooks):
         })
         if r.status_code != 204:
             raise Exception(f"Failed to remove invalid webhook: {r.text}")
-        if webhook[url] is None:
+        if webhooks[url] is None:
             del webhooks[url]
     for url, events in webhooks.items():
         r = requests.post(baseurl, headers={
