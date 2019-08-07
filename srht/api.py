@@ -70,8 +70,8 @@ def ensure_webhooks(token, baseurl, webhooks):
             del webhooks[url]
             continue # This webhook already configured
         # This webhook is set up incorrectly, delete it
-        url = f"{baseurl}/{webhook['id']}"
-        r = requests.delete(url, headers={
+        webhook_url = f"{baseurl}/{webhook['id']}"
+        r = requests.delete(webhook_url, headers={
             "Authorization": f"token {token}",
         })
         if r.status_code != 204:
@@ -79,6 +79,8 @@ def ensure_webhooks(token, baseurl, webhooks):
         if webhooks[url] is None:
             del webhooks[url]
     for url, events in webhooks.items():
+        if not events:
+            continue
         r = requests.post(baseurl, headers={
             "Authorization": f"token {token}",
         }, json={"events": events, "url": url})
