@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from enum import Enum
 from flask import request, abort
 from srht.api import paginated_response
+from srht.crypto import sign_payload
 from srht.config import cfg
 from srht.database import db
 from srht.flask import date_handler
@@ -15,11 +16,6 @@ from srht.oauth import oauth, current_token
 from srht.validation import Validation
 from srht.webhook.magic import WebhookMeta
 from uuid import UUID
-
-private_key = cfg("webhooks", "private-key", default=None)
-private_key = Ed25519PrivateKey.from_private_bytes(
-        base64.b64decode(private_key))
-public_key = private_key.public_key()
 
 class Webhook(metaclass=WebhookMeta):
     """
@@ -68,12 +64,7 @@ class Webhook(metaclass=WebhookMeta):
             "X-Webhook-Event": delivery.event,
             "X-Webhook-Delivery": str(delivery.uuid),
         }
-        if private_key:
-            nonce = binascii.hexlify(os.urandom(8))
-            signature = private_key.sign(delivery.payload.encode() + nonce)
-            signature = base64.b64encode(signature).decode()
-            headers["X-Payload-Signature"] = signature
-            headers["X-Payload-Nonce"] = nonce.decode()
+        headers.update(sign_payload(delivery.payload))
         return headers
 
     def notify(cls, sub, event, payload, **kwargs):
