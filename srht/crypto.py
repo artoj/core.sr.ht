@@ -4,6 +4,7 @@ from flask import abort, Response, request
 from srht.config import cfg
 import base64
 import binascii
+import json
 import os
 
 private_key = cfg("webhooks", "private-key")
@@ -21,7 +22,8 @@ def verify_request_signature(request):
         nonce = nonce.encode()
         public_key.verify(signature, payload + nonce)
         return True
-    except:
+    except Exception as ex:
+        print(ex)
         abort(Response(
             status=403,
             mimetype="application/json",
