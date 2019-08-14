@@ -83,7 +83,7 @@ def revoke(revocation_token):
 @oauth_blueprint.route("/oauth/webhook/profile-update", methods=["POST"])
 @csrf_bypass
 def profile_update():
-    verify_request_signature()
+    verify_request_signature(request)
     profile = json.loads(payload.decode('utf-8'))
     User = current_app.oauth_service.User
     user = User.query.filter(User.username == profile["name"]).one_or_none()
