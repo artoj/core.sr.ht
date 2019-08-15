@@ -21,9 +21,8 @@ def verify_request_signature(request):
         signature = base64.b64decode(signature)
         nonce = nonce.encode()
         public_key.verify(signature, payload + nonce)
-        return True
+        return payload
     except Exception as ex:
-        print(ex)
         abort(Response(
             status=403,
             mimetype="application/json",
