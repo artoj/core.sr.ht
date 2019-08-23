@@ -32,6 +32,13 @@ body {
   padding-bottom: 1rem;
 }
 
+@include media-breakpoint-down(md) {
+  .container {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 p {
   margin-bottom: 0.5rem;
 }
@@ -149,15 +156,6 @@ h5 {
 
 section {
   padding-bottom: 0.5rem;
-}
-
-.container {
-  margin: 0;
-
-  @include media-breakpoint-down(md) {
-    width: 100%;
-    max-width: 100%;
-  }
 }
 
 .btn {

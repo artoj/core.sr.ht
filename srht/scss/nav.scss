@@ -1,9 +1,10 @@
 .header-tabbed {
   border-bottom: 3px solid #ddd;
   margin-bottom: 1rem;
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
+
+  .container, .container-fluid {
+    display: flex;
+  }
 
   &.vertical {
     align-items: inherit;
@@ -11,7 +12,9 @@
   }
 
   h2 {
+    display: inline;
     margin: 0;
+    padding-right: 1rem;
 
     @include media-breakpoint-down(xs) {
       flex-grow: 1;
@@ -23,11 +26,26 @@
     border: none;
     margin: 0;
     flex-grow: 1;
-    padding-top: 0.5rem;
+    display: inline-flex;
+    padding: 0;
 
-    @include media-breakpoint-down(xs) {
-      padding-top: 1rem;
-      justify-content: center;
+    li {
+      align-self: flex-end;
+    }
+
+    @include media-breakpoint-down(md) {
+      flex-direction: column;
+      padding-bottom: 1rem;
+
+      li {
+        align-self: flex-start;
+        margin: 0 -1rem;
+        width: calc(99.9% + 2rem);
+      }
+
+      .nav-item.back-button {
+        margin-left: -8px;
+      }
     }
   }
 
