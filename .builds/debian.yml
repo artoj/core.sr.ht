@@ -1,0 +1,37 @@
+image: debian/sid
+repositories:
+  sr.ht: https://mirror.sr.ht/debian/ sid main 6B1296C65B24472674E7B6520585B50AC6A4914D
+packages:
+  - devscripts
+  - reprepro
+  - rsync
+sources:
+  - https://git.sr.ht/~sircmpwn/core.sr.ht
+  - https://git.sr.ht/~dlax/core.sr.ht-deb
+  - https://git.sr.ht/~dlax/sr.ht-debbuilds
+environment:
+  project: core.sr.ht
+  remote: deploy@mirror.sr.ht
+  remote_path: ./
+  DEB_SIGN_KEYID: 6B1296C65B24472674E7B6520585B50AC6A4914D
+  DEBFULLNAME: sr.ht Debian autobuilder
+  DEBEMAIL: debian@sr.ht
+secrets:
+  - 34f9cf9f-b541-4bcd-a83a-cf61cbf03856 # ssh deploy key
+  - d5303413-dc4d-449d-9b81-41158ad4065d # packages/repo signing key
+tasks:
+  - archive: |
+      cd ${project}
+      pkgver=$(git describe)
+      echo "pkgver=$pkgver" >> ~/.buildenv
+      git archive -o ../"${project}_${pkgver}".orig.tar.gz \
+        --prefix="${project}-${pkgver}"/ HEAD
+  - package: |
+      cd sr.ht-debbuilds
+      ./pkgkit build-version -li ${project} ${pkgver}
+  - upload: |
+      cd ${project}
+      git describe --exact-match HEAD || complete-build
+      echo "StrictHostKeyChecking=no" >> ~/.ssh/config
+      cd ~/sr.ht-debbuilds
+      ./pkgkit include ${project} ${pkgver}
