@@ -12,7 +12,7 @@ sources:
 environment:
   project: core.sr.ht
   remote: deploy@mirror.sr.ht
-  remote_path: ./
+  remote_path: /var/www/mirror.sr.ht/debian
   DEB_SIGN_KEYID: 6B1296C65B24472674E7B6520585B50AC6A4914D
   DEBFULLNAME: sr.ht Debian autobuilder
   DEBEMAIL: debian@sr.ht
