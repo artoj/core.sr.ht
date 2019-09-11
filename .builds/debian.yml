@@ -17,8 +17,8 @@ environment:
   DEBFULLNAME: sr.ht Debian autobuilder
   DEBEMAIL: debian@sr.ht
 secrets:
-  - 34f9cf9f-b541-4bcd-a83a-cf61cbf03856 # ssh deploy key
-  - d5303413-dc4d-449d-9b81-41158ad4065d # packages/repo signing key
+  - fa00a8d3-7b63-42d5-8060-3bb31c3e3018 # ssh deploy key
+  - 0f260200-f6e7-4e3a-9bfb-805e6f36b2e6 # packages/repo signing key
 tasks:
   - archive: |
       cd ${project}
