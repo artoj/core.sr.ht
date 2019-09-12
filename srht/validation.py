@@ -19,18 +19,22 @@ class ValidationError:
 class Validation:
     def __init__(self, request):
         self.files = dict()
+        self.errors = []
+        self.status = 400
         if isinstance(request, dict):
             self.source = request
         else:
             contentType = request.headers.get("Content-Type")
             if contentType and contentType == "application/json":
-                self.source = json.loads(request.data.decode('utf-8'))
+                try:
+                    self.source = json.loads(request.data.decode('utf-8'))
+                except json.JSONDecodeError:
+                    self.error("Invalid JSON provided")
+                    self.source = {}
             else:
                 self.source = request.form
                 self.files = request.files
             self.request = request
-        self.errors = []
-        self.status = 400
         self._kwargs = {
             "valid": self
         }
