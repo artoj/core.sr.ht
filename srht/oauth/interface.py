@@ -163,6 +163,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
             db.session.add(user)
         if "user_type" in profile:
             user.user_type = UserType(profile["user_type"])
+            user.suspension_notice = profile["suspension_notice"]
         else:
             self._preauthorized_warning()
             user.user_type = UserType.unknown
@@ -209,6 +210,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
     def profile_update_hook(self, user, payload):
         if "user_type" in payload:
             user.user_type = UserType(payload["user_type"])
+            user.suspension_notice = profile["suspension_notice"]
         user.email = payload["email"]
         user.bio = payload["bio"]
         user.location = payload["location"]

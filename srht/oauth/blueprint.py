@@ -6,7 +6,7 @@ from srht.crypto import verify_request_signature
 from srht.database import db
 from srht.flask import csrf_bypass
 from srht.oauth.scope import OAuthScope
-from srht.oauth import OAuthError
+from srht.oauth import OAuthError, UserType
 import base64
 import json
 import requests
@@ -55,6 +55,9 @@ def oauth_callback():
     except OAuthError:
         return render_template("oauth-error.html",
             details="Error occured retrieving account info. Try again.")
+
+    if user.user_type == UserType.suspended:
+        return render_template("suspended.html", notice=user.suspension_notice)
 
     db.session.commit()
     login_user(user, remember=True)

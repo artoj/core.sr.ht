@@ -11,6 +11,7 @@ class UserType(Enum):
     active_delinquent = "active_delinquent"
     admin = "admin"
     unknown = "unknown"
+    suspended = "suspended"
 
 class UserMixin:
     @declared_attr
@@ -29,6 +30,7 @@ class UserMixin:
     url = sa.Column(sa.String(256))
     location = sa.Column(sa.Unicode(256))
     bio = sa.Column(sa.Unicode(4096))
+    suspension_notice = sa.Column(sa.Unicode(4096))
 
     @property
     def canonical_name(self):
