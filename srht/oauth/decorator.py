@@ -1,6 +1,7 @@
 from flask import current_app, request, g
 from functools import wraps
-from srht.oauth import OAuthError
+from srht.config import cfg
+from srht.oauth import OAuthError, UserType
 from srht.oauth.scope import OAuthScope
 from srht.validation import Validation
 import hashlib
@@ -55,6 +56,17 @@ def oauth(scopes):
             if not any(applicable):
                 return valid.error("Your OAuth token is not permitted to use " +
                     "this endpoint (needs {})".format(required), status=403)
+
+            if oauth_token.user.user_type == UserType.suspended:
+                return valid.error("The authorized user's account has been " +
+                    "suspended with the following notice: \n" +
+                    oauth_token.user.suspension_notice + "\n" +
+                    "Contact support: " + cfg("sr.ht", "owner-email"),
+                    status=403)
+
+            if oauth_token.user.user_type == UserType.unconfirmed:
+                return valid.error("The authorized user's account has not " +
+                    "been confirmed.", status=403)
 
             return f(*args, **kwargs)
         return wrapper
