@@ -131,6 +131,12 @@ class Validation:
         for err in self.errors:
             valid.error(err.message, field + "." + err.field)
 
+    def error_for(self, *fields):
+        for error in self.errors:
+            if error.field in fields:
+                return True
+        return False
+
     def __contains__(self, value):
         return value in self.source or value in self.files
 
