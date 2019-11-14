@@ -21,7 +21,7 @@ class UserMixin:
     id = sa.Column(sa.Integer, primary_key=True)
     created = sa.Column(sa.DateTime, nullable=False)
     updated = sa.Column(sa.DateTime, nullable=False)
-    username = sa.Column(sa.Unicode(256))
+    username = sa.Column(sa.Unicode(256), index=True)
     email = sa.Column(sa.String(256), nullable=False)
     user_type = sa.Column(
             sau.ChoiceType(UserType, impl=sa.String()),
