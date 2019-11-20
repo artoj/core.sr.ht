@@ -7,6 +7,7 @@ from srht.database import db
 from srht.flask import csrf_bypass
 from srht.oauth.scope import OAuthScope
 from srht.oauth import OAuthError, UserType
+from srht.validation import Validation
 import base64
 import json
 import requests
@@ -34,6 +35,7 @@ def oauth_callback():
             details=("Expected an exchange token from meta.sr.ht. " +
                 "Something odd has happened, try again."))
     meta_uri = get_origin("meta.sr.ht")
+    # TODO: Add revocation URL to this request
     r = requests.post(meta_uri + "/oauth/exchange", json={
         "client_id": current_app.oauth_service.client_id,
         "client_secret": current_app.oauth_service.client_secret,
@@ -71,15 +73,20 @@ def logout():
     logout_user()
     return redirect(request.headers.get("Referer") or "/")
 
-@oauth_blueprint.route("/oauth/revoke/<revocation_token>")
-def revoke(revocation_token):
+@oauth_blueprint.route("/oauth/revoke",
+        defaults={"legacy_parameter": None}, methods=["POST"])
+@oauth_blueprint.route("/oauth/revoke/<legacy_paramter>", methods=["POST"])
+@csrf_bypass
+def revoke_delegated_token(legacy_parameter):
     OAuthToken = current_app.oauth_service.OAuthToken
     User = current_app.oauth_service.User
-    user = User.query.filter(
-            User.oauth_revocation_token == revocation_token).one_or_none()
-    if not user:
-        abort(404)
-    OAuthToken.query.filter(OAuthToken.user_id == user.id).delete()
+
+    valid = Validation(request)
+    token_hash = valid.require("token_hash")
+    if not valid.ok:
+        return "hm?", 400
+
+    OAuthToken.query.filter(OAuthToken.token_hash == token_hash).delete()
     db.session.commit()
     return {}
 

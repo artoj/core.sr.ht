@@ -1,6 +1,5 @@
 import abc
 import hashlib
-import os
 import requests
 from collections import namedtuple
 from datetime import datetime
@@ -99,28 +98,27 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
 
     def get_token(self, token, token_hash, scopes):
         """Fetch an OAuth token given the provided token & token_hash."""
-        # TODO: rig up webhook(?)
         now = datetime.utcnow()
         oauth_token = (self.OAuthToken.query
             .filter(self.OAuthToken.token_hash == token_hash)
             .filter(self.OAuthToken.expires > now)
         ).one_or_none()
+
         if oauth_token:
             oauth_token.updated = now
             db.session.commit()
             return oauth_token
+
         if not self.User or not issubclass(self.User, ExternalUserMixin):
             return oauth_token
-        revocation_token = hashlib.sha512(os.urandom(16)).hexdigest()
+
         origin = get_origin(current_app.site)
-        revocation_url = origin + url_for("srht.oauth.revoke",
-                revocation_token=revocation_token)
+        revocation_url = origin + url_for("srht.oauth.revoke_delegated_token")
         _token = self.delegated_exchange(token, revocation_url)
         expires = datetime.strptime(_token["expires"], DATE_FORMAT)
         scopes = set(OAuthScope(s) for s in _token["scopes"].split(","))
         user = self.lookup_or_register(token, expires, _token["scopes"])
         db.session.flush()
-        user.oauth_revocation_token = revocation_token
         oauth_token = self.OAuthToken()
         oauth_token.user_id = user.id
         oauth_token.expires = expires
@@ -188,11 +186,12 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         goes wrong.
         """
         try:
-            r = requests.post("{}/oauth/token/{}".format(metasrht, token),
+            r = requests.post("{}/oauth/token/verify".format(metasrht),
                 json={
                     "client_id": self.client_id,
                     "client_secret": self.client_secret,
                     "revocation_url": revocation_url,
+                    "oauth_token": token,
                 })
             _token = r.json()
         except Exception as ex:
