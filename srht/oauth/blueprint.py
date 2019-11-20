@@ -75,7 +75,7 @@ def logout():
 
 @oauth_blueprint.route("/oauth/revoke",
         defaults={"legacy_parameter": None}, methods=["POST"])
-@oauth_blueprint.route("/oauth/revoke/<legacy_paramter>", methods=["POST"])
+@oauth_blueprint.route("/oauth/revoke/<legacy_parameter>", methods=["POST"])
 @csrf_bypass
 def revoke_delegated_token(legacy_parameter):
     OAuthToken = current_app.oauth_service.OAuthToken
