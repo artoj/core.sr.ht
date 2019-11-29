@@ -1,12 +1,12 @@
 from datetime import datetime
 from flask import Blueprint, request, redirect, render_template, current_app
-from flask_login import login_user, logout_user
 from srht.config import cfg, get_origin
 from srht.crypto import verify_request_signature
 from srht.database import db
 from srht.flask import csrf_bypass
 from srht.oauth.scope import OAuthScope
 from srht.oauth import OAuthError, UserType
+from srht.oauth import current_user, login_user, logout_user
 from srht.validation import Validation
 import base64
 import json
@@ -21,9 +21,18 @@ def oauth_callback():
     if error:
         details = request.args.get("details")
         return render_template("oauth-error.html", details=details)
+
     exchange_token = request.args.get("exchange")
     scopes = request.args.get("scopes")
     state = request.args.get("state")
+
+    if current_user:
+        # Already logged in via internal user info cookie
+        if not state or not state.startswith("/"):
+            return redirect("/")
+        else:
+            return redirect(urllib.parse.unquote(state))
+
     _scopes = [OAuthScope(s) for s in scopes.split(",")]
     if not OAuthScope("profile:read") in _scopes:
         return render_template("oauth-error.html",
@@ -52,7 +61,7 @@ def oauth_callback():
             details="Error occured retrieving OAuth token. Try again.")
 
     try:
-        user = current_app.oauth_service.lookup_or_register(
+        user = current_app.oauth_service.lookup_via_oauth(
                 token, expires, scopes)
     except OAuthError:
         return render_template("oauth-error.html",
@@ -62,7 +71,7 @@ def oauth_callback():
         return render_template("suspended.html", notice=user.suspension_notice)
 
     db.session.commit()
-    login_user(user, remember=True)
+    login_user(user)
     if not state or not state.startswith("/"):
         return redirect("/")
     else:

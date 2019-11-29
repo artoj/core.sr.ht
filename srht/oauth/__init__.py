@@ -1,6 +1,9 @@
-from flask import g, request
+from flask import g, request, redirect, current_app
+from functools import wraps
+from srht.crypto import fernet
 from srht.validation import Validation
 from werkzeug.local import LocalProxy
+import json
 
 current_token = LocalProxy(lambda:
         g.current_oauth_token if "current_oauth_token" in g else None)
@@ -9,6 +12,30 @@ Proxy for the currently authorized OAuth token. The type is implementation
 defined, it's populated from the return value of
 AbstractOAuthService.get_token.
 """
+
+current_user = LocalProxy(lambda:
+        g.current_user if "current_user" in g else None)
+"""
+Proxy for the currently authorzied user. The type is implementation defined,
+it's populated from the return value of AbstractOAuthService.get_user.
+"""
+
+def login_user(user, set_cookie=False):
+    g.current_user = user
+    g.set_current_user = set_cookie
+
+def logout_user():
+    g.current_user = None
+    g.set_current_user = True
+
+def loginrequired(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not current_user:
+            return redirect(current_app.oauth_service.oauth_url(request.url))
+        else:
+            return f(*args, **kwargs)
+    return wrapper
 
 class OAuthError(Exception):
     def __init__(self, err, *args, status=401, **kwargs):

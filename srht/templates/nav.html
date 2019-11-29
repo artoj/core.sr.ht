@@ -19,7 +19,7 @@
     <a href="{{get_origin("meta.sr.ht", external=True)}}/profile">
       {{current_user.username}}</a>
     &mdash;
-    <a href="/logout">Log out</a>
+    <a href="{{logout_url}}">Log out</a>
   </span>
   {% else %}
   <span class="navbar-text">

@@ -4,13 +4,14 @@ import requests
 from collections import namedtuple
 from datetime import datetime
 from flask import current_app, url_for
-from srht.config import cfg, get_origin
 from srht.api import get_results, ensure_webhooks
+from srht.config import cfg, get_origin
+from srht.crypto import encrypt_request_authorization
 from srht.database import db
 from srht.flask import DATE_FORMAT
 from srht.oauth import OAuthError, ExternalUserMixin, UserType, OAuthScope
-from werkzeug.local import LocalProxy
 from urllib.parse import quote_plus
+from werkzeug.local import LocalProxy
 
 metasrht = get_origin("meta.sr.ht")
 
@@ -24,7 +25,7 @@ class AbstractOAuthService(abc.ABC):
     """
     def __init__(self, client_id, client_secret,
             required_scopes=["profile"], delegated_scopes=[],
-            token_class=None, user_class=None):
+            token_class=None, user_class=None, client_class=None):
         """
         required_scopes: list of scopes (in string form) to request from
         meta.sr.ht when authenticating web users
@@ -36,8 +37,9 @@ class AbstractOAuthService(abc.ABC):
         self.client_secret = client_secret
         self.required_scopes = required_scopes
         self.delegated_scopes = delegated_scopes
-        self.OAuthToken = token_class
         self.User = user_class
+        self.OAuthToken = token_class
+        self.OAuthClient = client_class
 
         self._get = (lambda *args, **kwargs:
                 self._request("GET", *args, **kwargs))
@@ -117,7 +119,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         _token = self.delegated_exchange(token, revocation_url)
         expires = datetime.strptime(_token["expires"], DATE_FORMAT)
         scopes = set(OAuthScope(s) for s in _token["scopes"].split(","))
-        user = self.lookup_or_register(token, expires, _token["scopes"])
+        user = self.lookup_via_oauth(token, expires, _token["scopes"])
         db.session.flush()
         oauth_token = self.OAuthToken()
         oauth_token.user_id = user.id
@@ -129,33 +131,21 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         db.session.commit()
         return oauth_token
 
-    def ensure_meta_webhooks(self, user, webhooks):
-        """
-        Ensures that the given webhooks are rigged up with meta.sr.ht for this
-        user. Webhooks should be a dict whose key is the webhook URL and whose
-        values are the list of events to send to that URL.
-        """
-        try:
-            ensure_webhooks(user.oauth_token,
-                    f"{metasrht}/api/user/webhooks", webhooks)
-        except:
-            print(f"Warning: failed to ensure meta webhooks")
-
-    def lookup_or_register(self, token, token_expires, scopes):
-        User = self.User
-        try:
-            r = requests.get(f"{metasrht}/api/user/profile", headers={
-                "Authorization": f"token {token}",
-            })
-            profile = r.json()
-        except Exception as ex:
-            print(ex)
-            raise OAuthError("Temporary authentication failure", status=500)
+    def fetch_unknown_user(self, username):
+        """Fetch an unknown user profile with internal authorization"""
+        r = requests.get(f"{metasrht}/api/user/profile",
+                headers=encrypt_request_authorization(user=
+                    type("User", tuple(), {"username": username})))
         if r.status_code != 200:
-            raise OAuthError(profile, status=r.status_code)
+            return None
+        return r.json()
 
+    def get_user(self, profile):
+        """Get a user object from the meta.sr.ht user profile dict"""
+        User = self.User
         user = User.query.filter(User.username == profile["name"]).one_or_none()
-        if not user:
+        exists = bool(user)
+        if not exists:
             user = User()
             user.username = profile["name"]
             db.session.add(user)
@@ -169,14 +159,55 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         user.bio = profile["bio"]
         user.location = profile["location"]
         user.url = profile["url"]
+        if not exists:
+            # TODO: Add a version number or something so that we can add new
+            # webhooks as necessary
+            origin = get_origin(current_app.site)
+            webhook_url = origin + url_for("srht.oauth.profile_update")
+            self.ensure_meta_webhooks(user, {
+                webhook_url: ["profile:update"],
+            })
+            db.session.commit()
+        return user
+
+    def lookup_user(self, username):
+        User = self.User
+        user = User.query.filter(User.username == username).one_or_none()
+        if user:
+            return user
+        profile = self.fetch_unknown_user(username)
+        if not profile:
+            return None
+        return self.get_user(profile)
+
+    def ensure_meta_webhooks(self, user, webhooks):
+        """
+        Ensures that the given webhooks are rigged up with meta.sr.ht for this
+        user. Webhooks should be a dict whose key is the webhook URL and whose
+        values are the list of events to send to that URL.
+        """
+        try:
+            ensure_webhooks(user, f"{metasrht}/api/user/webhooks", webhooks)
+        except Exception as ex:
+            print("Warning: failed to ensure meta.sr.ht webhooks:")
+            print(ex)
+
+    def lookup_via_oauth(self, token, token_expires, scopes):
+        User = self.User
+        try:
+            r = requests.get(f"{metasrht}/api/user/profile", headers={
+                "Authorization": f"token {token}",
+            })
+            profile = r.json()
+        except Exception as ex:
+            print(ex)
+            raise OAuthError("Temporary authentication failure", status=500)
+        if r.status_code != 200:
+            raise OAuthError(profile, status=r.status_code)
+        user = self.get_user(profile)
         user.oauth_token = token
         user.oauth_token_expires = token_expires
         user.oauth_token_scopes = scopes
-        origin = get_origin(current_app.site)
-        webhook_url = origin + url_for("srht.oauth.profile_update")
-        self.ensure_meta_webhooks(user, {
-            webhook_url: ["profile:update"],
-        })
         return user
 
     def delegated_exchange(self, token, revocation_url):

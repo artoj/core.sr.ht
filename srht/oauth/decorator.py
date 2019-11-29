@@ -1,11 +1,65 @@
-from flask import current_app, request, g
+from datetime import datetime, timedelta
+from flask import current_app, request, g, abort
 from functools import wraps
-from srht.config import cfg
+from srht.config import cfg, get_origin
+from srht.crypto import encrypt_request_authorization
+from srht.crypto import verify_encrypted_authorization
+from srht.database import db
 from srht.oauth import OAuthError, UserType
 from srht.oauth.scope import OAuthScope
 from srht.validation import Validation
 import hashlib
 import requests
+
+metasrht = get_origin("meta.sr.ht")
+
+def _internal_auth(f, *args, **kwargs):
+    # Used for authenticating internal API users, like other sr.ht sites.
+    oauth_service = current_app.oauth_service
+    OAuthClient = oauth_service.OAuthClient
+    OAuthToken = oauth_service.OAuthToken
+    User = oauth_service.User
+
+    auth = request.headers.get("X-Srht-Authorization")
+    auth = verify_encrypted_authorization(auth)
+    client_id = auth["client_id"]
+    username = auth["username"]
+
+    # Create a synthetic OAuthToken based on the client ID and username
+    token = client_id
+    token_hash = hashlib.sha512((token + username).encode()).hexdigest()
+    oauth_token = OAuthToken.query.filter(
+            OAuthToken.token_hash == token_hash).one_or_none()
+    if not oauth_token:
+        user = User.query.filter(User.username == username).one_or_none()
+        if user == None:
+            if current_app.site == "meta.sr.ht":
+                # The request issuer is asking about a user which doesn't exist
+                # XXX: Is this because the service wasn't notified about an
+                # account deletion? Should we tell them?
+                abort(400)
+            profile = oauth_service.fetch_unknown_user(username)
+            user = oauth_service.get_user(profile)
+        oauth_token = OAuthToken()
+        oauth_token.user = user
+        oauth_token.user_id = user.id
+        # Note: the expiration is meaningless
+        oauth_token.expires = datetime.utcnow() + timedelta(days=9999)
+        if hasattr(oauth_token, "client_id"):
+            client = OAuthClient.query.filter(
+                    OAuthClient.client_id == client_id).one_or_none()
+            if not client:
+                abort(400) # Note: this should never happen
+            oauth_token.client = client
+            oauth_token.client_id = client.id
+        oauth_token.token_hash = token_hash
+        oauth_token.token_partial = "internal"
+        oauth_token._scopes = "*"
+        db.session.add(oauth_token)
+        db.session.commit()
+
+    g.current_oauth_token = oauth_token
+    return f(*args, **kwargs)
 
 def oauth(scopes):
     """
@@ -16,6 +70,10 @@ def oauth(scopes):
     def wrap(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
+            internal = request.headers.get('X-Srht-Authorization')
+            if internal:
+                return _internal_auth(f, *args, **kwargs)
+
             token = request.headers.get('Authorization')
             valid = Validation(request)
             if not token or not token.startswith('token '):

@@ -1,10 +1,9 @@
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+00:00"
 from flask import Flask, Response, request, url_for, render_template, redirect
 from flask import Blueprint, current_app, g, abort, session as flask_session
-from flask_login import LoginManager, current_user
-from functools import wraps
 from enum import Enum
 from srht.config import cfg, cfgi, cfgkeys, config, get_origin
+from srht.crypto import fernet
 from srht.email import mail_exception
 from srht.database import db
 from srht.markdown import markdown
@@ -143,27 +142,6 @@ def paginate_query(query, results_per_page=15):
         "total_results": total_results
     }
 
-class LoginConfig:
-    def __init__(self, client_id, client_secret, base_scopes):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.base_scopes = base_scopes
-
-    def oauth_url(self, return_to, scopes=[]):
-        meta_sr_ht = get_origin("meta.sr.ht", external=True)
-        return "{}/oauth/authorize?client_id={}&scopes={}&state={}".format(
-            meta_sr_ht, self.client_id, ','.join(self.base_scopes + scopes),
-            quote_plus(return_to))
-
-def loginrequired(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not current_user:
-            return redirect(current_app.oauth_service.oauth_url(request.url))
-        else:
-            return f(*args, **kwargs)
-    return wrapper
-
 class ModifiedUnicodeConverter(UnicodeConverter):
     """Added ~ and ^ to safe URL characters, otherwise no changes."""
     def to_url(self, value):
@@ -199,7 +177,10 @@ class SrhtFlask(Flask):
         self.jinja_env.globals['icon'] = icon
         self.jinja_env.globals['csrf_token'] = csrf_token
         self.jinja_loader = ChoiceLoader(choices)
-        self.secret_key = cfg("sr.ht", "secret-key")
+        self.secret_key = cfg("sr.ht", "service-key", default=
+                cfg("sr.ht", "secret-key", default=None))
+        if self.secret_key is None:
+            raise Exception("[sr.ht]service-key missing from config")
 
         self.oauth_service = oauth_service
         self.oauth_provider = oauth_provider
@@ -210,18 +191,6 @@ class SrhtFlask(Flask):
 
             from srht.oauth.scope import set_client_id
             set_client_id(self.oauth_service.client_id)
-
-        self.login_manager = LoginManager()
-        self.login_manager.init_app(self)
-        self.login_manager.anonymous_user = lambda: None
-
-        if self.oauth_service and self.oauth_service.User:
-            @self.login_manager.user_loader
-            def user_loader(username):
-                User = self.oauth_service.User
-                # TODO: Switch to a session token
-                return User.query.filter(
-                        User.username == username).one_or_none()
 
         # TODO: Remove
         self.no_csrf_prefixes = ['/api']
@@ -273,11 +242,13 @@ class SrhtFlask(Flask):
 
         @self.context_processor
         def inject():
+            from srht.oauth import current_user
             user_class = (current_user._get_current_object().__class__
                     if current_user else None)
+            root = get_origin(self.site, external=True)
             ctx = {
-                'root': cfg(self.site, "origin"),
-                'domain': urlparse(cfg(self.site, "origin")).netloc,
+                'root': root,
+                'domain': urlparse(root).netloc,
                 'app': self,
                 'len': len,
                 'any': any,
@@ -302,6 +273,9 @@ class SrhtFlask(Flask):
                 ctx.update({
                     "oauth_url": self.oauth_service.oauth_url(
                         request.full_path),
+                    "logout_url": "{}/logout?return_to={}{}".format(
+                        get_origin("meta.sr.ht", external=True),
+                        root, quote_plus(request.full_path)),
                 })
             return ctx
 
@@ -317,6 +291,63 @@ class SrhtFlask(Flask):
         @self.template_filter()
         def extended_md(text, baselevel=1):
             return markdown(text, ["h1", "h2", "h3", "h4", "h5"], baselevel)
+
+        @self.before_request
+        def get_session_cookie():
+            # TODO: We could probably speed things up by skipping the
+            # round-trip until we actually need any user info which isn't
+            # present in the user's info cookie
+            cookie = request.cookies.get("sr.ht.unified-login.v1")
+            if not cookie:
+                return
+            user_info = json.loads(fernet.decrypt(cookie.encode()).decode())
+            g.current_user = self.oauth_service.get_user(user_info)
+
+    def make_response(self, rv):
+        # Converts responses from dicts to JSON response objects
+        response = None
+
+        def jsonify_wrap(obj):
+            jsonification = json.dumps(obj, default=date_handler)
+            return Response(jsonification, mimetype='application/json')
+
+        if isinstance(rv, tuple) and \
+            (isinstance(rv[0], dict) or isinstance(rv[0], list)):
+            response = jsonify_wrap(rv[0]), rv[1]
+        elif isinstance(rv, dict):
+            response = jsonify_wrap(rv)
+        elif isinstance(rv, list):
+            response = jsonify_wrap(rv)
+        else:
+            response = rv
+        response = super(SrhtFlask, self).make_response(response)
+
+        global_domain = urlparse(get_origin(self.site, external=True)).netloc
+        global_domain = global_domain[global_domain.index("."):]
+        if "set_current_user" in g and g.set_current_user:
+            cookie_key = f"sr.ht.unified-login.v1"
+            if not g.current_user:
+                # Clear user info cookie
+                response.set_cookie(cookie_key, "",
+                        domain=global_domain, max_age=0)
+            else:
+                # Set user info cookie
+                user_info = g.current_user.to_dict(first_party=True)
+                user_info = json.dumps(user_info)
+                response.set_cookie(cookie_key,
+                        fernet.encrypt(user_info.encode()).decode(),
+                        domain=global_domain,
+                        max_age=60 * 60 * 24 * 365)
+
+        path = request.path
+        if hasattr(self, "network_prefs") and not path.startswith("/api"):
+            for key, value in self.network_prefs.items():
+                response.set_cookie(f"{key}-preference",
+                        json.dumps(value),
+                        domain=global_domain,
+                        max_age=60 * 60 * 24 * 365)
+
+        return response
 
     def static_resource(self, path):
         """
@@ -365,32 +396,3 @@ class SrhtFlask(Flask):
                 if site not in members or prefs[0][0] == site
             ]
         return sites
-
-    def make_response(self, rv):
-        # Converts responses from dicts to JSON response objects
-        response = None
-
-        def jsonify_wrap(obj):
-            jsonification = json.dumps(obj, default=date_handler)
-            return Response(jsonification, mimetype='application/json')
-
-        if isinstance(rv, tuple) and \
-            (isinstance(rv[0], dict) or isinstance(rv[0], list)):
-            response = jsonify_wrap(rv[0]), rv[1]
-        elif isinstance(rv, dict):
-            response = jsonify_wrap(rv)
-        elif isinstance(rv, list):
-            response = jsonify_wrap(rv)
-        else:
-            response = rv
-        response = super(SrhtFlask, self).make_response(response)
-
-        path = request.path
-        if hasattr(self, "network_prefs") and not path.startswith("/api"):
-            for key, value in self.network_prefs.items():
-                response.set_cookie(f"{key}-preference",
-                        json.dumps(value),
-                        domain="." + cfg("sr.ht", "site-name"),
-                        max_age=60 * 60 * 24 * 365)
-
-        return response

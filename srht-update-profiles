@@ -15,7 +15,7 @@ for i, user in enumerate(users):
     print(f"Updating {user.username} ({i+1}/{len(users)})")
     try:
         with app.test_request_context():
-            svc.lookup_or_register(user.oauth_token,
+            svc.lookup_via_oauth(user.oauth_token,
                     user.oauth_token_expires, user.oauth_token_scopes)
     except Exception as ex:
         print(f"Update failed: {str(ex)}")
