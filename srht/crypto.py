@@ -26,8 +26,8 @@ try:
 except:
     print("Warning: unable to initialize redis, nonce reuse will be possible")
     redis = type("Redis", tuple(), {
-        get: lambda *args, **kwargs: None,
-        setex: lambda *args, **kwargs: None,
+        "get": lambda *args, **kwargs: None,
+        "setex": lambda *args, **kwargs: None,
     })
 
 def verify_request_signature(request):
