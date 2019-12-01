@@ -61,7 +61,7 @@ def get_authorization(user_or_token):
     else:
         # Token auth
         return {
-            "Authorization": f"token {token}",
+            "Authorization": f"token {user_or_token}",
         }
 
 def get_results(url, user_or_token):
