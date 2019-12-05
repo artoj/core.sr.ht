@@ -1,6 +1,7 @@
 import requests
 from flask import current_app, request
 from srht.crypto import encrypt_request_authorization
+from werkzeug.local import LocalProxy
 
 _default = 1
 
@@ -48,6 +49,9 @@ def paginated_response(id_col, query,
     }
 
 def get_authorization(user_or_token):
+    if isinstance(user_or_token, LocalProxy):
+        # This can happen if current_user is passed into this function
+        user_or_token = user_or_token._get_current_object()
     if isinstance(user_or_token, current_app.oauth_service.User):
         user = user_or_token
         if user.oauth_token:
