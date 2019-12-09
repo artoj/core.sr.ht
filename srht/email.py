@@ -4,6 +4,7 @@ from email.message import Message
 from email.utils import formatdate, make_msgid
 from flask import request, has_request_context, has_app_context, current_app
 from srht.config import cfg, cfgi, cfgb, get_origin
+from unidecode import unidecode
 import base64
 import smtplib
 import pgpy
@@ -17,9 +18,9 @@ smtp_host = cfg("mail", "smtp-host", default=None)
 smtp_port = cfgi("mail", "smtp-port", default=None)
 smtp_user = cfg("mail", "smtp-user", default=None)
 smtp_password = cfg("mail", "smtp-password", default=None)
-smtp_from = cfg("mail", "smtp-from", default=None)
+smtp_from = unidecode(cfg("mail", "smtp-from", default=None))
 error_to = cfg("mail", "error-to", default=None)
-error_from = cfg("mail", "error-from", default=None)
+error_from = unidecode(cfg("mail", "error-from", default=None))
 use_unixfrom = cfgb("mail", "use_unixfrom", default=True)
 meta_url = get_origin("meta.sr.ht")
 
