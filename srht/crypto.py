@@ -21,8 +21,7 @@ public_key = private_key.public_key()
 fernet = Fernet(cfg("sr.ht", "network-key"))
 
 try:
-    from redis import Redis
-    redis = Redis()
+    from srht.redis import redis
 except:
     print("Warning: unable to initialize redis, nonce reuse will be possible")
     redis = type("Redis", tuple(), {
