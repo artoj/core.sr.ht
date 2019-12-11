@@ -1,7 +1,7 @@
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.message import Message
-from email.utils import formatdate, make_msgid
+from email.utils import formataddr, formatdate, make_msgid, parseaddr
 from flask import request, has_request_context, has_app_context, current_app
 from srht.config import cfg, cfgi, cfgb, get_origin
 import base64
@@ -41,6 +41,12 @@ def lookup_key(user, oauth_token):
         return None
     return r.json()["key"]
 
+def format_headers(**headers):
+    headers['From'] = formataddr(parseaddr(headers['From']))
+    if 'Reply-To' in headers:
+        headers['Reply-To'] = formataddr(parseaddr(headers['Reply-To']))
+    return headers
+
 def prepare_email(body, to, subject, encrypt_key=None, **headers):
     multipart = MIMEMultipart(_subtype="signed", micalg="pgp-sha1",
         protocol="application/pgp-signature")
@@ -50,6 +56,7 @@ def prepare_email(body, to, subject, encrypt_key=None, **headers):
     headers.setdefault('To', to)
     headers.setdefault('Date', formatdate())
     headers.setdefault('Message-ID', make_msgid())
+    headers = format_headers(**headers)
 
     text_part = MIMEText(body)
 
