@@ -144,22 +144,20 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         """Get a user object from the meta.sr.ht user profile dict"""
         User = self.User
         user = User.query.filter(User.username == profile["name"]).one_or_none()
-        exists = bool(user)
-        if not exists:
+        if not user:
             user = User()
             user.username = profile["name"]
             db.session.add(user)
-        if "user_type" in profile:
-            user.user_type = UserType(profile["user_type"])
-            user.suspension_notice = profile["suspension_notice"]
-        else:
-            self._preauthorized_warning()
-            user.user_type = UserType.unknown
-        user.email = profile["email"]
-        user.bio = profile["bio"]
-        user.location = profile["location"]
-        user.url = profile["url"]
-        if not exists:
+            if "user_type" in profile:
+                user.user_type = UserType(profile["user_type"])
+                user.suspension_notice = profile["suspension_notice"]
+            else:
+                self._preauthorized_warning()
+                user.user_type = UserType.unknown
+            user.email = profile["email"]
+            user.bio = profile["bio"]
+            user.location = profile["location"]
+            user.url = profile["url"]
             # TODO: Add a version number or something so that we can add new
             # webhooks as necessary
             origin = get_origin(current_app.site)
