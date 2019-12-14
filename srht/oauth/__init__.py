@@ -28,6 +28,9 @@ def logout_user():
     g.current_user = None
     g.set_current_user = True
 
+def freshen_user():
+    g.set_current_user = True
+
 def loginrequired(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
