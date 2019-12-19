@@ -2,7 +2,7 @@ from redis import Redis
 from srht.config import cfg
 from urllib.parse import urlparse
 
-url = cfg("sr.ht", "redis-host", "localhost")
+url = cfg("sr.ht", "redis-host", "redis://localhost")
 url = urlparse(url)
 
 redis = Redis(host=url.hostname,
