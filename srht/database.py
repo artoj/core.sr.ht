@@ -1,19 +1,30 @@
+import hashlib
 import sys
 from alembic import command, context
 from alembic.config import Config, CommandLine
 from argparse import ArgumentParser
 from datetime import datetime
 from logging.config import dictConfig
+from prometheus_client import Counter, Summary
 from sqlalchemy import create_engine, event, engine_from_config, pool
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from srht.config import cfg
+from timeit import default_timer
 from werkzeug.local import LocalProxy
 
 Base = declarative_base()
 
 _db = None
 db = LocalProxy(lambda: _db)
+
+_metrics = type("metrics", tuple(), {
+    m.describe()[0].name: m
+    for m in [
+        Counter("sql_roundtrips", "Number of SQL round-trips"),
+        Summary("sql_query_duration", "Duration of SQL queries"),
+    ]
+})
 
 class DbSession():
     def __init__(self, connection_string, assign_global=True):
@@ -43,6 +54,18 @@ class DbSession():
                 return
             if hasattr(target, 'updated'):
                 target.updated = datetime.utcnow()
+
+        @event.listens_for(self.engine, 'before_cursor_execute')
+        def before_cursor_execute(conn, cursor, statement,
+                    parameters, context, executemany):
+            self._execute_start_time = default_timer()
+
+        @event.listens_for(self.engine, 'after_cursor_execute')
+        def after_cursor_execute(conn, cursor, statement,
+                    parameters, context, executemany):
+            _metrics.sql_roundtrips.inc()
+            _metrics.sql_query_duration.observe(
+                    max(default_timer() - self._execute_start_time, 0))
 
     def create(self):
         Base.metadata.create_all(bind=self.engine)
