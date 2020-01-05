@@ -11,10 +11,13 @@ from srht.validation import Validation
 from datetime import datetime, timedelta
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
 from jinja2 import escape
+from prometheus_client import Counter, Summary, make_wsgi_app
+from timeit import default_timer
 from urllib.parse import urlparse, quote_plus
 from werkzeug.local import LocalProxy
 from werkzeug.routing import UnicodeConverter
 from werkzeug.urls import url_quote
+from werkzeug.wsgi import DispatcherMiddleware
 import binascii
 import hashlib
 import inspect
@@ -153,6 +156,20 @@ class SrhtFlask(Flask):
         super().__init__(name, *args, **kwargs)
 
         self.site = site
+        self.wsgi_app = DispatcherMiddleware(self.wsgi_app, {
+            "/metrics": make_wsgi_app(),
+        })
+        self.metrics = type("metrics", tuple(), {
+            m.describe()[0].name: m
+            for m in [
+                Counter("http_requests", "Number of HTTP requests", [
+                    "method", "route", "status",
+                ]),
+                Summary("request_time", "Duration of HTTP requests", [
+                    "method", "route",
+                ]),
+            ]
+        })
 
         self.url_map.converters['default'] = ModifiedUnicodeConverter
         self.url_map.converters['string'] = ModifiedUnicodeConverter
@@ -302,6 +319,23 @@ class SrhtFlask(Flask):
                 return
             user_info = json.loads(fernet.decrypt(cookie.encode()).decode())
             g.current_user = self.oauth_service.get_user(user_info)
+
+        @self.before_request
+        def begin_track_request():
+            request._srht_start_time = default_timer()
+
+        @self.after_request
+        def track_request(resp):
+            self.metrics.http_requests.labels(
+                method=request.method,
+                route=request.endpoint,
+                status=resp.status_code,
+            ).inc()
+            self.metrics.request_time.labels(
+                method=request.method,
+                route=request.endpoint,
+            ).observe(max(default_timer() - request._srht_start_time, 0))
+            return resp
 
     def make_response(self, rv):
         # Converts responses from dicts to JSON response objects
