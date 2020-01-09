@@ -61,6 +61,16 @@ def verify_request_signature(request):
         print(ex)
         fail()
 
+def verify_payload(payload, signature, nonce):
+    try:
+        payload = payload.encode()
+        signature = base64.b64decode(signature)
+        nonce = nonce.encode()
+        public_key.verify(signature, payload + nonce)
+        return payload
+    except Exception as ex:
+        return None
+
 def sign_payload(payload):
     """
     Returns the signature headers for a payload signed with the sr.ht webhook
