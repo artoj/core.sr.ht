@@ -326,6 +326,8 @@ class SrhtFlask(Flask):
 
         @self.after_request
         def track_request(resp):
+            if not hasattr(request, "_srht_start_time"):
+                return resp
             self.metrics.http_requests.labels(
                 method=request.method,
                 route=request.endpoint,
