@@ -52,7 +52,7 @@ def cfgkeys(section):
     for key in _config[section]:
         yield key
 
-def get_origin(service, external=False):
+def get_origin(service, external=False, default=_throw):
     """
     Fetches the URL for the requested service.
 
@@ -61,6 +61,6 @@ def get_origin(service, external=False):
     to access sr.ht services over a different network than the external net.
     """
     if external:
-        return cfg(service, "origin")
+        return cfg(service, "origin", default=default)
     return cfg(service, "internal-origin", default=
-            cfg(service, "origin"))
+            cfg(service, "origin", default=default))
