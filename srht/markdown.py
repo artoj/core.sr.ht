@@ -16,11 +16,13 @@ class RelativeLinkPrefixRenderer(m.HtmlRenderer):
         self.link_prefix = link_prefix
 
     def link(self, content, url, title=''):
+        maybe_title = f' title="{m.escape_html(title)}"' if title else ''
+        if url.startswith("#"):
+            return f'<a href="{url}"{maybe_title}>{content}</a>'
         p = urlparse(url)
         if not p.netloc and not p.scheme and self.link_prefix:
             path = join(self.link_prefix, p.path)
             url = urlunparse(('', '', path, p.params, p.query, p.fragment))
-        maybe_title = f' title="{m.escape_html(title)}"' if title else ''
         return f'<a href="{url}"{maybe_title}>{content}</a>'
 
 class HighlighterRenderer(m.HtmlRenderer):
