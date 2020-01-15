@@ -113,7 +113,11 @@ class Validation:
                         self.error("{} should be a valid {}".format(name, cls.__name__),
                                 field=name)
                     else:
-                        value = cls(value)
+                        try:
+                            value = cls(value)
+                        except ValueError:
+                            self.error('{} is not a valid {}'.format(
+                                value, cls.__name__), field=name)
             elif cls and not isinstance(value, cls):
                 self.error('{} should be a {}'.format(name, cls.__name__), field=name)
         self._kwargs[name] = value
