@@ -100,7 +100,11 @@ class Validation:
                 if not isinstance(value, int):
                     self.error('{} should be an int'.format(name), field=name)
                 else:
-                    value = cls(value)
+                    try:
+                        value = cls(value)
+                    except ValueError:
+                        self.error('{} is not a valid {}'.format(
+                            value, cls.__name__), field=name)
             elif cls and issubclass(cls, Enum):
                 if not isinstance(value, str):
                     self.error("{} should be an str".format(name), field=name)
