@@ -43,6 +43,7 @@ def lookup_key(user, oauth_token):
 
 def format_headers(**headers):
     headers['From'] = formataddr(parseaddr(headers['From']))
+    headers['To'] = formataddr(parseaddr(headers['To']))
     if 'Reply-To' in headers:
         headers['Reply-To'] = formataddr(parseaddr(headers['Reply-To']))
     return headers
