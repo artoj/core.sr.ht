@@ -1,5 +1,7 @@
+@import "contrast";
 @import "bootstrap/scss/functions";
 @import "bootstrap/scss/variables";
+@import "variables";
 @import "bootstrap/scss/mixins";
 @import "bootstrap/scss/root";
 @import "bootstrap/scss/reboot";
@@ -23,8 +25,8 @@
 
 @import "icons";
 @import "nav";
-
-$base-font-size: 1rem;
+@import "events";
+@import "highlight";
 
 body {
   font-family: sans-serif;
@@ -41,6 +43,26 @@ body {
 
 p {
   margin-bottom: 0.5rem;
+}
+
+a {
+  text-decoration: underline;
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+a.nav-link, a.navbar-brand, a.btn {
+  text-decoration: none;
+}
+
+h1 a, h2 a, h3 a, h4 a, h5 a {
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 label {
@@ -98,7 +120,6 @@ h3 {
   padding-bottom: 0.25rem;
 
   small {
-    @extend .text-muted;
     font-size: 1rem;
     margin-left: 1rem;
   }
@@ -110,7 +131,6 @@ h4 {
   padding-bottom: 0.25rem;
 
   small {
-    @extend .text-muted;
     font-size: 0.8rem;
     margin-left: 1rem;
   }
@@ -147,8 +167,6 @@ h5 {
   }
 
   .btn-danger.btn-fill {
-    background: lighten($danger, 5);
-
     &:hover {
       background: $danger;
     }
@@ -159,88 +177,77 @@ section {
   padding-bottom: 0.5rem;
 }
 
+@mixin btn_type($background, $foreground, $border, $hover) {
+  /* FINDME */
+  background: $background;
+  border: $border 1px solid;
+  color: $foreground;
+
+  @at-root a#{&} {
+    color: $foreground;
+
+    &:hover {
+      color: color_adjust_contrast_AERT($foreground, $hover);
+    }
+  }
+
+  &:hover {
+    background: $hover;
+  }
+}
+
 .btn {
   border-radius: 0;
   padding: 0.1rem 0.75rem;
   font-size: 0.9rem;
-
-  &.btn-default {
-    transition: background 0.1s linear;
-    background: $gray-200;
-    border: $gray-800 1px solid;
-    color: black;
-
-    &:hover {
-      background: $gray-100;
-    }
-  }
-
-  &.btn-primary {
-    border: darken($primary, 40) 1px solid;
-  }
-
-  &.btn-success {
-    border: darken($success, 30) 1px solid;
-  }
-
-  &.btn-info {
-    border: darken($info, 30) 1px solid;
-  }
-
-  &.btn-danger {
-    border: darken($danger, 30) 1px solid;
-  }
-
-  &.btn-link {
-    padding: 0;
-    font-size: $base-font-size;
-    margin-top: -0.1rem;
-  }
-
-  &.btn-fill {
-    display: block;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 100%;
-    border: none;
-    padding: 0;
-    line-height: 1.6;
-  }
+  transition: background 0.1s linear;
 }
 
-.navbar-light .navbar-nav {
-  .nav-link:hover {
+.btn-default {
+  @include btn_type($gray-300, $black, $gray-800, $gray-200);
+}
+
+.btn-primary {
+  @include btn_type(darken($primary, 10), $white,
+    darken($primary, 40), $primary);
+}
+
+.btn-success {
+  @include btn_type(darken($success, 12),
+    color_adjust_contrast_AERT($white, darken($success, 5)),
+    darken($success, 20), darken($success, 10));
+}
+
+.btn-info {
+  @include btn_type(darken($info, 10), $white, darken($info, 40), $info);
+}
+
+.btn-danger {
+  @include btn_type(darken($danger, 5), $white, darken($danger, 40), $danger);
+}
+
+.btn-link {
+  padding: 0;
+  font-size: $base-font-size;
+  margin-top: -0.1rem;
+}
+
+.btn-fill {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  border: none;
+  padding: 0;
+  line-height: 1.6;
+}
+
+.navbar-light {
+  .navbar-brand {
     color: $black;
-  }
-}
-
-.nav-tabs {
-  padding-left: 1rem;
-  margin-bottom: 0.5rem;
-  border-bottom: 3px #ddd solid;
-
-  .nav-link {
-    padding: 0 1rem;
-    border-radius: 0;
-    border: none;
-    color: #777;
-    cursor: pointer;
-
-    &.active, &.active:hover {
-      color: black;
-      background: #ddd;
-    }
-
-    &[disabled], &[disabled]:hover {
-      color: #888;
-      cursor: not-allowed;
-      background: transparent;
-      padding-left: 0;
-      padding-right: 0;
-    }
   }
 }
 
@@ -275,7 +282,7 @@ blockquote {
 }
 
 pre {
-  background: $gray-200;
+  background: $pre-background;
   padding: 0.25rem;
 }
 
@@ -283,44 +290,4 @@ code {
   margin: 0;
   background: transparent;
   color: black;
-}
-
-.event-list {
-  .event {
-    text-overflow: ellipsis;
-    overflow: hidden;
-    padding: 0.5rem;
-    margin: 0.5rem 0;
-    background: #f5f5f5;
-
-    &:first-child {
-      margin-top: 0;
-    }
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    h4 {
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-      margin-bottom: 0;
-      padding: 0;
-    }
-
-    blockquote {
-      margin-bottom: 0.5rem;
-
-      *:last-child {
-        margin-bottom: 0;
-      }
-    }
-
-    *:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  margin-bottom: 1rem;
 }

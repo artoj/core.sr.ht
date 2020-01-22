@@ -1,0 +1,8 @@
+// Overrides for syntax highlighting (agreed, this is the wrong way to fix it)
+.highlight .nl {
+  color: darken(#A0A000, 10) !important;
+}
+
+.highlight .cp {
+  color: darken(#BC7A00, 5) !important;
+}
