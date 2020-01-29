@@ -15,23 +15,14 @@ class RelativeLinkPrefixRenderer(m.HtmlRenderer):
         super().__init__(args, **kwargs)
         self.link_prefix = link_prefix
 
-    def _relative_url(self, url):
+    def link(self, content, url, title=''):
+        maybe_title = f' title="{m.escape_html(title)}"' if title else ''
+        if url.startswith("#"):
+            return f'<a href="{url}"{maybe_title}>{content}</a>'
         p = urlparse(url)
         if not p.netloc and not p.scheme and self.link_prefix:
             path = join(self.link_prefix, p.path)
             url = urlunparse(('', '', path, p.params, p.query, p.fragment))
-        return url
-
-    def image(self, link, title='', alt=''):
-        url = self._relative_url(link)
-        maybe_title = f' title="{m.escape_html(title)}"' if title else ''
-        maybe_alt = f' title="{m.escape_html(alt)}"' if alt else ''
-        return f'<img src="{url}"{maybe_title}{maybe_alt}></img>'
-
-    def link(self, content, url, title=''):
-        maybe_title = f' title="{m.escape_html(title)}"' if title else ''
-        if not url.startswith("#"):
-            url = self._relative_url(url)
         return f'<a href="{url}"{maybe_title}>{content}</a>'
 
 class HighlighterRenderer(m.HtmlRenderer):
@@ -70,7 +61,7 @@ def _img_filter(tag, name, value):
         return True
     if name == "src":
         p = urlparse(value)
-        return p.scheme in ["http", "https", ""]
+        return p.scheme in ["http", "https"]
     return False
 
 def _input_filter(tag, name, value):
