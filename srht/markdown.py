@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from collections import namedtuple
 from jinja2 import Markup, escape
-from posixpath import join
+from urllib.parse import urljoin
 from pygments import highlight
 from pygments.formatters import HtmlFormatter, ClassNotFound
 from pygments.lexers import get_lexer_by_name
@@ -21,7 +21,7 @@ class RelativeLinkPrefixRenderer(m.HtmlRenderer):
             return f'<a href="{url}"{maybe_title}>{content}</a>'
         p = urlparse(url)
         if not p.netloc and not p.scheme and self.link_prefix:
-            path = join(self.link_prefix, p.path)
+            path = urljoin(self.link_prefix, p.path)
             url = urlunparse(('', '', path, p.params, p.query, p.fragment))
         return f'<a href="{url}"{maybe_title}>{content}</a>'
 
