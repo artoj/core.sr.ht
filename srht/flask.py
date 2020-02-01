@@ -17,7 +17,10 @@ from urllib.parse import urlparse, quote_plus
 from werkzeug.local import LocalProxy
 from werkzeug.routing import UnicodeConverter
 from werkzeug.urls import url_quote
-from werkzeug.wsgi import DispatcherMiddleware
+try:
+    from werkzeug.wsgi import DispatcherMiddleware
+except ImportError:
+    from werkzeug.middleware.dispatcher import DispatcherMiddleware
 import binascii
 import hashlib
 import inspect
