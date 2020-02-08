@@ -39,6 +39,7 @@ setup(
       'misaka',
       'pygments',
       'cryptography',
+      'prometheus_client'
   ],
   license = 'BSD-3-Clause',
   package_data={
