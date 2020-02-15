@@ -13,16 +13,36 @@ import re
 class RelativeLinkPrefixRenderer(m.HtmlRenderer):
     def __init__(self, *args, link_prefix=None, **kwargs):
         super().__init__(args, **kwargs)
-        self.link_prefix = link_prefix
+        if isinstance(link_prefix, (tuple, list)):
+            # If passing a 2 item list/tuple than assume the second
+            # item is to be used to fetch raw_blob url's (ie, images)
+            try:
+                self.link_prefix, self.blob_prefix = link_prefix
+            except ValueError:
+                self.link_prefix = link_prefix[0]
+                self.blob_prefix = link_prefix[0]
+        else:
+            self.link_prefix = link_prefix
+            self.blob_prefix = link_prefix
+
+    def _relative_url(self, url, use_blob=False):
+        p = urlparse(url)
+        link_prefix = self.link_prefix if not use_blob else self.blob_prefix
+        if not p.netloc and not p.scheme and link_prefix:
+            path = urljoin(link_prefix, p.path)
+            url = urlunparse(('', '', path, p.params, p.query, p.fragment))
+        return url
+
+    def image(self, link, title='', alt=''):
+        url = self._relative_url(link, use_blob=True)
+        maybe_title = f' title="{m.escape_html(title)}"' if title else ''
+        maybe_alt = f' title="{m.escape_html(alt)}"' if alt else ''
+        return f'<img src="{url}"{maybe_title}{maybe_alt}></img>'
 
     def link(self, content, url, title=''):
         maybe_title = f' title="{m.escape_html(title)}"' if title else ''
-        if url.startswith("#"):
-            return f'<a href="{url}"{maybe_title}>{content}</a>'
-        p = urlparse(url)
-        if not p.netloc and not p.scheme and self.link_prefix:
-            path = urljoin(self.link_prefix, p.path)
-            url = urlunparse(('', '', path, p.params, p.query, p.fragment))
+        if not url.startswith("#"):
+            url = self._relative_url(url)
         return f'<a href="{url}"{maybe_title}>{content}</a>'
 
 class HighlighterRenderer(m.HtmlRenderer):
@@ -61,7 +81,7 @@ def _img_filter(tag, name, value):
         return True
     if name == "src":
         p = urlparse(value)
-        return p.scheme in ["http", "https"]
+        return p.scheme in ["http", "https", ""]
     return False
 
 def _input_filter(tag, name, value):
