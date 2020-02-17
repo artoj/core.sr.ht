@@ -10,6 +10,8 @@ import bleach
 import misaka as m
 import re
 
+SRHT_MARKDOWN_VERSION = 1
+
 class RelativeLinkPrefixRenderer(m.HtmlRenderer):
     def __init__(self, *args, link_prefix=None, **kwargs):
         super().__init__(args, **kwargs)
