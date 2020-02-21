@@ -145,7 +145,8 @@ Request headers:
         body = f"""
 {traceback.format_exc()}"""
     if has_app_context():
-        subject = f"[{current_app.site}] {ex.__class__.__name__}: {str(ex)}"
+        subject = (f"[{current_app.site}] {ex.__class__.__name__} on " +
+            f"{request.method} {request.url}")
     else:
-        subject = f"{ex.__class__.__name__} {str(ex)}"
+        subject = f"{ex.__class__.__name__}"
     send_email(body, error_to, subject, **{"From": error_from})
