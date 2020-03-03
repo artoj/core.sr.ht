@@ -23,6 +23,17 @@ error_from = cfg("mail", "error-from", default=None)
 use_unixfrom = cfgb("mail", "use_unixfrom", default=True)
 meta_url = get_origin("meta.sr.ht")
 
+def micalg_for(hash_alg):
+    return {
+        pgpy.constants.HashAlgorithm.MD5: "pgp-md5",
+        pgpy.constants.HashAlgorithm.SHA1: "pgp-sha1",
+        pgpy.constants.HashAlgorithm.RIPEMD160: "pgp-ripemd160",
+        pgpy.constants.HashAlgorithm.SHA256: "pgp-sha256",
+        pgpy.constants.HashAlgorithm.SHA384: "pgp-sha384",
+        pgpy.constants.HashAlgorithm.SHA512: "pgp-sha512",
+        pgpy.constants.HashAlgorithm.SHA224: "pgp-sha224",
+    }[hash_alg]
+
 def lookup_key(user, oauth_token):
     """
     Looks up the preferred PGP key for the given username and their OAuth token.
@@ -49,9 +60,6 @@ def format_headers(**headers):
     return headers
 
 def prepare_email(body, to, subject, encrypt_key=None, **headers):
-    multipart = MIMEMultipart(_subtype="signed", micalg="pgp-sha1",
-        protocol="application/pgp-signature")
-
     headers['Subject'] = subject
     headers.setdefault('From', smtp_from or smtp_user)
     headers.setdefault('To', to)
@@ -62,14 +70,15 @@ def prepare_email(body, to, subject, encrypt_key=None, **headers):
     text_part = MIMEText(body)
 
     if site_key:
-        signature = str(site_key.sign(text_part.as_string().replace('\n', '\r\n')))
+        signature = site_key.sign(text_part.as_string().replace('\n', '\r\n'))
         sig_part = Message()
         sig_part['Content-Type'] = 'application/pgp-signature; name="signature.asc"'
         sig_part['Content-Description'] = 'OpenPGP digital signature'
-        sig_part.set_payload(signature)
+        sig_part.set_payload(str(signature))
 
-        multipart = MIMEMultipart(_subtype="signed", micalg="pgp-sha1",
-            protocol="application/pgp-signature")
+        multipart = MIMEMultipart(_subtype="signed",
+                micalg=micalg_for(signature.hash_algorithm),
+                protocol="application/pgp-signature")
         multipart.attach(text_part)
         multipart.attach(sig_part)
     else:
