@@ -1,3 +1,33 @@
+.navbar {
+  flex-wrap: wrap;
+
+  .navbar-nav {
+    flex-grow: 1;
+    flex-wrap: nowrap;
+
+    @include media-breakpoint-down(xs) {
+      flex-direction: row !important;
+
+      .nav-link {
+        padding: 0 0.5rem;
+
+        &:first-child {
+          padding-left: 0;
+        }
+      }
+
+    }
+  }
+
+  .navbar-text {
+    color: $black;
+
+    @include media-breakpoint-down(xs) {
+      padding-bottom: 0;
+    }
+  }
+}
+
 .nav-tabs {
   padding-left: 1rem;
   margin-bottom: 0.5rem;
@@ -19,8 +49,6 @@
       color: $gray-800;
       cursor: not-allowed;
       background: transparent;
-      padding-left: 0;
-      padding-right: 0;
     }
   }
 }
@@ -31,6 +59,11 @@
 
   .container, .container-fluid {
     display: flex;
+    flex-wrap: wrap;
+
+    @include media-breakpoint-down(sm) {
+      flex-direction: column;
+    }
   }
 
   &.vertical {
@@ -42,11 +75,6 @@
     display: inline;
     margin: 0;
     padding-right: 1rem;
-
-    @include media-breakpoint-down(xs) {
-      flex-grow: 1;
-      text-align: center;
-    }
   }
 
   .nav {
@@ -54,6 +82,7 @@
     margin: 0;
     flex-grow: 1;
     display: inline-flex;
+    flex-wrap: nowrap;
     padding: 0;
 
     li {
@@ -67,9 +96,8 @@
       }
     }
 
-    @include media-breakpoint-down(md) {
-      flex-direction: column;
-      padding-bottom: 1rem;
+    @include media-breakpoint-down(sm) {
+      flex-wrap: wrap;
 
       li {
         align-self: flex-start;

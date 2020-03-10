@@ -2,7 +2,7 @@
   {{site_name}}
   <span class="text-danger">{{site.split(".")[0]}}</span>
 </a>
-<ul class="navbar-nav mr-auto d-none d-sm-flex">
+<ul class="navbar-nav">
   {% for _site in network %}
   <li class="nav-item {{'active' if _site == site else ''}}">
     <a
