@@ -10,7 +10,7 @@ import bleach
 import misaka as m
 import re
 
-SRHT_MARKDOWN_VERSION = 2
+SRHT_MARKDOWN_VERSION = 3
 
 class RelativeLinkPrefixRenderer(m.HtmlRenderer):
     def __init__(self, *args, link_prefix=None, **kwargs):
@@ -30,6 +30,8 @@ class RelativeLinkPrefixRenderer(m.HtmlRenderer):
     def _relative_url(self, url, use_blob=False):
         p = urlparse(url)
         link_prefix = self.link_prefix if not use_blob else self.blob_prefix
+        if not link_prefix:
+            return url
         if not link_prefix.endswith("/"):
             link_prefix += "/"
         if not p.netloc and not p.scheme and link_prefix:
