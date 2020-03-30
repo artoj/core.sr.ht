@@ -76,7 +76,7 @@ def oauth(scopes):
 
             token = request.headers.get('Authorization')
             valid = Validation(request)
-            if not token or not token.startswith('token '):
+            if not token or not (token.startswith('token ') or token.startswith('Bearer ')):
                 return valid.error("No authorization supplied (expected an "
                     "OAuth token)", status=401)
 
