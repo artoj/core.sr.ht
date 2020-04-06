@@ -74,7 +74,7 @@ def get_results(url, user_or_token):
         rurl = f"{url}?start={response['next']}"
         r = requests.get(rurl, headers=get_authorization(user_or_token))
         if r.status_code != 200:
-            raise Exception(r.json())
+            raise Exception(r.text)
         response = r.json()
         yield from response["results"]
 

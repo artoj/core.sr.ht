@@ -291,3 +291,7 @@ code {
   background: transparent;
   color: black;
 }
+
+.markdown table {
+  @extend .table;
+}

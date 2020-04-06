@@ -10,7 +10,7 @@ import bleach
 import misaka as m
 import re
 
-SRHT_MARKDOWN_VERSION = 3
+SRHT_MARKDOWN_VERSION = 4
 
 class RelativeLinkPrefixRenderer(m.HtmlRenderer):
     def __init__(self, *args, link_prefix=None, **kwargs):
@@ -142,7 +142,10 @@ def markdown(text, tags=[], baselevel=1, link_prefix=None):
     html = cleaner.clean(html)
     formatter = HtmlFormatter()
     style = formatter.get_style_defs('.highlight') + " .highlight { background: inherit; }"
-    return Markup(f"<style>{style}</style>" + add_noopener(html))
+    return Markup(f"<style>{style}</style>"
+            + "<div class='markdown'>"
+            + add_noopener(html)
+            + "</div>")
 
 Heading = namedtuple("Header", ["level", "name", "id", "children", "parent"])
 
