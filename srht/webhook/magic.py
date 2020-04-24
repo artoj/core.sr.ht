@@ -57,6 +57,8 @@ class _SubscriptionMixin:
 
     @property
     def events(self):
+        if not self._events:
+            return []
         return [self._Webhook.Events(e) for e in self._events.split(",")]
 
     @events.setter
