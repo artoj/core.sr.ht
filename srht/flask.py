@@ -2,7 +2,7 @@ DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+00:00"
 from flask import Flask, Response, request, url_for, render_template, redirect
 from flask import Blueprint, current_app, g, abort, session as flask_session
 from enum import Enum
-from srht.config import cfg, cfgi, cfgkeys, config, get_origin
+from srht.config import cfg, cfgi, cfgkeys, config, get_origin, get_global_domain
 from srht.crypto import fernet
 from srht.email import mail_exception
 from srht.database import db
@@ -361,8 +361,7 @@ class SrhtFlask(Flask):
             response = rv
         response = super(SrhtFlask, self).make_response(response)
 
-        global_domain = urlparse(get_origin(self.site, external=True)).netloc
-        global_domain = global_domain[global_domain.index("."):]
+        global_domain = get_global_domain(self.site)
         if "set_current_user" in g and g.set_current_user:
             cookie_key = f"sr.ht.unified-login.v1"
             if not g.current_user:

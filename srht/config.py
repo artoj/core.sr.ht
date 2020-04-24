@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 from configparser import ConfigParser
 from werkzeug.local import LocalProxy
 
@@ -64,3 +65,15 @@ def get_origin(service, external=False, default=_throw):
         return cfg(service, "origin", default=default)
     return cfg(service, "internal-origin", default=
             cfg(service, "origin", default=default))
+
+def get_global_domain(site):
+    """
+    Gets the global domain from the config. If it's not defined, assume that
+    the given site is a sub-domain of the global domain, i.e. it is of the
+    form `blah.globaldomain.com`.
+    """
+    global_domain = cfg("sr.ht", "global-domain", None)
+    if global_domain is None:
+        global_domain = urlparse(get_origin(site, external=True)).netloc
+        global_domain = global_domain[global_domain.index("."):]
+    return global_domain
