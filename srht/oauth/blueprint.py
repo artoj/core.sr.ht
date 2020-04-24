@@ -33,6 +33,11 @@ def oauth_callback():
         else:
             return redirect(urllib.parse.unquote(state))
 
+    if not scopes:
+        return render_template("oauth-error.html",
+            details=("This application requires profile access at a mininum " +
+                "to function correctly. " +
+                "Try again and do not untick these permissions."))
     _scopes = [OAuthScope(s) for s in scopes.split(",")]
     if not OAuthScope("profile:read") in _scopes:
         return render_template("oauth-error.html",
