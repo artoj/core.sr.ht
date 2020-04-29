@@ -6,11 +6,13 @@
   </a>
 </span>
 {% else %}
-<a class="navbar-brand" href="/">
+<span class="navbar-brand">
   {{icon('circle', cls='text-muted')}}
-  {{site_name}}
-  <span class="text-danger">{{site.split(".")[0]}}</span>
-</a>
+  <a class="navbar-brand" href="/">
+    {{site_name}}
+    <span class="text-danger">{{site.split(".")[0]}}</span>
+  </a>
+</span>
 {% endif %}
 <ul class="navbar-nav">
   {% if current_user %}
