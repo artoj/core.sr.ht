@@ -1,16 +1,28 @@
+{% if "hub.sr.ht" in network %}
+<a class="navbar-brand" href="{{get_origin("hub.sr.ht", external=True)}}">
+  {{icon('circle', cls='text-muted')}}
+  {{site_name}}
+</a>
+{% else %}
 <a class="navbar-brand" href="/">
+  {{icon('circle', cls='text-muted')}}
   {{site_name}}
   <span class="text-danger">{{site.split(".")[0]}}</span>
 </a>
+{% endif %}
 <ul class="navbar-nav">
   {% if current_user %}
   {% for _site in network %}
+
+  {% if _site != "hub.sr.ht" %}
   <li class="nav-item {{'active' if _site == site else ''}}">
     <a
       class="nav-link"
       href="{{get_origin(_site, external=True)}}"
     >{{_site.split(".")[0]}}</a>
   </li>
+  {% endif %}
+
   {% endfor %}
   {% endif %}
 </ul>

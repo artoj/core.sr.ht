@@ -245,10 +245,9 @@ section {
   line-height: 1.6;
 }
 
-.navbar-light {
-  .navbar-brand {
-    color: $black;
-  }
+.btn-sm {
+  font-size: 0.95rem;
+  padding: 0 0.75rem;
 }
 
 .alert {
