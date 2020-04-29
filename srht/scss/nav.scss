@@ -22,10 +22,6 @@
     text-decoration: underline;
   }
 
-  .navbar-brand:hover {
-    text-decoration: underline;
-  }
-
   .navbar-text {
     color: $black;
 
@@ -36,15 +32,19 @@
 }
 
 .navbar-light .navbar-brand {
-  color: $link-color;
+  & a {
+    text-decoration: none;
+    color: $link-color;
+
+    &:hover {
+      color: darken($link-color, 15);
+      text-decoration: underline;
+    }
+  }
 
   .icon {
     position: relative;
     top: 1px;
-  }
-
-  &:hover {
-    color: darken($link-color, 15);
   }
 }
 

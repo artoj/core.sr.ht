@@ -1,8 +1,10 @@
 {% if "hub.sr.ht" in network %}
-<a class="navbar-brand" href="{{get_origin("hub.sr.ht", external=True)}}">
+<span class="navbar-brand">
   {{icon('circle', cls='text-muted')}}
-  {{site_name}}
-</a>
+  <a href="{{get_origin("hub.sr.ht", external=True)}}">
+    {{site_name}}
+  </a>
+</span>
 {% else %}
 <a class="navbar-brand" href="/">
   {{icon('circle', cls='text-muted')}}
