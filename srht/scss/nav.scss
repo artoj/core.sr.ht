@@ -34,10 +34,9 @@
 .navbar-light .navbar-brand {
   & a {
     text-decoration: none;
-    color: $link-color;
+    color: $black;
 
     &:hover {
-      color: darken($link-color, 15);
       text-decoration: underline;
     }
   }
