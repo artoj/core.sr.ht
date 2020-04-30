@@ -141,6 +141,8 @@ def paginate_query(query, results_per_page=15):
             page = 0
     else:
         page = 0
+    if page < 1:
+        abort(400)
     query = query.limit(results_per_page).all()
     return query, {
         "total_pages": total_pages,
