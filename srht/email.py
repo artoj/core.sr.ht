@@ -91,7 +91,7 @@ def prepare_email(body, to, subject, encrypt_key=None, **headers):
         return multipart
     else:
         pubkey, _ = pgpy.PGPKey.from_blob(encrypt_key.replace('\r', '').encode())
-        pgp_msg = pgpy.PGPMessage.new(multipart.as_string(unixfrom=use_unixfrom))
+        pgp_msg = pgpy.PGPMessage.new(multipart.as_string(unixfrom=False))
         encrypted = str(pubkey.encrypt(pgp_msg))
         ver_part = Message()
         ver_part['Content-Type'] = 'application/pgp-encrypted'
