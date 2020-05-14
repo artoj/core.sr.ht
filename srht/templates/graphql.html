@@ -28,12 +28,14 @@
         'request.credentials': 'same-origin'
       },
       tabs: [
+        /* TODO: Let downstream service provide default tabs */
         {
+          name: "List repositories",
           endpoint: location.protocol + '//' + location.host + '/query',
           query: `# Welcome to the SourceHut GraphQL explorer
 # You can use this to run test requests against the GraphQL API
 # To browse the GraphQL schema, use the "Schema" button on the far right.
-# Here's a sample query:
+# There's a sample query for you here; and more samples in other tabs.
 query {
   # Fetch info about the authenticated user (you):
   me {
@@ -70,8 +72,61 @@ query {
   #     -H Content-Type:application/json \\
   #     -d '{"query": "{ me { canonicalName } }"}' \\
   #     https://git.sr.ht/query
-}`
+}`,
         },
+        {
+          name: "Get latest commit",
+          endpoint: location.protocol + '//' + location.host + '/query',
+          query: `query {
+  me {
+    repositories(filter: { count: 5 }) {
+      results {
+        name
+        HEAD {
+          name
+          object {
+            ... of Commit {
+              id
+              message
+              author { name, email }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+`,
+        },
+        {
+          name: "Get build manifests",
+          endpoint: location.protocol + '//' + location.host + '/query',
+          query: `query {
+  me {
+    repositories(filter: { count: 5 }) {
+      results {
+        multiple: path(path:".builds") {
+          object {
+            ... on Tree {
+              entries {
+                results {
+                  name
+                  object { ... on TextBlob { text } }
+                }
+              }
+            }
+          }
+        },
+        single: path(path:".build.yml") {
+          object {
+            ... on TextBlob { text }
+          }
+        }
+      }
+    }
+  }
+}`
+        }
       ]
     })
   })
