@@ -84,8 +84,8 @@ query {
         name
         HEAD {
           name
-          object {
-            ... of Commit {
+          follow {
+            ... on Commit {
               id
               message
               author { name, email }
