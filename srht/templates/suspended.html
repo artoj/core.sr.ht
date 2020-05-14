@@ -1,11 +1,9 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="container">
-  <h2>Your account has been suspended</h2>
-  <p>The following reason was provided:</p>
-  <blockquote>{{ notice }}</blockquote>
-  <p>
-    Please <a href="mailto:{{cfg('sr.ht', 'owner-email')}}">contact support</a>.
-  </p>
-</div>
+<h2>Your account has been suspended</h2>
+<p>The following reason was provided:</p>
+<blockquote>{{ notice }}</blockquote>
+<p>
+  Please <a href="mailto:{{cfg('sr.ht', 'owner-email')}}">contact support</a>.
+</p>
 {% endblock %}

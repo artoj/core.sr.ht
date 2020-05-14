@@ -344,6 +344,13 @@ class SrhtFlask(Flask):
             ).observe(max(default_timer() - request._srht_start_time, 0))
             return resp
 
+        from srht.oauth import loginrequired
+
+        @self.route("/graphql")
+        @loginrequired
+        def query_explorer():
+            return render_template("graphql.html")
+
     def make_response(self, rv):
         # Converts responses from dicts to JSON response objects
         response = None
