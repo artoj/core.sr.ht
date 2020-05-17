@@ -79,7 +79,7 @@ def datef(d):
         return 'Never'
     if isinstance(d, timedelta):
         return Markup('<span title="{}">{}</span>'.format(
-            f'{d.seconds} seconds', humanize.naturaltime(d).rstrip(" ago")))
+            f'{d.seconds} seconds', humanize.naturaldelta(d)))
     return Markup('<span title="{}">{}</span>'.format(
         d.strftime('%Y-%m-%d %H:%M:%S UTC'),
         humanize.naturaltime(d)))
