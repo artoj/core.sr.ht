@@ -10,7 +10,7 @@ import bleach
 import misaka as m
 import re
 
-SRHT_MARKDOWN_VERSION = 4
+SRHT_MARKDOWN_VERSION = 5
 
 class RelativeLinkPrefixRenderer(m.HtmlRenderer):
     def __init__(self, *args, link_prefix=None, **kwargs):
@@ -80,8 +80,6 @@ class HighlighterRenderer(m.HtmlRenderer):
 class CustomRenderer(RelativeLinkPrefixRenderer, HighlighterRenderer):
     pass
 
-urlregex = re.compile(r'(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?\xab\xbb\u201c\u201d\u2018\u2019]))')
-
 def _img_filter(tag, name, value):
     if name in ["alt", "height", "width"]:
         return True
@@ -126,6 +124,16 @@ def markdown(text, tags=[], baselevel=1, link_prefix=None):
             "q",
         ] + tags,
         attributes=attrs,
+        protocols=[
+            'ftp',
+            'gemini',
+            'gopher',
+            'http',
+            'https',
+            'irc',
+            'ircs',
+            'mailto',
+        ],
         styles=bleach.sanitizer.ALLOWED_STYLES + [
             "margin", "padding",
             "text-align", "font-weight", "text-decoration"
