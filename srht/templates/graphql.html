@@ -6,6 +6,10 @@
   border: 1px solid #eee;
   height: 35rem;
 }
+
+.input textarea, .results pre {
+  height: 35rem;
+}
 </style>
 {% endblock %}
 {% block body %} 
@@ -16,7 +20,7 @@
     experience is improved if you enable it.
   </noscript>
   <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-6 input">
       <textarea
         class="form-control"
         rows="25"
@@ -28,7 +32,7 @@
         document.getElementById('editor').style.display = 'none';
       </script>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-6 results">
       {{results}}
       <button class="btn btn-primary pull-right" type="submit">
         Submit query {{icon('caret-right')}}
