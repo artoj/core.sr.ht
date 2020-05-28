@@ -193,6 +193,14 @@ class SrhtFlask(Flask):
                 "templates"
             )))
 
+            try:
+                with open(os.path.join(path, "schema.graphqls")) as f:
+                    self.graphql_schema = f.read()
+                with open(os.path.join(path, "default_query.graphql")) as f:
+                    self.graphql_query = f.read()
+            except:
+                pass
+
         self.jinja_env.cache = None
         self.jinja_env.filters['date'] = datef
         self.jinja_env.globals['pagination'] = pagination
@@ -343,13 +351,6 @@ class SrhtFlask(Flask):
                 route=request.endpoint,
             ).observe(max(default_timer() - request._srht_start_time, 0))
             return resp
-
-        from srht.oauth import loginrequired
-
-        @self.route("/graphql")
-        @loginrequired
-        def query_explorer():
-            return render_template("graphql.html")
 
     def make_response(self, rv):
         # Converts responses from dicts to JSON response objects

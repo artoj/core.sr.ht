@@ -1,134 +1,83 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset=utf-8/>
-  <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
-  <link rel="stylesheet" href="/static/graphql.css">
-  <script src="/static/graphql.js"></script>
-  <title>GraphQL API Explorer</title>
-</head>
-<body>
-<style type="text/css">
-  html { font-family: "Open Sans", sans-serif; overflow: hidden; }
-  body { margin: 0; background: #172a3a; }
-  noscript { display: block; text-align: center; color: white; }
-</style>
-<noscript>
-  Sorry, this tool requires JavaScript to be enabled.
-</noscript>
-<div id="root"/>
-<script type="text/javascript">
-  window.addEventListener('load', function (event) {
-    const root = document.getElementById('root');
-    root.classList.add('playgroundIn');
-    const wsProto = location.protocol == 'https:' ? 'wss:' : 'ws:'
-    GraphQLPlayground.init(root, {
-      endpoint: location.protocol + '//' + location.host + '/query',
-      settings: {
-        'request.credentials': 'same-origin'
-      },
-      tabs: [
-        {
-          name: "List repositories",
-          endpoint: location.protocol + '//' + location.host + '/query',
-          query: `# Welcome to the SourceHut GraphQL explorer
-# You can use this to run test requests against the GraphQL API
-# To browse the GraphQL schema, use the "Schema" button on the far right.
-# There's a sample query for you here; and more samples in other tabs.
-query {
-  # Fetch info about the authenticated user (you):
-  me {
-    # Grab their canonical name:
-    canonicalName
-    # And a list of repositories:
-    repositories(filter: { count: 5 }) {
-      # This resource is paginated, so it has a cursor. If you pass this value
-      # into repositories(cursor:"...") in a subsequent request, you'll get the
-      # next page.
-      cursor
-      # These are the actual results. Grab the id, name, and updated fields
-      # from each repository.
-      results {
-        id, name, updated
-      }
-    }
-  }
-
-  # Also fetch the API version. Please note that the GraphQL API is considered
-  # experimental: as long as this returns 0.0.0, the API is subject to change
-  # without notice. Some features may not be working; notably, all write
-  # operations are presently unsupported.
-  version {
-    major, minor, patch
-  }
-
-  # On this page, you have been automatically authorized to make API requests
-  # with your sr.ht login cookie. If you wish to make GraphQL requests outside
-  # of the browser, create a personal access token at https://meta.sr.ht/oauth
-  #
-  # curl \\
-  #     -H Authorization:"Bearer <your oauth token>" \\
-  #     -H Content-Type:application/json \\
-  #     -d '{"query": "{ me { canonicalName } }"}' \\
-  #     https://git.sr.ht/query
-}`,
-        },
-        {
-          name: "Get latest commit",
-          endpoint: location.protocol + '//' + location.host + '/query',
-          query: `query {
-  me {
-    repositories(filter: { count: 5 }) {
-      results {
-        name
-        HEAD {
-          name
-          follow {
-            ... on Commit {
-              id
-              message
-              author { name, email }
-            }
-          }
-        }
-      }
-    }
-  }
+{% extends "layout.html" %}
+{% block head %}
+<link rel="stylesheet" href="/static/codemirror.css">
+<style>
+.CodeMirror {
+  border: 1px solid #eee;
+  height: 35rem;
 }
-`,
-        },
-        {
-          name: "Get build manifests",
-          endpoint: location.protocol + '//' + location.host + '/query',
-          query: `query {
-  me {
-    repositories(filter: { count: 5 }) {
-      results {
-        multiple: path(path:".builds") {
-          object {
-            ... on Tree {
-              entries {
-                results {
-                  name
-                  object { ... on TextBlob { text } }
-                }
-              }
-            }
-          }
-        },
-        single: path(path:".build.yml") {
-          object {
-            ... on TextBlob { text }
-          }
-        }
-      }
-    }
+</style>
+{% endblock %}
+{% block body %} 
+<form class="container" id="query-form" method="POST">
+  {{csrf_token()}}
+  <noscript class="alert alert-info d-block">
+    <strong>Notice:</strong> This page works without JavaScript, but the
+    experience is improved if you enable it.
+  </noscript>
+  <div class="row">
+    <div class="col-md-7">
+      <textarea
+        class="form-control"
+        rows="25"
+        id="editor"
+        placeholder="Enter a GraphQL query here"
+        name="query">{{query}}</textarea>
+      <script>
+        /* Reduce effects of FOUC for JS users */
+        document.getElementById('editor').style.display = 'none';
+      </script>
+    </div>
+    <div class="col-md-5">
+      {{results}}
+      <button class="btn btn-primary pull-right" type="submit">
+        Submit query {{icon('caret-right')}}
+      </button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <details style="margin-top: 1rem">
+        <summary>View GraphQL schema</summary>
+        {{schema}}
+      </details>
+    </div>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="/static/codemirror.js"></script>
+<script src="/static/simple.js"></script>
+<script>
+CodeMirror.defineSimpleMode("graphql", {
+  start: [
+    {regex: /"(?:[^\\]|\\.)*?(?:"|$)/, token: "string"},
+    {regex: /#.*/, token: "comment"},
+    {regex: /\w[a-zA-Z]+/, token: "atom"},
+  ],
+  meta: {
+    lineComment: "#"
   }
-}`
-        }
-      ]
-    })
-  })
+});
+
+const el = document.getElementById('editor');
+let cm = CodeMirror(elt => {
+  el.parentNode.replaceChild(elt, el);
+}, {
+  value: el.value,
+  mode: 'graphql',
+  lineNumbers: true,
+});
+
+document.querySelector('button[type="submit"]').addEventListener('click', ev => {
+  ev.preventDefault();
+  let form = document.getElementById('query-form');
+  let node = document.createElement('input');
+  node.type = 'hidden';
+  node.name = 'query';
+  node.value = cm.getValue();
+  form.appendChild(node);
+  form.submit();
+});
 </script>
-</body>
-</html>
+{% endblock %}
