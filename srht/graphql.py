@@ -7,15 +7,18 @@ from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import JsonLexer
 from srht.gql_lexer import GraphqlLexer
+from srht.config import get_origin
 from srht.oauth import loginrequired
 from srht.validation import Validation
+from urllib.parse import urlparse
 
 gql_blueprint = Blueprint('srht.graphql', __name__)
 
 _schema_html = None
 
 def execute_gql(query):
-    r = requests.post("http://meta.sr.ht.local/query",
+    origin = get_origin(current_app.site)
+    r = requests.post(f"{origin}/query",
             cookies=request.cookies,
             headers={"Content-Type": "application/json"},
             json={"query": query})
