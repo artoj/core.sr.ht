@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "layout-full.html" %}
 {% block head %}
 <link rel="stylesheet" href="/static/codemirror.css">
 <style>
@@ -9,14 +9,14 @@
 </style>
 {% endblock %}
 {% block body %} 
-<form class="container" id="query-form" method="POST">
+<form class="container-fluid" id="query-form" method="POST">
   {{csrf_token()}}
   <noscript class="alert alert-info d-block">
     <strong>Notice:</strong> This page works without JavaScript, but the
     experience is improved if you enable it.
   </noscript>
   <div class="row">
-    <div class="col-md-7">
+    <div class="col-md-6">
       <textarea
         class="form-control"
         rows="25"
@@ -28,7 +28,7 @@
         document.getElementById('editor').style.display = 'none';
       </script>
     </div>
-    <div class="col-md-5">
+    <div class="col-md-6">
       {{results}}
       <button class="btn btn-primary pull-right" type="submit">
         Submit query {{icon('caret-right')}}
