@@ -109,12 +109,12 @@ class Validation:
                 if not isinstance(value, str):
                     self.error("{} should be an str".format(name), field=name)
                 else:
-                    if value not in (m[0] for m in cls.__members__.items()):
+                    if value not in cls.__members__.keys():
                         self.error("{} should be a valid {}".format(name, cls.__name__),
                                 field=name)
                     else:
                         try:
-                            value = cls(value)
+                            value = cls[value]
                         except ValueError:
                             self.error('{} is not a valid {}'.format(
                                 value, cls.__name__), field=name)
