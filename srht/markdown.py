@@ -7,14 +7,16 @@ from pygments.formatters import HtmlFormatter, ClassNotFound
 from pygments.lexers import get_lexer_by_name
 from urllib.parse import urlparse, urlunparse
 import bleach
-import misaka as m
+import html
+import mistletoe as m
 import re
 
-SRHT_MARKDOWN_VERSION = 5
+SRHT_MARKDOWN_VERSION = 6
 
-class RelativeLinkPrefixRenderer(m.HtmlRenderer):
-    def __init__(self, *args, link_prefix=None, **kwargs):
-        super().__init__(args, **kwargs)
+class SrhtRenderer(m.HTMLRenderer):
+    def __init__(self, link_prefix=None, baselevel=1):
+        super().__init__()
+        self.baselevel = baselevel
         if isinstance(link_prefix, (tuple, list)):
             # If passing a 2 item list/tuple than assume the second
             # item is to be used to fetch raw_blob url's (ie, images)
@@ -39,46 +41,57 @@ class RelativeLinkPrefixRenderer(m.HtmlRenderer):
             url = urlunparse(('', '', path, p.params, p.query, p.fragment))
         return url
 
-    def image(self, link, title='', alt=''):
-        url = self._relative_url(link, use_blob=True)
-        maybe_title = f' title="{m.escape_html(title)}"' if title else ''
-        maybe_alt = f' title="{m.escape_html(alt)}"' if alt else ''
-        return f'<img src="{url}"{maybe_title}{maybe_alt}></img>'
-
-    def link(self, content, url, title=''):
-        maybe_title = f' title="{m.escape_html(title)}"' if title else ''
+    def render_link(self, token):
+        template = '<a href="{target}"{title}>{inner}</a>'
+        url = token.target
+        if token.title:
+            title = ' title="{}"'.format(self.escape_html(token.title))
+        else:
+            title = ''
+        if not url.startswith("#"):
+            url = self._relative_url(url)
+        target = self.escape_url(url)
+        inner = self.render_inner(token)
+        return template.format(target=target, title=title, inner=inner)
         if not url.startswith("#"):
             url = self._relative_url(url)
         return f'<a href="{url}"{maybe_title}>{content}</a>'
 
-class HighlighterRenderer(m.HtmlRenderer):
-    def __init__(self, *args, baselevel=1, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.baselevel = 1
+    def render_image(self, token):
+        template = '<img src="{}" alt="{}"{} />'
+        url = self._relative_url(token.src, use_blob=True)
+        if token.title:
+            title = ' title="{}"'.format(self.escape_html(token.title))
+        else:
+            title = ''
+        alt = self.render_to_plain(token)
+        return template.format(url, alt, title)
 
-    def blockcode(self, text, lang):
-        try:
-            lexer = get_lexer_by_name(lang, stripall=True)
-        except ClassNotFound:
-            lexer = None
-        if lexer:
-            formatter = HtmlFormatter()
-            return highlight(text, lexer, formatter)
-        # default
-        return '\n<pre><code>{}</code></pre>\n'.format(
-                escape(text.strip()))
+    def render_block_code(self, token):
+        template = '<pre><code{attr}>{inner}</code></pre>'
+        if token.language:
+            try:
+                lexer = get_lexer_by_name(token.language, stripall=True)
+            except ClassNotFound:
+                lexer = None
+            if lexer:
+                formatter = HtmlFormatter()
+                return highlight(token.children[0].content, lexer, formatter)
+            else:
+                attr = ' class="{}"'.format('language-{}'.format(self.escape_html(token.language)))
+        else:
+            attr = ''
+        inner = html.escape(token.children[0].content)
+        return template.format(attr=attr, inner=inner)
 
-    def header(self, content, level):
-        level += self.baselevel
+    def render_heading(self, token):
+        template = '<h{level} id="{_id}">{inner}</h{level}>'
+        level = token.level + self.baselevel
         if level > 6:
             level = 6
-        _id = re.sub(r'[^a-z0-9-_]', '', content.lower().replace(" ", "-"))
-        return f'''\n<h{str(level)} id="{_id}">
-            {content}
-        </h{str(level)}>\n'''
-
-class CustomRenderer(RelativeLinkPrefixRenderer, HighlighterRenderer):
-    pass
+        inner = self.render_inner(token)
+        _id = re.sub(r'[^a-z0-9-_]', '', inner.lower().replace(" ", "-"))
+        return template.format(level=level, inner=inner, _id=_id)
 
 def _img_filter(tag, name, value):
     if name in ["alt", "height", "width"]:
@@ -102,13 +115,14 @@ def add_noopener(html):
         a['rel'] = 'nofollow noopener'
     return str(soup)
 
-def markdown(text, tags=[], baselevel=1, link_prefix=None):
+def markdown(text, baselevel=1, link_prefix=None):
     attrs = {
         "h1": ["id"],
         "h2": ["id"],
         "h3": ["id"],
         "h4": ["id"],
         "h5": ["id"],
+        "h6": ["id"],
         "img": _img_filter,
         "input": _input_filter,
         "*": _wildcard_filter,
@@ -122,7 +136,8 @@ def markdown(text, tags=[], baselevel=1, link_prefix=None):
             "input",
             "img",
             "q",
-        ] + tags,
+            "h1", "h2", "h3", "h4", "h5", "h6",
+        ],
         attributes=attrs,
         protocols=[
             'ftp',
@@ -141,12 +156,8 @@ def markdown(text, tags=[], baselevel=1, link_prefix=None):
         + ["padding-{}".format(p) for p in ["left", "right", "bottom", "top"]]
         + ["margin-{}".format(p) for p in ["left", "right", "bottom", "top"]],
         strip=True)
-    renderer = md = m.Markdown(
-        CustomRenderer(baselevel=baselevel, link_prefix=link_prefix),
-        extensions=(
-            'tables', 'fenced-code', 'footnotes', 'strikethrough', 'highlight',
-            'quote', 'autolink'))
-    html = renderer(text)
+    with SrhtRenderer(link_prefix, baselevel) as renderer:
+        html = renderer.render(m.Document(text))
     html = cleaner.clean(html)
     formatter = HtmlFormatter()
     style = formatter.get_style_defs('.highlight') + " .highlight { background: inherit; }"
@@ -165,7 +176,7 @@ def extract_toc(markup):
     )
     for el in soup.descendants:
         try:
-            level = ["h1", "h2", "h3", "h4", "h5"].index(el.name)
+            level = ["h1", "h2", "h3", "h4", "h5", "h6"].index(el.name)
         except ValueError:
             continue
         while cur.level >= level:

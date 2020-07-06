@@ -333,7 +333,7 @@ class SrhtFlask(Flask):
 
         @self.template_filter()
         def extended_md(text, baselevel=1):
-            return markdown(text, ["h1", "h2", "h3", "h4", "h5"], baselevel)
+            return markdown(text, baselevel)
 
         @self.before_request
         def get_session_cookie():

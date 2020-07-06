@@ -32,11 +32,11 @@ setup(
       'sqlalchemy-utils',
       'psycopg2',
       'markdown',
+      'mistletoe',
       'bleach',
       'requests',
       'BeautifulSoup4',
       'pgpy',
-      'misaka',
       'pygments',
       'cryptography',
       'prometheus_client'
