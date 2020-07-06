@@ -22,15 +22,18 @@ try:
 except ImportError:
     from werkzeug.middleware.dispatcher import DispatcherMiddleware
 import binascii
-import hashlib
-import inspect
-import humanize
-import decimal
 import bleach
+import decimal
+import hashlib
+import humanize
+import inspect
 import json
 import locale
-import sys
 import os
+import psycopg2.errors
+import sqlalchemy.exc
+import sqlalchemy.orm.exc
+import sys
 
 class NamespacedSession:
     def __getitem__(self, key):
@@ -251,8 +254,10 @@ class SrhtFlask(Flask):
 
         @self.errorhandler(500)
         def handle_500(e):
-            if self.debug:
-                raise e
+            if isinstance(e.original_exception, sqlalchemy.exc.InternalError):
+                e = e.original_exception.orig
+                if isinstance(e, psycopg2.errors.ReadOnlySqlTransaction):
+                    return render_template("read_only.html")
             # shit
             try:
                 if hasattr(db, 'session'):
@@ -272,9 +277,6 @@ class SrhtFlask(Flask):
 
         @self.context_processor
         def inject():
-            from srht.oauth import current_user
-            user_class = (current_user._get_current_object().__class__
-                    if current_user else None)
             root = get_origin(self.site, external=True)
             ctx = {
                 'root': root,
@@ -294,11 +296,22 @@ class SrhtFlask(Flask):
                 'site_name': cfg("sr.ht", "site-name", default=None),
                 'environment': cfg("sr.ht", "environment", default="production"),
                 'network': self.get_network(),
-                'current_user': (user_class.query
-                    .filter(user_class.id == current_user.id)
-                ).one_or_none() if current_user else None,
                 'static_resource': self.static_resource,
             }
+            try:
+                from srht.oauth import current_user
+                user_class = (current_user._get_current_object().__class__
+                        if current_user else None)
+                ctx = {
+                    **ctx,
+                    'current_user': (user_class.query
+                        .filter(user_class.id == current_user.id)
+                    ).one_or_none() if current_user else None,
+                }
+            except sqlalchemy.orm.exc.DetachedInstanceError:
+                pass # Can happen while cleaning up from 500 errors
+            except sqlalchemy.exc.InvalidRequestError:
+                pass # Can happen while cleaning up from 500 errors
             if self.oauth_service:
                 ctx.update({
                     "oauth_url": self.oauth_service.oauth_url(

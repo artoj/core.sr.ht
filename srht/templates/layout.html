@@ -19,6 +19,7 @@
     {% endblock %}
   </head>
   <body>
+    {% block environment %}
     {% if environment != "production" or
       (current_user and current_user.user_type.value == 'admin' )%}
     <div style="
@@ -31,6 +32,7 @@
       {{environment.upper()}} ENVIRONMENT
     </div>
     {% endif %}
+    {% endblock %}
     {% block nav %}
     <nav class="container navbar navbar-light navbar-expand-sm">
       {% include 'nav.html' %}

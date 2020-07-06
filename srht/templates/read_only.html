@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block nav %}{% endblock %}
+{% block environment %}{% endblock %}
+{% block body %} 
+<style>
+#warning {
+  background: repeating-linear-gradient(
+    45deg,
+    yellow,
+    yellow 10px,
+    #856404 10px,
+    #856404 20px
+  );
+  height: 1rem;
+  margin-bottom: 1rem;
+}
+
+h2 { text-align: center; }
+</style>
+<div id="warning"></div>
+<div class="container">
+  <h2>{{cfg('sr.ht', 'site-name')}} is currently in read-only mode</h2>
+  <p>
+    We are currently operating in read-only mode and cannot process your
+    request. This usually occurs during planned maintenance or as the result of
+    an unexpected outage. Consult the
+    <a href="{{cfg('sr.ht', 'status-page')}}">status page</a> for updates.
+    This type of issue is usually resolved within a few minutes. You may
+    refresh this page later to re-attempt your request, or press back to return
+    to the previous page.
+  </p>
+</div>
+{% endblock %}
