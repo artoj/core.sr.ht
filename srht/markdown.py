@@ -9,13 +9,31 @@ from urllib.parse import urlparse, urlunparse
 import bleach
 import html
 import mistletoe as m
+from mistletoe.span_token import SpanToken, RawText
 import re
 
-SRHT_MARKDOWN_VERSION = 6
+SRHT_MARKDOWN_VERSION = 7
+
+class PlainLink(SpanToken):
+    """
+    Plain link and mail tokens. ("http://www.google.com" and "test@example.org")
+
+    Attributes:
+        children (iterator): a single RawText node for alternative text.
+        target (str): link target.
+    """
+    pattern = re.compile(r"(?<!\\)(?:\\\\)*((?P<url>[A-Za-z][A-Za-z0-9+.-]{1,31}://[^ \t\n\r\f\v<>]*)|(?P<mail>[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+))")
+    parse_inner = False
+
+    def __init__(self, match):
+        content = match.group(1)
+        self.children = (RawText(content),)
+        self.target = content
+        self.mailto = match.group("mail") is not None
 
 class SrhtRenderer(m.HTMLRenderer):
     def __init__(self, link_prefix=None, baselevel=1):
-        super().__init__()
+        super().__init__(PlainLink)
         self.baselevel = baselevel
         if isinstance(link_prefix, (tuple, list)):
             # If passing a 2 item list/tuple than assume the second
@@ -53,9 +71,15 @@ class SrhtRenderer(m.HTMLRenderer):
         target = self.escape_url(url)
         inner = self.render_inner(token)
         return template.format(target=target, title=title, inner=inner)
-        if not url.startswith("#"):
-            url = self._relative_url(url)
-        return f'<a href="{url}"{maybe_title}>{content}</a>'
+
+    def render_plain_link(self, token):
+        template = '<a href="{target}">{inner}</a>'
+        if token.mailto:
+            target = 'mailto:{}'.format(token.target)
+        else:
+            target = self.escape_url(token.target)
+        inner = self.render_inner(token)
+        return template.format(target=target, inner=inner)
 
     def render_image(self, token):
         template = '<img src="{}" alt="{}"{} />'
