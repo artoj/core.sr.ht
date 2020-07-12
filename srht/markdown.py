@@ -12,7 +12,7 @@ import mistletoe as m
 from mistletoe.span_token import SpanToken, RawText
 import re
 
-SRHT_MARKDOWN_VERSION = 7
+SRHT_MARKDOWN_VERSION = 8
 
 class PlainLink(SpanToken):
     """
@@ -22,8 +22,13 @@ class PlainLink(SpanToken):
         children (iterator): a single RawText node for alternative text.
         target (str): link target.
     """
-    pattern = re.compile(r"(?<!\\)(?:\\\\)*((?P<url>[A-Za-z][A-Za-z0-9+.-]{1,31}://[^ \t\n\r\f\v<>]*)|(?P<mail>[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+))")
+    pattern = re.compile(r"(?<!\\)(?:\\\\)*" # Fail if prefixed by odd number of backslashes
+            r"((?P<url>[A-Za-z][A-Za-z0-9+.-]{1,31}://[^ \t\n\r\f\v<>]*)" # URLs: 'scheme'://'path'
+            r"|(?P<mail>[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9]" # Emails: 'user'@'domain
+                r"(?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+                r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+))")
     parse_inner = False
+    precedence = 3
 
     def __init__(self, match):
         content = match.group(1)
