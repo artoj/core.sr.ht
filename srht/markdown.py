@@ -144,7 +144,7 @@ def add_noopener(html):
         a['rel'] = 'nofollow noopener'
     return str(soup)
 
-def markdown(text, baselevel=1, link_prefix=None):
+def markdown(text, baselevel=1, link_prefix=None, with_styles=True):
     attrs = {
         "h1": ["id"],
         "h2": ["id"],
@@ -189,11 +189,14 @@ def markdown(text, baselevel=1, link_prefix=None):
         html = renderer.render(m.Document(text))
     html = cleaner.clean(html)
     formatter = HtmlFormatter()
-    style = formatter.get_style_defs('.highlight') + " .highlight { background: inherit; }"
-    return Markup(f"<style>{style}</style>"
-            + "<div class='markdown'>"
-            + add_noopener(html)
-            + "</div>")
+    if with_styles:
+        style = formatter.get_style_defs('.highlight') + " .highlight { background: inherit; }"
+        return Markup(f"<style>{style}</style>"
+                + "<div class='markdown'>"
+                + add_noopener(html)
+                + "</div>")
+    else:
+        return Markup(add_noopener(html))
 
 Heading = namedtuple("Header", ["level", "name", "id", "children", "parent"])
 
