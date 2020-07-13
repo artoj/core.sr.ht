@@ -13,17 +13,18 @@ import requests
 
 metasrht = get_origin("meta.sr.ht")
 
-def _internal_auth(f, *args, **kwargs):
+def _internal_auth(f, auth, *args, **kwargs):
     # Used for authenticating internal API users, like other sr.ht sites.
     oauth_service = current_app.oauth_service
     OAuthClient = oauth_service.OAuthClient
     OAuthToken = oauth_service.OAuthToken
     User = oauth_service.User
 
-    auth = request.headers.get("X-Srht-Authorization")
     auth = verify_encrypted_authorization(auth)
     client_id = auth["client_id"]
-    username = auth["username"]
+    username = auth.get("name", auth.get("username"))
+    if not username:
+        abort(400)
 
     # Create a synthetic OAuthToken based on the client ID and username
     token = client_id
@@ -72,17 +73,22 @@ def oauth(scopes):
         def wrapper(*args, **kwargs):
             internal = request.headers.get('X-Srht-Authorization')
             if internal:
-                return _internal_auth(f, *args, **kwargs)
+                return _internal_auth(f, internal, *args, **kwargs)
 
             token = request.headers.get('Authorization')
             valid = Validation(request)
-            if not token or not (token.startswith('token ') or token.startswith('Bearer ')):
+            if not token or not (token.startswith('token ')
+                    or token.startswith('Bearer ')
+                    or token.startswith('Internal ')):
                 return valid.error("No authorization supplied (expected an "
                     "OAuth token)", status=401)
 
             token = token.split(' ')
             if len(token) != 2:
                 return valid.error("Invalid authorization supplied", status=401)
+
+            if token[0] == "Internal":
+                return _internal_auth(f, token[1], *args, **kwargs)
 
             token = token[1]
             token_hash = hashlib.sha512(token.encode()).hexdigest()

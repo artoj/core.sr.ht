@@ -54,18 +54,12 @@ def get_authorization(user_or_token):
         user_or_token = user_or_token._get_current_object()
     if isinstance(user_or_token, current_app.oauth_service.User):
         user = user_or_token
-        if user.oauth_token:
-            # Token auth
-            return {
-                "Authorization": f"token {user.oauth_token}",
-            }
-        else:
-            # Internal auth
-            return encrypt_request_authorization(user)
+        # Internal auth
+        return encrypt_request_authorization(user)
     else:
         # Token auth
         return {
-            "Authorization": f"token {user_or_token}",
+            "Authorization": f"Bearer {user_or_token}",
         }
 
 def get_results(url, user_or_token):

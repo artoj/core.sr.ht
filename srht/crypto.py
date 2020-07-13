@@ -112,10 +112,11 @@ def encrypt_request_authorization(user=None):
     sr.ht services.
     """
     auth = {
-        "username": user.username,
+        "name": user.username,
         "client_id": current_app.oauth_service.client_id,
+        "node_id": "core.sr.ht legacy",
     }
     auth = fernet.encrypt(json.dumps(auth).encode())
     return {
-        "X-Srht-Authorization": auth.decode(),
+        "Authorization": f"Internal {auth.decode()}",
     }
