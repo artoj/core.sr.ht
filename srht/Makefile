@@ -5,16 +5,20 @@
 
 SRHT_PATH?=/usr/lib/python3.8/site-packages/srht
 
-SCRIPTS+=$(patsubst js/%.js,$(MODULE)static/%.js,$(wildcard js/*.js))
-_STATIC:=$(patsubst _static/%,$(MODULE)static/%,$(wildcard _static/*))
-_STATIC+=$(patsubst $(SRHT_PATH)/static/%,$(MODULE)static/%,$(wildcard $(SRHT_PATH)/static/*))
+_STATIC:=$(patsubst _static/%,$(MODULE)static/%,$(wildcard _static/*.*))
+_STATIC+=$(patsubst $(SRHT_PATH)/static/%,$(MODULE)static/%,$(wildcard $(SRHT_PATH)/static/*.*))
+_STATIC+=$(patsubst $(SRHT_PATH)/static/%,$(MODULE)static/%,$(wildcard $(SRHT_PATH)/static/icons/*))
 
 $(MODULE)static/%: $(SRHT_PATH)/static/%
 	@mkdir -p $(MODULE)static/
-	cp -r $(SRHT_PATH)/static/* $(MODULE)/static/
+	cp -L $< $@
 
 $(MODULE)static/%: _static/%
 	@mkdir -p $(MODULE)static/
+	cp -RLf $< $@
+
+$(MODULE)static/icons/%: $(SRHT_PATH)/static/icons/%
+	@mkdir -p $(MODULE)static/icons/
 	cp -L $< $@
 
 $(MODULE)static/main.css: scss/*.scss ${SRHT_PATH}/scss/*.scss
@@ -32,7 +36,7 @@ $(MODULE)static/%.js: js/%.js
 	@mkdir -p $(MODULE)static/
 	cp $< $@
 
-static: $(SCRIPTS) $(_STATIC) $(MODULE)static/main.min.css
+static: $(_STATIC) $(MODULE)static/main.min.css
 
 all: static
 
