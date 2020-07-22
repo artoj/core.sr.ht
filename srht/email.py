@@ -107,17 +107,23 @@ def prepare_email(body, to, subject, encrypt_key=None, **headers):
             wrapped[key] = headers[key]
         return wrapped
 
+
+def start_smtp():
+    smtp = smtplib.SMTP(smtp_host, smtp_port)
+    smtp.ehlo()
+    if smtp_user and smtp_password:
+        smtp.starttls()
+        smtp.login(smtp_user, smtp_password)
+    return smtp
+
+
 def send_email(body, to, subject, encrypt_key=None, **headers):
     message = prepare_email(body, to, subject, encrypt_key, **headers)
     if not smtp_host:
         print("Not configured to send email. The email we tried to send was:")
         print(message)
         return
-    smtp = smtplib.SMTP(smtp_host, smtp_port)
-    smtp.ehlo()
-    if smtp_user and smtp_password:
-        smtp.starttls()
-        smtp.login(smtp_user, smtp_password)
+    smtp = start_smtp()
     smtp.sendmail(smtp_user, [to], message.as_string(unixfrom=use_unixfrom))
     smtp.quit()
 
