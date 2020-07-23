@@ -20,7 +20,6 @@ smtp_password = cfg("mail", "smtp-password", default=None)
 smtp_from = cfg("mail", "smtp-from", default=None)
 error_to = cfg("mail", "error-to", default=None)
 error_from = cfg("mail", "error-from", default=None)
-use_unixfrom = cfgb("mail", "use_unixfrom", default=True)
 meta_url = get_origin("meta.sr.ht")
 
 def micalg_for(hash_alg):
@@ -124,7 +123,7 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
         print(message)
         return
     smtp = start_smtp()
-    smtp.sendmail(smtp_user, [to], message.as_string(unixfrom=use_unixfrom))
+    smtp.sendmail(smtp_user, [to], message.as_string(unixfrom=False))
     smtp.quit()
 
 def mail_exception(ex):
