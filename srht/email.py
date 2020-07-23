@@ -123,7 +123,7 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
         print(message)
         return
     smtp = start_smtp()
-    smtp.sendmail(smtp_from, [to], message.as_string(unixfrom=False))
+    smtp.send_message(message, smtp_from, [to])
     smtp.quit()
 
 def mail_exception(ex):
