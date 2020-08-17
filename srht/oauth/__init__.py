@@ -44,10 +44,10 @@ class OAuthError(Exception):
     def __init__(self, err, *args, status=401, **kwargs):
         super().__init__(*args, **kwargs)
         if isinstance(err, dict):
-            self.response = err
+            self.response = err, status
         else:
             valid = Validation(request)
-            valid.error(err)
+            valid.error(err, status=status)
             self.response = valid.response
         self.status = status
 
