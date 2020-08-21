@@ -4,7 +4,7 @@
   {% if page != 1 %}
     <a
       class="btn btn-default"
-      href="?page={{ page - 1 }}{{ '&search=' + search if search else '' }}"
+      href="?page={{ page - 1 }}{{ coalesce_search_terms() }}"
     >
       {{icon('caret-left')}}
       prev
@@ -18,7 +18,7 @@
   {% if page != total_pages %}
     <a
       class="btn btn-default"
-      href="?page={{ page + 1 }}{{ '&search=' + search if search else '' }}"
+      href="?page={{ page + 1 }}{{ coalesce_search_terms() }}"
     >
       next
       {{icon('caret-right')}}

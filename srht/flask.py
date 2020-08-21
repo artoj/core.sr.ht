@@ -107,9 +107,19 @@ def icon(i, cls=""):
     return Markup(f'<span class="icon icon-{i} {cls}">{svg}</span>')
 
 @contextfunction
+def coalesce_search_terms(context):
+    ret = ""
+    for key in ["search"] + context.get("search_keys") or []:
+        val = context.get(key)
+        if val:
+            ret += f"&{key}={val}"
+    return ret
+
+@contextfunction
 def pagination(context):
     template = context.environment.get_template("pagination.html")
-    return Markup(template.render(**context.parent))
+    return Markup(template.render(**context.parent,
+            coalesce_search_terms=coalesce_search_terms))
 
 def csrf_token():
     if '_csrf_token_v2' not in flask_session:
