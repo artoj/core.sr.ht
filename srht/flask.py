@@ -109,7 +109,7 @@ def icon(i, cls=""):
 @contextfunction
 def coalesce_search_terms(context):
     ret = ""
-    for key in ["search"] + context.get("search_keys") or []:
+    for key in ["search"] + (context.get("search_keys") or []):
         val = context.get(key)
         if val:
             ret += f"&{key}={val}"
