@@ -2,8 +2,12 @@ from urllib.parse import urlparse
 from configparser import ConfigParser
 from werkzeug.local import LocalProxy
 
+
+class _Throw:
+    pass
+
+
 _config = None
-_throw = 1
 
 config = LocalProxy(lambda: _config)
 
@@ -21,30 +25,30 @@ def load_config():
 
 load_config()
 
-def cfg(section, key, default=_throw):
+def cfg(section, key, default=_Throw):
     if _config:
         if section in _config and key in _config[section]:
             return _config.get(section, key)
-    if default is _throw:
+    if default == _Throw:
         raise Exception("Config option [{}] {} not found".format(
             section, key))
     return default
 
-def cfgi(section, key, default=_throw):
+def cfgi(section, key, default=_Throw):
     v = cfg(section, key, default)
-    if not v or v is default:
+    if not v or v == default:
         return v
     return int(v)
 
-def cfgb(section, key, default=_throw):
+def cfgb(section, key, default=_Throw):
     v = cfg(section, key, default)
-    if not v or v is default:
+    if not v or v == default:
         return v
     if v.lower() in ['true', 'yes', 'on', '1']:
         return True
     if v.lower() in ['false', 'no', 'off', '0']:
         return False
-    if default is _throw:
+    if default == _Throw:
         raise Exception("Config option [{}] {} isn't a boolean value.".format(
             section, key))
     return default
@@ -53,7 +57,7 @@ def cfgkeys(section):
     for key in _config[section]:
         yield key
 
-def get_origin(service, external=False, default=_throw):
+def get_origin(service, external=False, default=_Throw):
     """
     Fetches the URL for the requested service.
 
