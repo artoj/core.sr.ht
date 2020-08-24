@@ -28,6 +28,9 @@ class Validation:
             if contentType and contentType == "application/json":
                 try:
                     self.source = json.loads(request.data.decode('utf-8'))
+                    if not isinstance(self.source, dict):
+                        self.error("Expected JSON dictionary")
+                        self.source = {}
                 except json.JSONDecodeError:
                     self.error("Invalid JSON provided")
                     self.source = {}
