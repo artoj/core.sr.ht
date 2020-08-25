@@ -138,6 +138,50 @@ def _input_filter(tag, name, value):
 def _wildcard_filter(tag, name, value):
     return name in ["style", "class", "colspan", "rowspan"]
 
+_sanitizer_attrs = {
+    "h1": ["id"],
+    "h2": ["id"],
+    "h3": ["id"],
+    "h4": ["id"],
+    "h5": ["id"],
+    "h6": ["id"],
+    "img": _img_filter,
+    "input": _input_filter,
+    "*": _wildcard_filter,
+}
+_sanitizer_attrs.update(bleach.sanitizer.ALLOWED_ATTRIBUTES)
+_sanitizer = bleach.sanitizer.Cleaner(
+    tags=bleach.sanitizer.ALLOWED_TAGS + [
+        "p", "div", "span", "pre", "hr",
+        "dd", "dt", "dl",
+        "table", "thead", "tbody", "tr", "th", "td",
+        "input",
+        "img",
+        "q",
+        "h1", "h2", "h3", "h4", "h5", "h6",
+    ],
+    attributes=_sanitizer_attrs,
+    protocols=[
+        'ftp',
+        'gemini',
+        'gopher',
+        'http',
+        'https',
+        'irc',
+        'ircs',
+        'mailto',
+    ],
+    styles=bleach.sanitizer.ALLOWED_STYLES + [
+        "margin", "padding",
+        "text-align", "font-weight", "text-decoration"
+    ]
+    + [f"padding-{p}" for p in ["left", "right", "bottom", "top"]]
+    + [f"margin-{p}"  for p in ["left", "right", "bottom", "top"]],
+    strip=True)
+
+def sanitize(html):
+    return add_noopener(_sanitizer.clean(html))
+
 def add_noopener(html):
     soup = BeautifulSoup(str(html), 'html.parser')
     for a in soup.findAll('a'):
@@ -145,58 +189,17 @@ def add_noopener(html):
     return str(soup)
 
 def markdown(text, baselevel=1, link_prefix=None, with_styles=True):
-    attrs = {
-        "h1": ["id"],
-        "h2": ["id"],
-        "h3": ["id"],
-        "h4": ["id"],
-        "h5": ["id"],
-        "h6": ["id"],
-        "img": _img_filter,
-        "input": _input_filter,
-        "*": _wildcard_filter,
-    }
-    attrs.update(bleach.sanitizer.ALLOWED_ATTRIBUTES)
-    cleaner = bleach.sanitizer.Cleaner(
-        tags=bleach.sanitizer.ALLOWED_TAGS + [
-            "p", "div", "span", "pre", "hr",
-            "dd", "dt", "dl",
-            "table", "thead", "tbody", "tr", "th", "td",
-            "input",
-            "img",
-            "q",
-            "h1", "h2", "h3", "h4", "h5", "h6",
-        ],
-        attributes=attrs,
-        protocols=[
-            'ftp',
-            'gemini',
-            'gopher',
-            'http',
-            'https',
-            'irc',
-            'ircs',
-            'mailto',
-        ],
-        styles=bleach.sanitizer.ALLOWED_STYLES + [
-            "margin", "padding",
-            "text-align", "font-weight", "text-decoration"
-        ]
-        + ["padding-{}".format(p) for p in ["left", "right", "bottom", "top"]]
-        + ["margin-{}".format(p) for p in ["left", "right", "bottom", "top"]],
-        strip=True)
     with SrhtRenderer(link_prefix, baselevel) as renderer:
         html = renderer.render(m.Document(text))
-    html = cleaner.clean(html)
     formatter = HtmlFormatter()
     if with_styles:
         style = formatter.get_style_defs('.highlight') + " .highlight { background: inherit; }"
         return Markup(f"<style>{style}</style>"
                 + "<div class='markdown'>"
-                + add_noopener(html)
+                + sanitize(html)
                 + "</div>")
     else:
-        return Markup(add_noopener(html))
+        return Markup(sanitize(html))
 
 Heading = namedtuple("Header", ["level", "name", "id", "children", "parent"])
 
