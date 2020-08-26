@@ -126,7 +126,7 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
     smtp.send_message(message, smtp_from, [to])
     smtp.quit()
 
-def mail_exception(ex):
+def mail_exception(ex, user=None):
     if not error_to or not error_from:
         print("Warning: no email configured for error emails")
         return
@@ -154,7 +154,11 @@ Request body:
 
 Request headers:
 
-{headers}"""
+{headers}
+
+Current user:
+
+{user}"""
     else:
         body = f"""
 {traceback.format_exc()}"""

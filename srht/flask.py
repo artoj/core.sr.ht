@@ -270,10 +270,15 @@ class SrhtFlask(Flask):
                     return render_template("read_only.html")
             # shit
             try:
+                from srht.oauth import current_user
+                user = None
                 if hasattr(db, 'session'):
                     db.session.rollback()
+                    if current_user:
+                        user = f"{current_user.canonical_name} " + \
+                                f"<{current_user.email}>"
                     db.session.close()
-                mail_exception(e)
+                mail_exception(e, user=user)
             except Exception as e2:
                 # shit shit
                 raise e2.with_traceback(e2.__traceback__)
