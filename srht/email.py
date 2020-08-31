@@ -126,21 +126,21 @@ def send_email(body, to, subject, encrypt_key=None, **headers):
     smtp.send_message(message, smtp_from, [to])
     smtp.quit()
 
-def mail_exception(ex, user=None):
+def mail_exception(ex, user=None, context=None):
     if not error_to or not error_from:
         print("Warning: no email configured for error emails")
         return
-    try:
+    if has_app_context() and has_request_context():
         data = request.get_data() or b"(no request body)"
-    except:
-        data = "(error getting request data)"
+    else:
+        data = b"(no request body)"
     try:
         data = data.decode()
     except:
         data = base64.b64encode(data)
     if "password" in data:
         data = "(request body contains password)"
-    if has_request_context():
+    if has_app_context() and has_request_context():
         headers = "\n".join(
             key + ": " + value for key, value in request.headers.items())
         body = f"""
@@ -162,7 +162,9 @@ Current user:
     else:
         body = f"""
 {traceback.format_exc()}"""
-    if has_app_context():
+    if context:
+        subject = f"[{context}] {ex.__class__.__name__}"
+    elif has_app_context():
         subject = (f"[{current_app.site}] {ex.__class__.__name__} on " +
             f"{request.method} {request.url}")
     else:
