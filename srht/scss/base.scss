@@ -89,7 +89,7 @@ input[type="checkbox"] {
   top: 2px;
 }
 
-select.form-control {
+select:not([multiple]).form-control {
   border-radius: 0;
   border-color: #888;
   color: $gray-800;
