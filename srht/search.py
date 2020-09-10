@@ -4,7 +4,8 @@ from collections import namedtuple
 
 Term = namedtuple("Term", ["key", "value", "inverse"])
 
-def search(query, search_string, deafult_fn, key_fns={}, fallback_fn=None):
+def search(query, search_string, default_fn, key_fns={}, fallback_fn=None,
+        term_map=None):
     """Filters a query according to the given search string.
 
     The search string is comprised of search terms separated by whitespace.
@@ -31,7 +32,7 @@ def search(query, search_string, deafult_fn, key_fns={}, fallback_fn=None):
         A search string comprised of values and key:value pairs separated by
         whitespace. Values may be quoted.
 
-    deafult_fn : function
+    default_fn : function
         Filter function applied to key-less search terms.
 
     key_fns : map
@@ -43,6 +44,9 @@ def search(query, search_string, deafult_fn, key_fns={}, fallback_fn=None):
         defined in key_fns. Unlike other search function which only take a
         value argument, this function takes both the key and the value as
         arguments.
+
+    term_map : function
+        Filter the terms through this function before parsing.
 
     Returns
     -------
@@ -56,24 +60,28 @@ def search(query, search_string, deafult_fn, key_fns={}, fallback_fn=None):
         If the query string contains a search term with a key for which no
         filter function is defined in `key_fns` and no `fallback_fn` is given.
     """
-    terms = parse_terms(search_string)
-    return apply_terms(query, terms, deafult_fn, key_fns, fallback_fn)
+    terms = parse_terms(search_string, term_map)
+    return apply_terms(query, terms, default_fn, key_fns, fallback_fn)
 
 
-def search_by(query, search_string, fields, key_fns={}, fallback_fn=None):
+def search_by(query, search_string, fields, key_fns={}, fallback_fn=None,
+        term_map=None):
     """
     Same as `search()`, but instead of taking a default filter function,
     takes a list of fields to search by default.
     """
-    def deafult_fn(value):
+    def default_fn(value):
         return or_(f.ilike(f"%{value}%") for f in fields)
 
-    return search(query, search_string, deafult_fn, key_fns, fallback_fn)
+    return search(query, search_string, default_fn, key_fns, fallback_fn,
+            term_map)
 
-def parse_terms(search_string):
+def parse_terms(search_string, term_map=None):
     """Splits a search string into search Terms."""
     search_string = search_string or ""
     for term in shlex.split(search_string):
+        if term_map:
+            term = term_map(term)
         if ":" in term:
             key, value = term.split(":", maxsplit=1)
             if key.startswith("!"):
@@ -84,7 +92,7 @@ def parse_terms(search_string):
             yield Term(None, term, None)
 
 
-def apply_terms(query, terms, deafult_fn, key_fns={}, fallback_fn=None):
+def apply_terms(query, terms, default_fn, key_fns={}, fallback_fn=None):
     """Converts terms to filters, and filters the query."""
     # TODO: OR, case-sensitivity(?)
     if not terms:
@@ -94,7 +102,7 @@ def apply_terms(query, terms, deafult_fn, key_fns={}, fallback_fn=None):
 
     for term in terms:
         if term.key is None:
-            filter = deafult_fn(term.value)
+            filter = default_fn(term.value)
         elif term.key in key_fns:
             filter = key_fns[term.key](term.value)
         elif fallback_fn is not None:
