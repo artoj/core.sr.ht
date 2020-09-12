@@ -113,7 +113,7 @@ def encrypt_request_authorization(user=None):
     """
     auth = {
         "name": user.username,
-        "client_id": current_app.oauth_service.client_id,
+        "client_id": current_app.site,
         "node_id": "core.sr.ht legacy",
     }
     auth = fernet.encrypt(json.dumps(auth).encode())
