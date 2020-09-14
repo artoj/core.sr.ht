@@ -12,7 +12,7 @@ import mistletoe as m
 from mistletoe.span_token import SpanToken, RawText
 import re
 
-SRHT_MARKDOWN_VERSION = 8
+SRHT_MARKDOWN_VERSION = 9
 
 class PlainLink(SpanToken):
     """
@@ -114,7 +114,7 @@ class SrhtRenderer(m.HTMLRenderer):
         return template.format(attr=attr, inner=inner)
 
     def render_heading(self, token):
-        template = '<h{level} id="{_id}">{inner}</h{level}>'
+        template = '<h{level} id="{_id}"><a href="#{_id}">#</a>{inner}</h{level}>'
         level = token.level + self.baselevel
         if level > 6:
             level = 6
