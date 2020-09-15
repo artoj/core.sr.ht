@@ -23,8 +23,7 @@ def _internal_auth(f, auth, *args, **kwargs):
     auth = verify_encrypted_authorization(auth)
     client_id = auth["client_id"]
     username = auth.get("name", auth.get("username"))
-    if not username:
-        abort(400)
+    assert username
 
     # Create a synthetic OAuthToken based on the client ID and username
     token = client_id
@@ -34,11 +33,10 @@ def _internal_auth(f, auth, *args, **kwargs):
     if not oauth_token:
         user = User.query.filter(User.username == username).one_or_none()
         if user == None:
-            if current_app.site == "meta.sr.ht":
-                # The request issuer is asking about a user which doesn't exist
-                # XXX: Is this because the service wasn't notified about an
-                # account deletion? Should we tell them?
-                abort(400)
+            # The request issuer is asking about a user which doesn't exist
+            # XXX: Is this because the service wasn't notified about an
+            # account deletion? Should we tell them?
+            assert current_app.site != "meta.sr.ht"
             profile = oauth_service.fetch_unknown_user(username)
             user = oauth_service.get_user(profile)
         oauth_token = OAuthToken()
@@ -49,8 +47,7 @@ def _internal_auth(f, auth, *args, **kwargs):
         if hasattr(oauth_token, "client_id"):
             client = OAuthClient.query.filter(
                     OAuthClient.client_id == client_id).one_or_none()
-            if not client:
-                abort(400) # Note: this should never happen
+            assert client
             oauth_token.client = client
             oauth_token.client_id = client.id
         oauth_token.token_hash = token_hash

@@ -137,7 +137,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
                 headers=encrypt_request_authorization(user=
                     type("User", tuple(), {"username": username})))
         if r.status_code != 200:
-            return None
+            raise Exception(r.text)
         return r.json()
 
     def get_user(self, profile):

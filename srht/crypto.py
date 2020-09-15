@@ -113,7 +113,8 @@ def encrypt_request_authorization(user=None):
     """
     auth = {
         "name": user.username,
-        "client_id": current_app.site,
+        # TODO: Remove/refactor this once GQL webhooks are done
+        "client_id": current_app.oauth_service.client_id or "meta.sr.ht",
         "node_id": "core.sr.ht legacy",
     }
     auth = fernet.encrypt(json.dumps(auth).encode())
