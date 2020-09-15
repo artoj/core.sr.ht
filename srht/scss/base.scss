@@ -314,6 +314,12 @@ code {
       left: -1rem;
     }
 
+    @media(prefers-reduced-motion) {
+      & > a:first-child {
+        transition: none;
+      }
+    }
+    
     &:hover > a:first-child {
       opacity: 1;
     }
