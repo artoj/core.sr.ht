@@ -47,7 +47,7 @@ def _internal_auth(f, auth, *args, **kwargs):
         if hasattr(oauth_token, "client_id"):
             client = OAuthClient.query.filter(
                     OAuthClient.client_id == client_id).one_or_none()
-            assert client
+            assert client, f"Client ID {client_id} missing"
             oauth_token.client = client
             oauth_token.client_id = client.id
         oauth_token.token_hash = token_hash
