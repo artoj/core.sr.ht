@@ -12,7 +12,7 @@ import mistletoe as m
 from mistletoe.span_token import SpanToken, RawText
 import re
 
-SRHT_MARKDOWN_VERSION = 10
+SRHT_MARKDOWN_VERSION = 11
 
 class PlainLink(SpanToken):
     """
@@ -216,6 +216,7 @@ def extract_toc(markup):
             continue
         while cur.level >= level:
             cur = cur.parent
+        el.a.extract()
         heading = Heading(
             level=level, name=el.text,
             id=el.attrs.get("id"),
