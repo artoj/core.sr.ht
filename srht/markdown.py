@@ -216,7 +216,8 @@ def extract_toc(markup):
             continue
         while cur.level >= level:
             cur = cur.parent
-        el.a.extract()
+        if el.a:
+            el.a.extract()
         heading = Heading(
             level=level, name=el.text,
             id=el.attrs.get("id"),
