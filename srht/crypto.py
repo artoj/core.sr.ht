@@ -102,8 +102,8 @@ def verify_encrypted_authorization(auth):
         ))
     return json.loads(auth)
 
-def encrypt_request_authorization(user=None):
-    if not user:
+def encrypt_request_authorization(user=None, client_id=None):
+    if not user and not client_id:
         from srht.oauth import current_user
         user = current_user
     """
@@ -112,10 +112,11 @@ def encrypt_request_authorization(user=None):
     sr.ht services.
     """
     auth = {
-        "name": user.username,
+        "name": user.username if user else None,
         # TODO: Remove/refactor this once GQL webhooks are done
         "client_id": current_app.oauth_service.client_id or "meta.sr.ht",
         "node_id": "core.sr.ht legacy",
+        "oauth_client_id": client_id if client_id else None,
     }
     auth = fernet.encrypt(json.dumps(auth).encode())
     return {
