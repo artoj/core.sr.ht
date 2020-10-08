@@ -118,8 +118,7 @@ def coalesce_search_terms(context):
 @contextfunction
 def pagination(context):
     template = context.environment.get_template("pagination.html")
-    return Markup(template.render(**context.parent,
-            coalesce_search_terms=coalesce_search_terms))
+    return Markup(template.render(**context.parent))
 
 def csrf_token():
     if '_csrf_token_v2' not in flask_session:
@@ -312,6 +311,7 @@ class SrhtFlask(Flask):
                 'environment': cfg("sr.ht", "environment", default="production"),
                 'network': self.get_network(),
                 'static_resource': self.static_resource,
+                'coalesce_search_terms': coalesce_search_terms,
             }
             try:
                 from srht.oauth import current_user

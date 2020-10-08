@@ -15,6 +15,12 @@
     {% else %}
     <link rel="stylesheet" href="/{{static_resource("static/main.min.css")}}">
     {% endif %}
+    {% if page and page != 1 %}
+    <link rel="prev" href="?page={{ page - 1 }}{{ coalesce_search_terms() }}" />
+    {% endif %}
+    {% if page and page != total_pages %}
+    <link rel="next" href="?page={{ page + 1 }}{{ coalesce_search_terms() }}" />
+    {% endif %}
     {% block head %}
     {% endblock %}
   </head>
