@@ -91,7 +91,7 @@ def verify_encrypted_authorization(auth):
     ID. This is used for internal HTTP requests between sr.ht services.
     """
     try:
-        auth = fernet.decrypt(auth.encode())
+        auth = fernet.decrypt(auth.encode(), ttl=30)
     except InvalidToken:
         abort(Response(
             status=403,
