@@ -33,10 +33,12 @@ def _internal_auth(f, auth, *args, **kwargs):
     if not oauth_token:
         user = User.query.filter(User.username == username).one_or_none()
         if user == None:
-            # The request issuer is asking about a user which doesn't exist
-            # XXX: Is this because the service wasn't notified about an
-            # account deletion? Should we tell them?
-            assert current_app.site != "meta.sr.ht"
+            if current_app.site == "meta.sr.ht":
+                # This is accepted for /api/user/profile for the purpose of
+                # supporting srht.oauth.AbstractOAuthService.fetch_unknown_user
+                assert request.path == "/api/user/profile",\
+                    "Internal authorization token issued for unknown user"
+                abort(404)
             profile = oauth_service.fetch_unknown_user(username)
             user = oauth_service.get_user(profile)
         oauth_token = OAuthToken()
