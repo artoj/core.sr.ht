@@ -173,8 +173,9 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         user = User.query.filter(User.username == username).one_or_none()
         if user:
             return user
-        profile = self.fetch_unknown_user(username)
-        if not profile:
+        try:
+            profile = self.fetch_unknown_user(username)
+        except:
             return None
         return self.get_user(profile)
 
