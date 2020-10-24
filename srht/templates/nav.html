@@ -34,7 +34,12 @@
   {% if current_user %}
   <span class="navbar-text">
     Logged in as
+    {% set hubsrht = get_origin("hub.sr.ht", external=True, default=None) %}
+    {% if hubsrht %}
+    <a href="{{hubsrht}}/~{{current_user.username}}">
+    {% else %}
     <a href="{{get_origin("meta.sr.ht", external=True)}}/profile">
+    {% endif %}
       {{current_user.username}}</a>
     &mdash;
     <a href="{{logout_url}}">Log out</a>
