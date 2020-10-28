@@ -112,6 +112,7 @@ def coalesce_search_terms(context):
     for key in ["search"] + (context.get("search_keys") or []):
         val = context.get(key)
         if val:
+            val = quote_plus(val)
             ret += f"&{key}={val}"
     return ret
 
