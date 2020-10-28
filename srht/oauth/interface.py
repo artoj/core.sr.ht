@@ -1,6 +1,7 @@
 import abc
 import hashlib
 import requests
+import requests.exceptions
 from collections import namedtuple
 from datetime import datetime
 from flask import current_app, url_for
@@ -49,7 +50,10 @@ class AbstractOAuthService(abc.ABC):
                 self._request("DELETE", *args, **kwargs))
 
         if any(self.delegated_scopes):
-            self._ensure_delegated()
+            try:
+                self._ensure_delegated()
+            except requests.exceptions.ConnectionError:
+                pass # Not important
 
     def _ensure_delegated(self):
         current = set()
