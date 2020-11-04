@@ -152,8 +152,9 @@ class Validation:
         return value in self.source or value in self.files
 
 def valid_url(url):
+    allowed_schemes = ('http', 'https', 'gemini', 'gopher')
     try:
         u = parse.urlparse(url)
-        return bool(u.scheme and u.netloc and u.scheme in ['http', 'https'])
+        return bool(u.scheme and u.netloc and u.scheme in allowed_schemes)
     except:
         return False
