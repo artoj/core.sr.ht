@@ -10,6 +10,11 @@
 .input textarea, .results pre {
   height: 35rem;
 }
+
+.highlight .err {
+  /* work around outdated gql impelmentation in pygments */
+  border: none !important;
+}
 </style>
 {% endblock %}
 {% block body %} 
