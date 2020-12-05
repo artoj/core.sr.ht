@@ -139,6 +139,7 @@ def _wildcard_filter(tag, name, value):
     return name in ["style", "class", "colspan", "rowspan"]
 
 _sanitizer_attrs = {
+    "a": ["id"],
     "h1": ["id"],
     "h2": ["id"],
     "h3": ["id"],
