@@ -139,7 +139,7 @@ def _wildcard_filter(tag, name, value):
     return name in ["style", "class", "colspan", "rowspan"]
 
 _sanitizer_attrs = {
-    "a": ["id"],
+    "a": ["id", "href", "title"],
     "h1": ["id"],
     "h2": ["id"],
     "h3": ["id"],
@@ -150,7 +150,6 @@ _sanitizer_attrs = {
     "input": _input_filter,
     "*": _wildcard_filter,
 }
-_sanitizer_attrs.update(bleach.sanitizer.ALLOWED_ATTRIBUTES)
 _sanitizer = bleach.sanitizer.Cleaner(
     tags=bleach.sanitizer.ALLOWED_TAGS + [
         "p", "div", "span", "pre", "hr",
@@ -161,7 +160,7 @@ _sanitizer = bleach.sanitizer.Cleaner(
         "q",
         "h1", "h2", "h3", "h4", "h5", "h6",
     ],
-    attributes=_sanitizer_attrs,
+    attributes={**bleach.sanitizer.ALLOWED_ATTRIBUTES, **_sanitizer_attrs},
     protocols=[
         'ftp',
         'gemini',
