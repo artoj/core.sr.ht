@@ -51,7 +51,7 @@ code {
 .alert-info {
   background: darken(#d1ecf1, 10);
 
-  a {
+  a:not(.btn) {
     color: $primary;
   }
 }
