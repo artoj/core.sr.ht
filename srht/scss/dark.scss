@@ -112,6 +112,7 @@ select.form-control:not([multiple]),
   .navbar-text,
   .navbar-text a,
   .navbar-text a:hover,
+  .navbar-text a:focus,
   .navbar-brand a:hover,
   .navbar-brand:hover {
     color: $white;
@@ -121,6 +122,10 @@ select.form-control:not([multiple]),
     .nav-link {
       // gray-600 is too dark and gray-500 is too light
       color: lighten($gray-600, 5);
+
+      &:focus {
+        color: $gray-500;
+      }
 
       &:hover {
         color: $white;
