@@ -1,0 +1,157 @@
+$primary-dark: darken($primary, 10);
+$success-dark: #2bb34b;
+$danger-dark: #ff3e3e;
+$muted-dark: $gray-400;
+$link-dark: lighten($primary, 10);
+
+body {
+  background: $gray-900;
+  color: $gray-100;
+}
+
+.event {
+  background: $gray-800;
+
+  a:not(.btn) {
+    color: $link-dark;
+  }
+}
+
+a {
+  color: $link-dark;
+}
+
+h3, h4 {
+  border-bottom-color: $gray-700;
+}
+
+pre {
+  color: $gray-100;
+  background: $gray-800;
+}
+
+code {
+  color: $white;
+}
+
+.text-success {
+  // Whose brilliant idea was it to make the text- classes !important in
+  // bootstrap?
+  color: $success-dark !important;
+}
+
+.text-danger {
+  color: $danger-dark !important;
+}
+
+.text-muted {
+  color: $muted-dark !important;
+}
+
+.alert-info {
+  background: darken(#d1ecf1, 10);
+
+  a {
+    color: $primary;
+  }
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="email"].form-control,
+textarea,
+textarea.form-control,
+select.form-control:not([multiple]),
+.form-control {
+  background: $gray-800;
+  color: $white;
+
+  &:active, &:focus {
+    background: $gray-900;
+    color: $white;
+  }
+
+  &[disabled], &[readonly] {
+    background: $gray-900;
+    color: $gray-400;
+  }
+}
+
+.btn {
+  &.btn-default {
+    background: $black;
+    color: $white;
+    border-color: $gray-700;
+
+    &:hover {
+      background: $gray-900;
+      color: $white;
+    }
+  }
+
+  &.btn-link {
+    color: $link-dark;
+  }
+}
+
+.table,
+.table tbody tr,
+.table tbody td,
+.table thead th {
+  background: $gray-800;
+}
+
+.table tbody td {
+  border: 1px solid $gray-900;
+}
+
+.navbar-light {
+  .navbar-brand,
+  .navbar-brand a,
+  .navbar-text,
+  .navbar-text a,
+  .navbar-text a:hover,
+  .navbar-brand a:hover,
+  .navbar-brand:hover {
+    color: $white;
+  }
+
+  .navbar-nav {
+    .nav-link {
+      // gray-600 is too dark and gray-500 is too light
+      color: lighten($gray-600, 5);
+
+      &:hover {
+        color: $white;
+      }
+    }
+
+    .active .nav-link {
+      color: $white;
+    }
+  }
+}
+
+.header-extension {
+  background: $gray-800;
+}
+
+.header-tabbed {
+  border-color: $gray-800;
+
+  .nav {
+    .nav-item .nav-link.active,
+    .nav-item .nav-link:hover {
+      color: $white;
+      background: $gray-800;
+      border-color: $gray-800;
+    }
+
+    .nav-link {
+      color: $gray-400;
+    }
+  }
+}
+
+@import "highlight-dark";

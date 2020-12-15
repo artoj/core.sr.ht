@@ -155,6 +155,7 @@ h5 {
       vertical-align: middle;
       padding: 0.1rem 0.75rem;
       border: 1px solid $gray-400;
+      background: $white;
 
       label {
         margin-bottom: 0;
@@ -328,4 +329,8 @@ code {
       margin: 0 .2rem;
     }
   }
+}
+
+@media(prefers-color-scheme: dark) {
+  @import "dark";
 }
