@@ -39,7 +39,8 @@ setup(
       'pgpy',
       'pygments',
       'cryptography',
-      'prometheus_client'
+      'prometheus_client',
+      'alembic',
   ],
   license = 'BSD-3-Clause',
   package_data={
