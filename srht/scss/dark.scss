@@ -3,6 +3,8 @@ $success-dark: #2bb34b;
 $danger-dark: #ff3e3e;
 $muted-dark: $gray-400;
 $link-dark: lighten($primary, 10);
+$darker: darken($gray-900, 6);
+$border: $gray-700;
 
 body {
   background: $gray-900;
@@ -10,7 +12,8 @@ body {
 }
 
 .event {
-  background: $gray-800;
+  background: $darker;
+  color: $white;
 
   a:not(.btn) {
     color: $link-dark;
@@ -26,8 +29,8 @@ h3, h4 {
 }
 
 pre {
-  color: $gray-100;
-  background: $gray-800;
+  color: $white;
+  background: $darker;
 }
 
 code {
@@ -49,11 +52,31 @@ code {
 }
 
 .alert-info {
-  background: darken(#d1ecf1, 10);
+  background-color: darken(#d1ecf1, 20);
+  border-color: darken(#bee5eb, 10);
+  color: $black;
 
   a:not(.btn) {
     color: $primary;
   }
+}
+
+.alert-success {
+  background-color: darken(#d4edda, 20);
+  border-color: darken(#c3e6cb, 10);
+  color: $black;
+}
+
+.alert-danger {
+  background-color: darken(#f8d7da, 12);
+  border-color: darken(#f5c6cb, 10);
+  color: $black;
+}
+
+.alert-warning {
+  background-color: darken(#fff3cd, 8);
+  border-color: darken(#ffeeba, 10);
+  color: $black;
 }
 
 input[type="text"],
@@ -64,8 +87,9 @@ textarea,
 textarea.form-control,
 select.form-control:not([multiple]),
 .form-control {
-  background: $gray-800;
+  background: $darker;
   color: $white;
+  border-color: $border;
 
   &:active, &:focus {
     background: $gray-900;
@@ -80,18 +104,24 @@ select.form-control:not([multiple]),
 
 .btn {
   &.btn-default {
-    background: $black;
+    background: $gray-900;
     color: $white;
-    border-color: $gray-700;
+    border-color: $border;
 
     &:hover {
-      background: $gray-900;
+      background: $darker;
       color: $white;
     }
   }
 
   &.btn-link {
     color: $link-dark;
+  }
+
+  &.btn-primary,
+  &.btn-success,
+  &.btn-danger {
+    border-color: $darker;
   }
 }
 
@@ -138,19 +168,21 @@ select.form-control:not([multiple]),
   }
 }
 
+$headerbg: $darker;
+
 .header-extension {
-  background: $gray-800;
+  background: $headerbg;
 }
 
 .header-tabbed {
-  border-color: $gray-800;
+  border-color: $headerbg;
 
   .nav {
     .nav-item .nav-link.active,
     .nav-item .nav-link:hover {
       color: $white;
-      background: $gray-800;
-      border-color: $gray-800;
+      background: $headerbg;
+      border-color: $headerbg;
     }
 
     .nav-link {
