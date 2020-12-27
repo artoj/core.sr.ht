@@ -12,7 +12,7 @@ import mistletoe as m
 from mistletoe.span_token import SpanToken, RawText
 import re
 
-SRHT_MARKDOWN_VERSION = 11
+SRHT_MARKDOWN_VERSION = 12
 
 class PlainLink(SpanToken):
     """
@@ -74,6 +74,10 @@ class SrhtRenderer(m.HTMLRenderer):
         if not url.startswith("#"):
             url = self._relative_url(url)
         target = self.escape_url(url)
+
+        for i in range(len(token.children)):
+            if isinstance(token.children[i], PlainLink):
+                token.children[i] = RawText(token.children[i].target)
         inner = self.render_inner(token)
         return template.format(target=target, title=title, inner=inner)
 
