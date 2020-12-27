@@ -18,9 +18,9 @@ from werkzeug.local import LocalProxy
 from werkzeug.routing import UnicodeConverter
 from werkzeug.urls import url_quote
 try:
-    from werkzeug.wsgi import DispatcherMiddleware
-except ImportError:
     from werkzeug.middleware.dispatcher import DispatcherMiddleware
+except ImportError:
+    from werkzeug.wsgi import DispatcherMiddleware
 import binascii
 import bleach
 import decimal

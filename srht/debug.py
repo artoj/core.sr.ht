@@ -25,9 +25,9 @@ def configure_static_arguments(parser):
 def configure_static_serving(app, args):
     if args.static and app.static_folder:
         try:
-            from werkzeug.wsgi import SharedDataMiddleware
-        except ImportError:
             from werkzeug.middleware.shared_data import SharedDataMiddleware
+        except ImportError:
+            from werkzeug.wsgi import SharedDataMiddleware
 
         print("Serving static assets from: {}".format(app.static_folder))
         app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
