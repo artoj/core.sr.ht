@@ -92,8 +92,8 @@ class Validation:
                     value = value.read()
         if not value and (name not in self.source or default):
             value = default
-        if value:
-            if cls and issubclass(cls, IntEnum):
+        if value and cls:
+            if issubclass(cls, IntEnum):
                 if not isinstance(value, int):
                     self.error('{} should be an int'.format(name), field=name)
                 else:
@@ -102,7 +102,7 @@ class Validation:
                     except ValueError:
                         self.error('{} is not a valid {}'.format(
                             value, cls.__name__), field=name)
-            elif cls and issubclass(cls, Enum):
+            elif issubclass(cls, Enum):
                 if not isinstance(value, str):
                     self.error("{} should be an str".format(name), field=name)
                 else:
@@ -115,7 +115,7 @@ class Validation:
                         except ValueError:
                             self.error('{} is not a valid {}'.format(
                                 value, cls.__name__), field=name)
-            elif cls and not isinstance(value, cls):
+            elif not isinstance(value, cls):
                 self.error('{} should be a {}'.format(name, cls.__name__), field=name)
         self._kwargs[name] = value
         return value
