@@ -22,12 +22,15 @@ def execute_gql(query):
             cookies=request.cookies,
             headers={"Content-Type": "application/json"},
             json={"query": query})
-    j = json.dumps(r.json(), indent=2)
-    lexer = JsonLexer()
-    formatter = HtmlFormatter()
-    style = formatter.get_style_defs('.highlight')
-    html = (f"<style>{style}</style>"
-            + highlight(j, lexer, formatter))
+    if r.ok:
+        j = json.dumps(r.json(), indent=2)
+        lexer = JsonLexer()
+        formatter = HtmlFormatter()
+        style = formatter.get_style_defs('.highlight')
+        html = (f"<style>{style}</style>"
+                + highlight(j, lexer, formatter))
+    else:
+        html = (f"<p>graphql execution returned code {r.status_code}</p>")
     return Markup(html)
 
 @gql_blueprint.route("/graphql")
