@@ -3,6 +3,7 @@ from email.mime.multipart import MIMEMultipart
 from email.message import Message
 from email.utils import formataddr, formatdate, make_msgid, parseaddr
 from flask import request, has_request_context, has_app_context, current_app
+from srht.crypto import encrypt_request_authorization
 from srht.config import cfg, cfgi, cfgb, get_origin
 import base64
 import smtplib
@@ -33,14 +34,13 @@ def micalg_for(hash_alg):
         pgpy.constants.HashAlgorithm.SHA224: "pgp-sha224",
     }[hash_alg]
 
-def lookup_key(user, oauth_token):
+def lookup_key(user):
     """
     Looks up the preferred PGP key for the given username and their OAuth token.
     """
     # TODO: we should stash this somewhere and use webhooks to update it
-    r = requests.get(meta_url + "/api/user/profile", headers={
-        "Authorization": "token {}".format(oauth_token)
-    })
+    r = requests.get(meta_url + "/api/user/profile",
+            headers=encrypt_request_authorization(user))
     if r.status_code != 200:
         return None
     key_id = r.json()["use_pgp_key"]
