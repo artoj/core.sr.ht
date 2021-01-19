@@ -78,7 +78,7 @@ class Validation:
 
     def optional(self, name, default=None, cls=None, max_file_size=-1):
         value = self.source.get(name)
-        if not value:
+        if value is None:
             value = self.files.get(name)
             if value and value.filename:
                 if max_file_size >= 0:
@@ -90,10 +90,15 @@ class Validation:
                         value = fbytes
                 else:
                     value = value.read()
-        if not value and (name not in self.source or default):
-            value = default
-        if value and cls:
-            if issubclass(cls, IntEnum):
+        if value is None:
+            if name in self.source and not allow_none:
+                self.error('{} may not be null'.format(name), field=name)
+            elif name in self.source and allow_none:
+                pass
+            else:
+                value = default
+        if cls and value is not None:
+            if cls and issubclass(cls, IntEnum):
                 if not isinstance(value, int):
                     self.error('{} should be an int'.format(name), field=name)
                 else:
