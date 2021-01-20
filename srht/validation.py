@@ -91,10 +91,8 @@ class Validation:
                 else:
                     value = value.read()
         if value is None:
-            if name in self.source and not allow_none:
+            if name in self.source:
                 self.error('{} may not be null'.format(name), field=name)
-            elif name in self.source and allow_none:
-                pass
             else:
                 value = default
         if cls and value is not None:
