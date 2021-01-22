@@ -113,7 +113,6 @@ def encrypt_request_authorization(user=None, client_id=None):
     """
     auth = {
         "name": user.username if user else None,
-        "client_id": "core.sr.ht",
         "node_id": "core.sr.ht legacy",
         "oauth_client_id": client_id if client_id else None,
     }
