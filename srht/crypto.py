@@ -113,8 +113,7 @@ def encrypt_request_authorization(user=None, client_id=None):
     """
     auth = {
         "name": user.username if user else None,
-        # TODO: Remove/refactor this once GQL webhooks are done
-        "client_id": current_app.oauth_service.client_id or "meta.sr.ht",
+        "client_id": "core.sr.ht",
         "node_id": "core.sr.ht legacy",
         "oauth_client_id": client_id if client_id else None,
     }
