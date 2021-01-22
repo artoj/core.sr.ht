@@ -21,12 +21,12 @@ def _internal_auth(f, auth, *args, **kwargs):
     User = oauth_service.User
 
     auth = verify_encrypted_authorization(auth)
-    client_id = auth["client_id"]
+    node_id = auth["node_id"]
     username = auth.get("name", auth.get("username"))
     assert username
 
     # Create a synthetic OAuthToken based on the client ID and username
-    token = client_id
+    token = node_id
     token_hash = hashlib.sha512((token + username).encode()).hexdigest()
     oauth_token = OAuthToken.query.filter(
             OAuthToken.token_hash == token_hash).one_or_none()
@@ -46,12 +46,6 @@ def _internal_auth(f, auth, *args, **kwargs):
         oauth_token.user_id = user.id
         # Note: the expiration is meaningless
         oauth_token.expires = datetime.utcnow() + timedelta(days=9999)
-        if hasattr(oauth_token, "client_id"):
-            client = OAuthClient.query.filter(
-                    OAuthClient.client_id == client_id).one_or_none()
-            assert client, f"Client ID {client_id} missing"
-            oauth_token.client = client
-            oauth_token.client_id = client.id
         oauth_token.token_hash = token_hash
         oauth_token.token_partial = "internal"
         oauth_token._scopes = "*"
