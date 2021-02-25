@@ -435,4 +435,11 @@ class SrhtFlask(Flask):
         return self.static_cache[path]
 
     def get_network(self):
-        return [s for s in config if s.endswith(".sr.ht")]
+        return [
+                s for s in config
+                if s.endswith(".sr.ht") and s not in [
+                    "paste.sr.ht",
+                    "pages.sr.ht",
+                    "dispatch.sr.ht",
+                ]
+            ]
