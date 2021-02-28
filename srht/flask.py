@@ -1,4 +1,5 @@
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+00:00"
+from bs4 import BeautifulSoup
 from flask import Flask, Response, request, url_for, render_template, redirect
 from flask import Blueprint, current_app, g, abort, session as flask_session
 from enum import Enum
@@ -35,6 +36,7 @@ import secrets
 import sqlalchemy.exc
 import sqlalchemy.orm.exc
 import sys
+import unicodedata
 
 class NamespacedSession:
     def __getitem__(self, key):
@@ -163,6 +165,23 @@ def paginate_query(query, results_per_page=15):
         "page": page + 1,
         "total_results": total_results
     }
+
+def inject_rtl_direction(resp):
+    if resp.mimetype == 'text/html':
+        html_doc = resp.data.decode('utf8')
+        soup = BeautifulSoup(html_doc, 'html.parser')
+        if not soup.body:
+            return resp
+        for el in soup.body.find_all():
+            if el.name == 'input' or el.name == 'textarea':
+                el.attrs['dir'] = "auto"
+                continue
+            for ch in el.text:
+                if unicodedata.bidirectional(ch) in ('R', 'AL'):
+                    el.attrs['dir'] = "auto"
+                    break
+        resp.data = soup.encode('utf8')
+    return resp
 
 class ModifiedUnicodeConverter(UnicodeConverter):
     """Added ~ and ^ to safe URL characters, otherwise no changes."""
@@ -382,7 +401,7 @@ class SrhtFlask(Flask):
                 method=request.method,
                 route=request.endpoint,
             ).observe(max(default_timer() - request._srht_start_time, 0))
-            return resp
+            return inject_rtl_direction(resp)
 
     def make_response(self, rv):
         # Converts responses from dicts to JSON response objects
