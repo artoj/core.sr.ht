@@ -31,6 +31,7 @@ import json
 import locale
 import os
 import psycopg2.errors
+import secrets
 import sqlalchemy.exc
 import sqlalchemy.orm.exc
 import sys
@@ -255,7 +256,9 @@ class SrhtFlask(Flask):
                 if request.path.startswith(prefix):
                     return
             token = flask_session.get('_csrf_token_v2', None)
-            if not token or token != request.form.get('_csrf_token'):
+            if not token:
+                abort(403)
+            if not secrets.compare_digest(token, request.form.get('_csrf_token')):
                 abort(403)
 
         @self.teardown_appcontext
