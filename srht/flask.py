@@ -12,7 +12,7 @@ from srht.validation import Validation
 from datetime import datetime, timedelta
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
 from jinja2 import escape
-from prometheus_client import Counter, Summary, CollectorRegistry, REGISTRY, make_wsgi_app
+from prometheus_client import Histogram, CollectorRegistry, REGISTRY, make_wsgi_app
 from prometheus_client.multiprocess import MultiProcessCollector
 from timeit import default_timer
 from urllib.parse import urlparse, quote_plus
@@ -206,11 +206,8 @@ class SrhtFlask(Flask):
         self.metrics = type("metrics", tuple(), {
             m.describe()[0].name: m
             for m in [
-                Counter("http_requests", "Number of HTTP requests", [
-                    "method", "route", "status",
-                ]),
-                Summary("request_time", "Duration of HTTP requests", [
-                    "method", "route",
+                Histogram("request_time", "Duration of HTTP requests", [
+                    "method", "route", "status"
                 ]),
             ]
         })
@@ -398,14 +395,10 @@ class SrhtFlask(Flask):
         def track_request(resp):
             if not hasattr(request, "_srht_start_time"):
                 return resp
-            self.metrics.http_requests.labels(
-                method=request.method,
-                route=request.endpoint,
-                status=resp.status_code,
-            ).inc()
             self.metrics.request_time.labels(
                 method=request.method,
                 route=request.endpoint,
+                status=resp.status_code,
             ).observe(max(default_timer() - request._srht_start_time, 0))
             return inject_rtl_direction(resp)
 

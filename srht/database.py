@@ -5,7 +5,7 @@ from alembic.config import Config, CommandLine
 from argparse import ArgumentParser
 from datetime import datetime
 from logging.config import dictConfig
-from prometheus_client import Counter, Summary
+from prometheus_client import Histogram
 from sqlalchemy import create_engine, event, engine_from_config, pool
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -21,8 +21,7 @@ db = LocalProxy(lambda: _db)
 _metrics = type("metrics", tuple(), {
     m.describe()[0].name: m
     for m in [
-        Counter("sql_roundtrips", "Number of SQL round-trips"),
-        Summary("sql_query_duration", "Duration of SQL queries"),
+        Histogram("sql_query_duration", "Duration of SQL queries"),
     ]
 })
 
@@ -63,7 +62,6 @@ class DbSession():
         @event.listens_for(self.engine, 'after_cursor_execute')
         def after_cursor_execute(conn, cursor, statement,
                     parameters, context, executemany):
-            _metrics.sql_roundtrips.inc()
             _metrics.sql_query_duration.observe(
                     max(default_timer() - self._execute_start_time, 0))
 
