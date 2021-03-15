@@ -12,7 +12,8 @@ from srht.validation import Validation
 from datetime import datetime, timedelta
 from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
 from jinja2 import escape
-from prometheus_client import Counter, Summary, make_wsgi_app
+from prometheus_client import Counter, Summary, CollectorRegistry, REGISTRY, make_wsgi_app
+from prometheus_client.multiprocess import MultiProcessCollector
 from timeit import default_timer
 from urllib.parse import urlparse, quote_plus
 from werkzeug.local import LocalProxy
@@ -194,8 +195,13 @@ class SrhtFlask(Flask):
         super().__init__(name, *args, **kwargs)
 
         self.site = site
+        if os.environ.get("prometheus_multiproc_dir"):
+            self.metrics_registry = CollectorRegistry()
+            MultiProcessCollector(self.metrics_registry)
+        else:
+            self.metrics_registry = REGISTRY
         self.wsgi_app = DispatcherMiddleware(self.wsgi_app, {
-            "/metrics": make_wsgi_app(),
+            "/metrics": make_wsgi_app(registry=self.metrics_registry),
         })
         self.metrics = type("metrics", tuple(), {
             m.describe()[0].name: m
