@@ -41,6 +41,7 @@ setup(
       'cryptography',
       'prometheus_client',
       'alembic',
+      'redis',
   ],
   license = 'BSD-3-Clause',
   package_data={
