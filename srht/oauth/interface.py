@@ -5,6 +5,7 @@ import requests.exceptions
 from collections import namedtuple
 from datetime import datetime
 from flask import current_app, url_for
+from sqlalchemy.sql import text
 from srht.api import get_results, ensure_webhooks
 from srht.config import cfg, get_origin
 from srht.crypto import encrypt_request_authorization
@@ -147,29 +148,45 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
     def get_user(self, profile):
         """Get a user object from the meta.sr.ht user profile dict"""
         User = self.User
-        user = User.query.filter(User.username == profile["name"]).one_or_none()
-        if not user:
-            user = User()
-            user.username = profile["name"]
-            db.session.add(user)
-            if "user_type" in profile:
-                user.user_type = UserType(profile["user_type"])
-                user.suspension_notice = profile["suspension_notice"]
-            else:
-                self._preauthorized_warning()
-                user.user_type = UserType.unknown
-            user.email = profile["email"]
-            user.bio = profile["bio"]
-            user.location = profile["location"]
-            user.url = profile["url"]
-            # TODO: Add a version number or something so that we can add new
-            # webhooks as necessary
-            origin = get_origin(current_app.site)
-            webhook_url = origin + url_for("srht.oauth.profile_update")
-            self.ensure_meta_webhooks(user, {
-                webhook_url: ["profile:update"],
-            })
-            db.session.commit()
+        # I hate SQLAlchemy SO FUCKING MUCH
+        results = db.engine.execute(text("""
+            INSERT INTO "user" (
+                created, updated, username, email, user_type, url, location,
+                bio, suspension_notice
+            ) VALUES (
+                NOW() at time zone 'utc',
+                NOW() at time zone 'utc',
+                :name, :email, :user_type, :url, :location, :bio, :suspension_notice
+            )
+            ON CONFLICT (username)
+            DO UPDATE SET
+                updated = NOW() at time zone 'utc',
+                email = :email,
+                user_type = :user_type,
+                url = :url,
+                location = :location,
+                bio = :bio,
+                suspension_notice = :suspension_notice
+            RETURNING id, username, email, user_type, url, location, bio, suspension_notice;
+        """), profile)
+        row = results.fetchone()
+        user = User()
+        user.id = row[0]
+        user.username = row[1]
+        user.email = row[2]
+        user.user_type = UserType(row[3])
+        user.url = row[4]
+        user.location = row[5]
+        user.bio = row[6]
+        user.suspension_notice = row[7]
+        db.session.commit()
+        # TODO: Add a version number or something so that we can add new
+        # webhooks as necessary
+        origin = get_origin(current_app.site)
+        webhook_url = origin + url_for("srht.oauth.profile_update")
+        self.ensure_meta_webhooks(user, {
+            webhook_url: ["profile:update"],
+        })
         return user
 
     def lookup_user(self, username):
