@@ -42,7 +42,6 @@ def _internal_auth(f, auth, *args, **kwargs):
             profile = oauth_service.fetch_unknown_user(username)
             user = oauth_service.get_user(profile)
         oauth_token = OAuthToken()
-        oauth_token.user = user
         oauth_token.user_id = user.id
         # Note: the expiration is meaningless
         oauth_token.expires = datetime.utcnow() + timedelta(days=9999)
