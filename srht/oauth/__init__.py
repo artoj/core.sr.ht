@@ -38,7 +38,7 @@ def loginrequired(f):
         if not current_user:
             return redirect(current_app.oauth_service.oauth_url(request.url))
         elif current_user.user_type == UserType.suspended:
-            return "Your account has been suspended. Contact support", 401
+            return f"Your account has been suspended for the following reason: {current_user.suspension_notice}. Contact support.", 401
         else:
             return f(*args, **kwargs)
     return wrapper

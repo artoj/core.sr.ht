@@ -385,7 +385,7 @@ class SrhtFlask(Flask):
             if not cookie:
                 return
             user_info = json.loads(fernet.decrypt(cookie.encode()).decode())
-            g.current_user = self.oauth_service.get_user(user_info)
+            g.current_user = self.oauth_service.lookup_user(user_info["name"])
 
         @self.before_request
         def begin_track_request():
