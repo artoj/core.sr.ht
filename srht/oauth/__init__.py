@@ -34,8 +34,11 @@ def freshen_user():
 def loginrequired(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
+        from srht.oauth import UserType
         if not current_user:
             return redirect(current_app.oauth_service.oauth_url(request.url))
+        elif current_user.user_type == UserType.suspended:
+            return "Your account has been suspended. Contact support", 401
         else:
             return f(*args, **kwargs)
     return wrapper

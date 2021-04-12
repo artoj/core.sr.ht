@@ -48,37 +48,26 @@ def paginated_response(id_col, query,
         "results_per_page": per_page,
     }
 
-def get_authorization(user_or_token):
-    if isinstance(user_or_token, LocalProxy):
-        # This can happen if current_user is passed into this function
-        user_or_token = user_or_token._get_current_object()
-    if isinstance(user_or_token, current_app.oauth_service.User):
-        user = user_or_token
-        # Internal auth
-        return encrypt_request_authorization(user)
-    else:
-        # Token auth
-        return {
-            "Authorization": f"Bearer {user_or_token}",
-        }
+def get_authorization(user):
+    return encrypt_request_authorization(user)
 
-def get_results(url, user_or_token):
+def get_results(url, user):
     response = {"next": -1}
     while response.get("next") is not None:
         rurl = f"{url}?start={response['next']}"
-        r = requests.get(rurl, headers=get_authorization(user_or_token))
+        r = requests.get(rurl, headers=get_authorization(user))
         if r.status_code != 200:
             raise Exception(r.text)
         response = r.json()
         yield from response["results"]
 
-def ensure_webhooks(user_or_token, baseurl, webhooks):
+def ensure_webhooks(user, baseurl, webhooks):
     """
     Ensures that the specified webhooks are rigged up. Webhooks should be a
     dict whose key is the webhook URL and whose values are the list of events
     to send to that URL, or None to unconfigure this webhook.
     """
-    for webhook in get_results(baseurl, user_or_token):
+    for webhook in get_results(baseurl, user):
         url = webhook["url"]
         if url not in webhooks:
             continue
@@ -88,7 +77,7 @@ def ensure_webhooks(user_or_token, baseurl, webhooks):
         # This webhook is set up incorrectly, delete it
         webhook_url = f"{baseurl}/{webhook['id']}"
         r = requests.delete(webhook_url,
-                headers=get_authorization(user_or_token))
+                headers=get_authorization(user))
         if r.status_code != 204:
             raise Exception(f"Failed to remove invalid webhook: {r.text}")
         if webhooks[url] is None:
@@ -97,7 +86,7 @@ def ensure_webhooks(user_or_token, baseurl, webhooks):
         if not events:
             continue
         r = requests.post(baseurl,
-                headers=get_authorization(user_or_token),
+                headers=get_authorization(user),
                 json={"events": events, "url": url})
         if r.status_code != 201:
             raise Exception(f"Failed to create webhook: {r.text}")
