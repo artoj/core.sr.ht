@@ -303,6 +303,7 @@ code {
     display: flex;
     margin-top: 1em;
     align-items: baseline;
+    white-space: pre;
 
     &:first-child {
       margin-top: 0;
