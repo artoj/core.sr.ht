@@ -85,7 +85,7 @@ class Validation:
                     fbytes = value.read(max_file_size + 1)
                     if len(fbytes) == max_file_size + 1:
                         self.error('{} is too large'.format(name), field=name)
-                        value = None
+                        return None
                     else:
                         value = fbytes
                 else:
@@ -93,18 +93,21 @@ class Validation:
         if value is None:
             if name in self.source:
                 self.error('{} may not be null'.format(name), field=name)
+                return None
             else:
                 value = default
         if cls and value is not None:
             if cls and issubclass(cls, IntEnum):
                 if not isinstance(value, int):
                     self.error('{} should be an int'.format(name), field=name)
+                    return None
                 else:
                     try:
                         value = cls(value)
                     except ValueError:
                         self.error('{} is not a valid {}'.format(
                             value, cls.__name__), field=name)
+                        return None
             elif issubclass(cls, Enum):
                 if not isinstance(value, str):
                     self.error("{} should be an str".format(name), field=name)
@@ -112,6 +115,7 @@ class Validation:
                     if value not in cls.__members__.keys():
                         self.error("{} should be a valid {}".format(name, cls.__name__),
                                 field=name)
+                        return None
                     else:
                         try:
                             value = cls[value]
@@ -120,6 +124,7 @@ class Validation:
                                 value, cls.__name__), field=name)
             elif not isinstance(value, cls):
                 self.error('{} should be a {}'.format(name, cls.__name__), field=name)
+                return None
         self._kwargs[name] = value
         return value
 
