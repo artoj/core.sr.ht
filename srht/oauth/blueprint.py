@@ -13,7 +13,7 @@ import json
 import requests
 import urllib
 
-oauth_blueprint = Blueprint('srht.oauth', __name__)
+oauth_blueprint = Blueprint('srht_oauth', __name__)
 
 @oauth_blueprint.route("/oauth/callback")
 def oauth_callback():

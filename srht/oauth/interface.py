@@ -120,7 +120,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
             return oauth_token
 
         origin = get_origin(current_app.site)
-        revocation_url = origin + url_for("srht.oauth.revoke_delegated_token")
+        revocation_url = origin + url_for("srht_oauth.revoke_delegated_token")
         _token = self.delegated_exchange(token, revocation_url)
         expires = datetime.strptime(_token["expires"], DATE_FORMAT)
         scopes = set(OAuthScope(s) for s in _token["scopes"].split(","))
@@ -183,7 +183,7 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         # TODO: Add a version number or something so that we can add new
         # webhooks as necessary
         origin = get_origin(current_app.site)
-        webhook_url = origin + url_for("srht.oauth.profile_update")
+        webhook_url = origin + url_for("srht_oauth.profile_update")
         self.ensure_meta_webhooks(user, {
             webhook_url: ["profile:update"],
         })
