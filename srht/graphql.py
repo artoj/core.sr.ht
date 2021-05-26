@@ -12,7 +12,7 @@ from srht.oauth import loginrequired
 from srht.validation import Validation
 from urllib.parse import urlparse
 
-gql_blueprint = Blueprint('srht.graphql', __name__)
+gql_blueprint = Blueprint('srht_graphql', __name__)
 
 _schema_html = None
 
