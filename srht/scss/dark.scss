@@ -54,10 +54,10 @@ code {
 .alert-info {
   background-color: darken(#d1ecf1, 20);
   border-color: darken(#bee5eb, 10);
-  color: $black;
+  color: black;
 
   a:not(.btn) {
-    color: $primary;
+    color: darken($primary, 20);
   }
 }
 
