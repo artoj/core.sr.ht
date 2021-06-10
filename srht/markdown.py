@@ -197,7 +197,7 @@ def markdown(text, baselevel=1, link_prefix=None, with_styles=True):
         html = renderer.render(m.Document(text))
     formatter = HtmlFormatter()
     if with_styles:
-        style = formatter.get_style_defs('.highlight') + " .highlight { background: inherit; }"
+        style = ".highlight { background: inherit; }"
         return Markup(f"<style>{style}</style>"
                 + "<div class='markdown'>"
                 + sanitize(html)
