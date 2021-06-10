@@ -71,12 +71,20 @@ code {
   background-color: darken(#f8d7da, 12);
   border-color: darken(#f5c6cb, 10);
   color: $black;
+
+  a:not(.btn) {
+    color: darken($primary, 15);
+  }
 }
 
 .alert-warning {
   background-color: darken(#fff3cd, 8);
   border-color: darken(#ffeeba, 10);
   color: $black;
+
+  a:not(.btn) {
+    color: darken($primary, 15);
+  }
 }
 
 input[type="text"],
