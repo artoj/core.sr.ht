@@ -6,6 +6,7 @@ class FlagType(types.TypeDecorator):
     """
 
     impl = types.Integer()
+    cache_ok = True
 
     def __init__(self, enum):
         self.enum = enum
