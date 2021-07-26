@@ -98,7 +98,7 @@ def apply_terms(query, terms, default_fn, key_fns={}, fallback_fn=None):
     if not terms:
         return query
 
-    filters = and_()
+    filters = []
 
     for term in terms:
         if term.key is None:
@@ -112,4 +112,4 @@ def apply_terms(query, terms, default_fn, key_fns={}, fallback_fn=None):
 
         filters.append(not_(filter) if term.inverse else filter)
 
-    return query.filter(filters)
+    return query.filter(and_(*filters))
