@@ -309,6 +309,12 @@ class SrhtFlask(Flask):
                 raise e2.with_traceback(e2.__traceback__)
             return render_template("internal_error.html"), 500
 
+        @self.errorhandler(401)
+        def handle_401(e):
+            if request.path.startswith("/api"):
+                return { "errors": [ { "reason": "401 unauthorized" } ] }, 401
+            return render_template("unauthorized.html"), 401
+
         @self.errorhandler(404)
         def handle_404(e):
             if request.path.startswith("/api"):
