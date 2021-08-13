@@ -14,7 +14,21 @@ async_request = LocalProxy(lambda: _async_request)
 def make_worker(broker='redis://'):
     worker = Celery('webhooks', broker=broker)
 
-    @worker.task
+    def task(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as ex:
+                mail_exception(ex, context=f"webhook process")
+                try:
+                    db.session.rollback()
+                except:
+                    pass
+                return
+        wrapper.__name__ = func.__name__
+        return worker.task(wrapper)
+
+    @task
     def async_request(url, payload, headers,
             delivery_table=None, delivery_id=None, timeout=5):
         """
