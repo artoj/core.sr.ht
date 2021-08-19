@@ -17,6 +17,7 @@ setup(
       'srht',
       'srht.alembic',
       'srht.alembic.versions',
+      'srht.graphql',
       'srht.oauth',
       'srht.webhook',
   ],
