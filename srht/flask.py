@@ -96,7 +96,7 @@ icon_cache = {}
 def icon(i, cls=""):
     if i in icon_cache:
         svg = icon_cache[i]
-        return Markup(f'<span class="icon icon-{i} {cls}">{svg}</span>')
+        return Markup(f'<span class="icon icon-{i} {cls}" aria-hidden="true">{svg}</span>')
     fa_license = """<!--
         Font Awesome Free 5.3.1 by @fontawesome - https://fontawesome.com
         License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
@@ -108,7 +108,7 @@ def icon(i, cls=""):
     if g and "fa_license" not in g:
         svg += fa_license
         g.fa_license = True
-    return Markup(f'<span class="icon icon-{i} {cls}">{svg}</span>')
+    return Markup(f'<span class="icon icon-{i} {cls}" aria-hidden="true">{svg}</span>')
 
 @contextfunction
 def coalesce_search_terms(context):
