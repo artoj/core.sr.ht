@@ -5,7 +5,7 @@ from srht.crypto import encrypt_request_authorization
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
-def exec_gql(site, query, user=None, client_id=None, **variables):
+def exec_gql(site, query, user=None, client_id=None, valid=None, **variables):
     """
     Executes a GraphQL query against the given site's GraphQL API. If no user
     is specified, the authenticated user is used. If a validation argument is
@@ -21,7 +21,11 @@ def exec_gql(site, query, user=None, client_id=None, **variables):
                 "variables": variables,
             })
     if r.status_code != 200:
-        raise Exception(r.text)
+        if valid is None:
+            raise Exception(r.text)
+        else:
+            _copy_errors(valid, r.json())
+            return r.json().get("data")
     return r.json()["data"]
 
 def gql_time(time):
@@ -29,3 +33,12 @@ def gql_time(time):
     Parses a timestamp from a GraphQL response.
     """
     return datetime.strptime(time, DATE_FORMAT)
+
+def _copy_errors(valid, response):
+    for err in response["errors"]:
+        msg = err["message"]
+        ext = err.get("extensions")
+        field = None
+        if ext:
+            field = ext.get("field")
+        valid.error(msg, field=field)
