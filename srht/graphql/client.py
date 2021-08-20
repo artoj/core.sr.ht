@@ -20,13 +20,14 @@ def exec_gql(site, query, user=None, client_id=None, valid=None, **variables):
                 "query": query,
                 "variables": variables,
             })
-    if r.status_code != 200:
+    resp = r.json()
+    if r.status_code != 200 or "errors" in resp:
         if valid is None:
             raise Exception(r.text)
         else:
-            _copy_errors(valid, r.json())
-            return r.json().get("data")
-    return r.json()["data"]
+            _copy_errors(valid, resp)
+            return resp.get("data")
+    return resp["data"]
 
 def gql_time(time):
     """

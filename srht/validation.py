@@ -39,7 +39,8 @@ class Validation:
                 self.files = request.files
             self.request = request
         self._kwargs = {
-            "valid": self
+            "valid": self,
+            **self.source,
         }
 
     @property
@@ -125,7 +126,6 @@ class Validation:
             elif not isinstance(value, cls):
                 self.error('{} should be a {}'.format(name, cls.__name__), field=name)
                 return None
-        self._kwargs[name] = value
         return value
 
     def require(self, name, cls=None, friendly_name=None):
