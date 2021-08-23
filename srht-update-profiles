@@ -3,7 +3,7 @@ import sys
 import os
 sys.path.append(os.getcwd())
 site = sys.argv[1]
-app = __import__(site.replace(".", "") + ".app").app.app # disgusting hack
+app = __import__(site.replace(".", "").replace("builds","build") + ".app").app.app # disgusting hack
 from srht.config import cfg
 from srht.database import db, DbSession
 db = DbSession(cfg(site, "connection-string"))
