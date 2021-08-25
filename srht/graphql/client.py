@@ -5,6 +5,11 @@ from srht.crypto import encrypt_request_authorization
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
+class GraphQLError(Exception):
+    def __init__(self, body):
+        self.body = body
+        self.errors = body["errors"]
+
 def exec_gql(site, query, user=None, client_id=None, valid=None, **variables):
     """
     Executes a GraphQL query against the given site's GraphQL API. If no user
@@ -23,7 +28,7 @@ def exec_gql(site, query, user=None, client_id=None, valid=None, **variables):
     resp = r.json()
     if r.status_code != 200 or "errors" in resp:
         if valid is None:
-            raise Exception(r.text)
+            raise GraphQLError(r.json())
         else:
             _copy_errors(valid, resp)
             return resp.get("data")
