@@ -1,5 +1,6 @@
 import requests
 from datetime import datetime
+from flask import request
 from srht.config import get_origin, cfg
 from srht.crypto import encrypt_request_authorization
 
