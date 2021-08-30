@@ -19,8 +19,10 @@ def exec_gql(site, query, user=None, client_id=None, valid=None, **variables):
     """
     origin = cfg(site, "api-origin", default=get_origin(site))
     r = requests.post(f"{origin}/query",
-            headers=encrypt_request_authorization(
-                user=user, client_id=client_id),
+            headers={
+                "X-Forwarded-For": ", ".join(request.access_route),
+                **encrypt_request_authorization(user=user, client_id=client_id),
+            },
             json={
                 "query": query,
                 "variables": variables,
