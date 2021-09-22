@@ -115,6 +115,29 @@
       }
     }
 
+    .nav-text {
+      padding: 0 1rem;
+      margin-right: 1rem;
+
+      &.vis-private {
+        border-bottom: 3px solid $danger;
+        margin-bottom: -3px;
+      }
+
+      &.vis-unlisted {
+        border-bottom: 3px solid $info;
+        margin-bottom: -3px;
+      }
+
+      &:hover {
+        background: transparent;
+      }
+
+      @include media-breakpoint-down(sm) {
+        display: none;
+      }
+    }
+
     @include media-breakpoint-down(sm) {
       flex-wrap: wrap;
 
