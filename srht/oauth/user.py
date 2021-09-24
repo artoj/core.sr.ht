@@ -22,7 +22,7 @@ class UserMixin:
     created = sa.Column(sa.DateTime, nullable=False)
     updated = sa.Column(sa.DateTime, nullable=False)
     username = sa.Column(sa.Unicode(256), index=True, unique=True)
-    email = sa.Column(sa.String(256), nullable=False)
+    email = sa.Column(sa.String(256), nullable=False, unique=True)
     user_type = sa.Column(
             sau.ChoiceType(UserType, impl=sa.String()),
             nullable=False,

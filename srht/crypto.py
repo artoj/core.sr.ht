@@ -102,15 +102,25 @@ def verify_encrypted_authorization(auth):
         ))
     return json.loads(auth)
 
+internal_anon = 1337
+"""
+Set user=internal_anon for encrypt_request_authorization in order to use
+"anonymous" internal auth. This is only useful in specific circumstances and
+likely to break things in other circumstances. See comments in
+core-go/auth/middleware.go for details.
+"""
+
 def encrypt_request_authorization(user=None, client_id=None):
-    if not user and not client_id:
-        from srht.oauth import current_user
-        user = current_user
     """
     Returns request headers which can be used to authenticate an HTTP request
     to other sr.ht services. This is used for internal HTTP requests between
     sr.ht services.
     """
+    if not user and not client_id:
+        from srht.oauth import current_user
+        user = current_user
+    if user is internal_anon:
+        user = None
     auth = {
         "name": user.username if user else None,
         "client_id": "core.sr.ht",
