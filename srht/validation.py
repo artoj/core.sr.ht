@@ -132,7 +132,7 @@ class Validation:
         value = self.optional(name, None, cls)
         if not friendly_name:
             friendly_name = name
-        if not isinstance(value, bool) and not value:
+        if not isinstance(value, (bool, Enum)) and not value:
             self.error('{} is required'.format(friendly_name), field=name)
         return value
 
