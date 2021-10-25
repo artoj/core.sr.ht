@@ -25,7 +25,7 @@ setup(
   description = 'sr.ht core modules',
   author = 'Drew DeVault',
   author_email = 'sir@cmpwn.com',
-  url = 'https://git.sr.ht/~sircmpwn/srht',
+  url = 'https://git.sr.ht/~sircmpwn/core.sr.ht',
   install_requires = [
       'flask',
       'humanize',
