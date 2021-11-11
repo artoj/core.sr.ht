@@ -193,6 +193,7 @@ def add_noopener(html):
     return str(soup)
 
 def markdown(text, baselevel=1, link_prefix=None, with_styles=True):
+    text = text.replace("\r\n", "\n") # https://github.com/miyuchina/mistletoe/issues/124
     with SrhtRenderer(link_prefix, baselevel) as renderer:
         html = renderer.render(m.Document(text))
     formatter = HtmlFormatter()
