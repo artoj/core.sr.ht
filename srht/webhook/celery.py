@@ -3,6 +3,7 @@ Import this module only after configuring your database.
 """
 
 from celery import Celery
+from srht.email import mail_exception
 from srht.database import db
 from srht.webhook import Webhook
 from werkzeug.local import LocalProxy
