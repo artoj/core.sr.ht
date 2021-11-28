@@ -81,11 +81,11 @@ class Webhook(metaclass=WebhookMeta):
         delivery.response_status = -2
         db.session.add(delivery)
         db.session.commit()
-        return cls.process_delivery(delivery, payload, headers, **kwargs)
+        return cls.process_delivery(delivery, headers, **kwargs)
 
-    def process_delivery(cls, delivery, payload, headers):
+    def process_delivery(cls, delivery, headers):
         try:
-            r = requests.post(delivery.url, data=payload,
+            r = requests.post(delivery.url, data=delivery.payload,
                     timeout=5, headers=headers)
             delivery.response = r.text[:65536]
             delivery.response_status = r.status_code
@@ -204,5 +204,5 @@ class Webhook(metaclass=WebhookMeta):
             if not delivery:
                 abort(404)
             headers = cls.prepare_headers(delivery)
-            cls.process_delivery(delivery, delivery.payload, headers)
+            cls.process_delivery(delivery, headers)
             return {}
