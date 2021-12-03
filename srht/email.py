@@ -19,6 +19,7 @@ smtp_port = cfgi("mail", "smtp-port", default=None)
 smtp_user = cfg("mail", "smtp-user", default=None)
 smtp_password = cfg("mail", "smtp-password", default=None)
 smtp_from = cfg("mail", "smtp-from", default=None)
+smtp_encryption = cfg("mail", "smtp-encryption", default=None)
 error_to = cfg("mail", "error-to", default=None)
 error_from = cfg("mail", "error-from", default=None)
 meta_url = get_origin("meta.sr.ht")
@@ -112,10 +113,14 @@ def prepare_email(body, to, subject, encrypt_key=None, **headers):
 
 
 def start_smtp():
-    smtp = smtplib.SMTP(smtp_host, smtp_port)
+    if smtp_encryption == 'tls':
+        smtp = smtplib.SMTP_SSL(smtp_host, smtp_port)
+    else:
+        smtp = smtplib.SMTP(smtp_host, smtp_port)
     smtp.ehlo()
-    if smtp_user and smtp_password:
+    if smtp_encryption == 'starttls':
         smtp.starttls()
+    if smtp_user and smtp_password:
         smtp.login(smtp_user, smtp_password)
     return smtp
 
