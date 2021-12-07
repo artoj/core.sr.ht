@@ -9,6 +9,7 @@ from prometheus_client import Histogram
 from sqlalchemy import create_engine, event, engine_from_config, pool
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
+from flask import request
 from srht.config import cfg
 from timeit import default_timer
 from werkzeug.local import LocalProxy
@@ -21,7 +22,7 @@ db = LocalProxy(lambda: _db)
 _metrics = type("metrics", tuple(), {
     m.describe()[0].name: m
     for m in [
-        Histogram("sql_query_duration", "Duration of SQL queries"),
+        Histogram("sql_query_duration", "Duration of SQL queries", ('endpoint',)),
     ]
 })
 
@@ -62,8 +63,11 @@ class DbSession():
         @event.listens_for(self.engine, 'after_cursor_execute')
         def after_cursor_execute(conn, cursor, statement,
                     parameters, context, executemany):
-            _metrics.sql_query_duration.observe(
-                    max(default_timer() - self._execute_start_time, 0))
+            endpoint = ""
+            if request:
+                endpoint = request.endpoint
+            _metrics.sql_query_duration.labels(endpoint=endpoint).observe(
+                max(default_timer() - self._execute_start_time, 0))
 
     def create(self):
         Base.metadata.create_all(bind=self.engine)
