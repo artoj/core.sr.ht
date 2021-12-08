@@ -22,7 +22,7 @@ db = LocalProxy(lambda: _db)
 _metrics = type("metrics", tuple(), {
     m.describe()[0].name: m
     for m in [
-        Histogram("sql_query_duration", "Duration of SQL queries", ('endpoint',)),
+        Histogram("sql_query_duration", "Duration of SQL queries", ('route',)),
     ]
 })
 
@@ -63,10 +63,10 @@ class DbSession():
         @event.listens_for(self.engine, 'after_cursor_execute')
         def after_cursor_execute(conn, cursor, statement,
                     parameters, context, executemany):
-            endpoint = ""
+            route = ""
             if request:
-                endpoint = request.endpoint
-            _metrics.sql_query_duration.labels(endpoint=endpoint).observe(
+                route = request.endpoint
+            _metrics.sql_query_duration.labels(route=route).observe(
                 max(default_timer() - self._execute_start_time, 0))
 
     def create(self):
