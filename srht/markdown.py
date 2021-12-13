@@ -12,7 +12,7 @@ import mistletoe as m
 from mistletoe.span_token import SpanToken, RawText
 import re
 
-SRHT_MARKDOWN_VERSION = 12
+SRHT_MARKDOWN_VERSION = 13
 
 class PlainLink(SpanToken):
     """
@@ -174,6 +174,8 @@ _sanitizer = bleach.sanitizer.Cleaner(
         'irc',
         'ircs',
         'mailto',
+        'matrix',
+        'xmpp',
     ],
     styles=bleach.sanitizer.ALLOWED_STYLES + [
         "margin", "padding",
