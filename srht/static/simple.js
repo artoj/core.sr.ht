@@ -1,5 +1,6 @@
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/LICENSE
+// @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&dn=expat.txt Expat
 
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
@@ -214,3 +215,4 @@
     };
   }
 });
+// @license-end
