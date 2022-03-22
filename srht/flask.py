@@ -237,7 +237,6 @@ class SrhtFlask(Flask):
             except:
                 pass
 
-        self.jinja_env.cache = None
         self.jinja_env.filters['date'] = datef
         self.jinja_env.globals['pagination'] = pagination
         self.jinja_env.globals['icon'] = icon
