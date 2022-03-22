@@ -215,27 +215,33 @@ class SrhtFlask(Flask):
         self.url_map.converters['default'] = ModifiedUnicodeConverter
         self.url_map.converters['string'] = ModifiedUnicodeConverter
 
-        choices = [FileSystemLoader("templates")]
+        choices = [
+            FileSystemLoader("templates"),
+            FileSystemLoader(os.path.join("/etc", self.site, "templates")),
+        ]
 
         mod = __import__(name)
         if hasattr(mod, "__path__"):
             path = list(mod.__path__)[0]
-            self.mod_path = path
-            choices.append(FileSystemLoader(
-                os.path.join("/etc", self.site, "templates")))
-            choices.append(FileSystemLoader(os.path.join(path, "templates")))
-            choices.append(FileSystemLoader(os.path.join(
-                os.path.dirname(__file__),
-                "templates"
-            )))
+        elif hasattr(mod, "__file__"):
+            path = os.path.dirname(mod.__file__)
+        else:
+            raise Exception("Can't find the module's path, how are you running the app???")
 
-            try:
-                with open(os.path.join(path, "schema.graphqls")) as f:
-                    self.graphql_schema = f.read()
-                with open(os.path.join(path, "default_query.graphql")) as f:
-                    self.graphql_query = f.read()
-            except:
-                pass
+        self.mod_path = path
+        choices.append(FileSystemLoader(os.path.join(path, "templates")))
+        choices.append(FileSystemLoader(os.path.join(
+            os.path.dirname(__file__),
+            "templates"
+        )))
+
+        try:
+            with open(os.path.join(path, "schema.graphqls")) as f:
+                self.graphql_schema = f.read()
+            with open(os.path.join(path, "default_query.graphql")) as f:
+                self.graphql_query = f.read()
+        except:
+            pass
 
         self.jinja_env.filters['date'] = datef
         self.jinja_env.globals['pagination'] = pagination
