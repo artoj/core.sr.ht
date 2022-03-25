@@ -1,6 +1,6 @@
 import requests
 from datetime import datetime
-from flask import request
+from flask import request, has_request_context
 from srht.config import get_origin, cfg
 from srht.crypto import encrypt_request_authorization
 
@@ -19,9 +19,10 @@ def exec_gql(site, query, user=None, client_id=None, valid=None, **variables):
     any GraphQL error will cause an exception to be thrown.
     """
     origin = cfg(site, "api-origin", default=get_origin(site))
+
     r = requests.post(f"{origin}/query",
             headers={
-                "X-Forwarded-For": ", ".join(request.access_route),
+                "X-Forwarded-For": ", ".join(request.access_route) if has_request_context() else None,
                 **encrypt_request_authorization(user=user, client_id=client_id),
             },
             json={
