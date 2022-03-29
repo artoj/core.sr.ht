@@ -4,7 +4,7 @@ from flask import request, has_request_context
 from srht.config import get_origin, cfg
 from srht.crypto import encrypt_request_authorization
 
-DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 class GraphQLError(Exception):
     def __init__(self, body):
