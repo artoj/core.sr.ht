@@ -4,7 +4,7 @@ from flask import request, has_request_context
 from srht.config import get_origin, cfg
 from srht.crypto import encrypt_request_authorization
 
-DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 class GraphQLError(Exception):
     def __init__(self, body):
@@ -42,6 +42,9 @@ def gql_time(time):
     """
     Parses a timestamp from a GraphQL response.
     """
+    # Python's strptime does not support nanoseconds, so that's cool.
+    nanos = time.rindex(".")
+    time = time[:nanos] + "Z"
     return datetime.strptime(time, DATE_FORMAT)
 
 def _copy_errors(valid, response):
