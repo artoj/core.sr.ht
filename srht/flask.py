@@ -10,8 +10,8 @@ from srht.database import db
 from srht.markdown import markdown
 from srht.validation import Validation
 from datetime import datetime, timedelta
-from jinja2 import Markup, FileSystemLoader, ChoiceLoader, contextfunction
-from jinja2 import escape
+from jinja2 import FileSystemLoader, ChoiceLoader, pass_context
+from markupsafe import Markup, escape
 from prometheus_client import Histogram, CollectorRegistry, REGISTRY, make_wsgi_app
 from prometheus_client.multiprocess import MultiProcessCollector
 from timeit import default_timer
@@ -110,7 +110,7 @@ def icon(i, cls=""):
         g.fa_license = True
     return Markup(f'<span class="icon icon-{i} {cls}" aria-hidden="true">{svg}</span>')
 
-@contextfunction
+@pass_context
 def coalesce_search_terms(context):
     ret = ""
     for key in ["search"] + (context.get("search_keys") or []):
@@ -120,7 +120,7 @@ def coalesce_search_terms(context):
             ret += f"&{key}={val}"
     return ret
 
-@contextfunction
+@pass_context
 def pagination(context):
     template = context.environment.get_template("pagination.html")
     return Markup(template.render(**context.parent))

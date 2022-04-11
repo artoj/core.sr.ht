@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from collections import namedtuple
-from jinja2 import Markup, escape
+from markupsafe import Markup, escape
 from urllib.parse import urljoin
 from pygments import highlight
 from pygments.formatters import HtmlFormatter, ClassNotFound

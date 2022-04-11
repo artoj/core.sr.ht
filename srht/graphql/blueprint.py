@@ -2,7 +2,7 @@ import json
 import pygments
 import requests
 from flask import Blueprint, current_app, render_template, request, abort
-from jinja2 import Markup
+from markupsafe import Markup
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import JsonLexer
