@@ -43,6 +43,7 @@ setup(
       'prometheus_client',
       'alembic',
       'redis',
+      'celery',
   ],
   license = 'BSD-3-Clause',
   package_data={
