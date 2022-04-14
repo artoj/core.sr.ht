@@ -154,6 +154,23 @@ _sanitizer_attrs = {
     "input": _input_filter,
     "*": _wildcard_filter,
 }
+_sanitizer_styles = [
+        "margin", "padding",
+        "text-align", "font-weight",
+        "text-decoration"
+    ]
+_sanitizer_styles += [f"padding-{p}" for p in ["left", "right", "bottom", "top"]]
+_sanitizer_styles += [f"margin-{p}" for p in ["left", "right", "bottom", "top"]]
+
+_sanitizer_css = {}
+try:
+    # bleach >= 5.0.0
+    from bleach.css_sanitizer import CSSSanitizer
+    _sanitizer_css["css_sanitizer"] = CSSSanitizer(allowed_svg_properties=[], allowed_css_properties=_sanitizer_styles)
+except ImportError:
+    # bleach < 5.0.0
+    _sanitizer_css["styles"] = bleach.sanitizer.ALLOWED_STYLES + _sanitizer_styles
+
 _sanitizer = bleach.sanitizer.Cleaner(
     tags=bleach.sanitizer.ALLOWED_TAGS + [
         "p", "div", "span", "pre", "hr",
@@ -177,13 +194,8 @@ _sanitizer = bleach.sanitizer.Cleaner(
         'matrix',
         'xmpp',
     ],
-    styles=bleach.sanitizer.ALLOWED_STYLES + [
-        "margin", "padding",
-        "text-align", "font-weight", "text-decoration"
-    ]
-    + [f"padding-{p}" for p in ["left", "right", "bottom", "top"]]
-    + [f"margin-{p}"  for p in ["left", "right", "bottom", "top"]],
-    strip=True)
+    strip=True,
+    **_sanitizer_css)
 
 def sanitize(html):
     return add_noopener(_sanitizer.clean(html))
