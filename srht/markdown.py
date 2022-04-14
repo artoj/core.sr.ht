@@ -7,7 +7,6 @@ from pygments.formatters import HtmlFormatter, ClassNotFound
 from pygments.lexers import get_lexer_by_name
 from urllib.parse import urlparse, urlunparse
 import bleach
-import bleach.css_sanitizer
 import html
 import mistletoe as m
 from mistletoe.span_token import SpanToken, RawText
@@ -178,12 +177,12 @@ _sanitizer = bleach.sanitizer.Cleaner(
         'matrix',
         'xmpp',
     ],
-    css_sanitizer=bleach.css_sanitizer.CSSSanitizer(allowed_svg_properties=[], allowed_css_properties=[
+    styles=bleach.sanitizer.ALLOWED_STYLES + [
         "margin", "padding",
         "text-align", "font-weight", "text-decoration"
     ]
     + [f"padding-{p}" for p in ["left", "right", "bottom", "top"]]
-    + [f"margin-{p}"  for p in ["left", "right", "bottom", "top"]]),
+    + [f"margin-{p}"  for p in ["left", "right", "bottom", "top"]],
     strip=True)
 
 def sanitize(html):
