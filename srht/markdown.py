@@ -173,7 +173,7 @@ except ImportError:
 
 _sanitizer = bleach.sanitizer.Cleaner(
     tags=bleach.sanitizer.ALLOWED_TAGS + [
-        "p", "div", "span", "pre", "hr",
+        "p", "div", "span", "pre", "hr", "br",
         "dd", "dt", "dl",
         "table", "thead", "tbody", "tr", "th", "td",
         "input",
