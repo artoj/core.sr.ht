@@ -11,6 +11,8 @@ $pre-background: $gray-200;
 
 $event-background: $gray-100;
 
+$font_family_monospace: monospace;
+
 @mixin anchor_with_contrast($background: $white) {
   a {
     color: color_adjust_contrast_AERT($link-color, $background);
