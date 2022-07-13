@@ -151,16 +151,17 @@ If you are the admin of {metasrht}, run the following SQL to correct this:
         # I hate SQLAlchemy SO FUCKING MUCH
         results = db.engine.execute(text("""
             INSERT INTO "user" (
-                created, updated, username, email, user_type, url, location,
+                created, updated, id, username, email, user_type, url, location,
                 bio, suspension_notice
             ) VALUES (
                 NOW() at time zone 'utc',
                 NOW() at time zone 'utc',
-                :name, :email, :user_type, :url, :location, :bio, :suspension_notice
+                :id, :name, :email, :user_type, :url, :location, :bio, :suspension_notice
             )
-            ON CONFLICT (username)
+            ON CONFLICT (id)
             DO UPDATE SET
                 updated = NOW() at time zone 'utc',
+                username = :name,
                 email = :email,
                 user_type = :user_type,
                 url = :url,
