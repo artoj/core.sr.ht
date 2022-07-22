@@ -12,7 +12,7 @@ import mistletoe as m
 from mistletoe.span_token import SpanToken, RawText
 import re
 
-SRHT_MARKDOWN_VERSION = 14
+SRHT_MARKDOWN_VERSION = 15
 
 class PlainLink(SpanToken):
     """
@@ -182,6 +182,7 @@ _sanitizer = bleach.sanitizer.Cleaner(
         "h1", "h2", "h3", "h4", "h5", "h6",
         "details", "summary",
         "abbr", "dfn",
+        "del",
     ],
     attributes={**bleach.sanitizer.ALLOWED_ATTRIBUTES, **_sanitizer_attrs},
     protocols=[
