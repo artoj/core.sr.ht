@@ -149,10 +149,17 @@ h5 {
   tbody {
     td {
       position: relative;
+      /*
+      `position: relative` requires `background-clip: padding-box` to avoid the
+      background being drawn on top of the borders on some OSes. Also,
+      subsequently setting `background` will override `background-clip`, so make
+      sure to use `background-color`.
+      */
+      background-clip: padding-box;
       vertical-align: middle;
       padding: 0.1rem 0.75rem;
       border: 1px solid $gray-400;
-      background: $white;
+      background-color: $white;
 
       label {
         margin-bottom: 0;
