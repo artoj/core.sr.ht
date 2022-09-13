@@ -2,6 +2,7 @@ DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+00:00"
 from bs4 import BeautifulSoup
 from flask import Flask, Response, request, url_for, render_template, redirect
 from flask import Blueprint, current_app, g, abort, session as flask_session
+from flask import make_response
 from enum import Enum
 from srht.config import cfg, cfgi, cfgkeys, config, get_origin, get_global_domain
 from srht.crypto import fernet
@@ -38,6 +39,7 @@ import sqlalchemy.exc
 import sqlalchemy.orm.exc
 import sys
 import unicodedata
+from functools import update_wrapper
 
 class NamespacedSession:
     def __getitem__(self, key):
@@ -475,3 +477,24 @@ class SrhtFlask(Flask):
                     "dispatch.sr.ht",
                 ]
             ]
+
+def cross_origin(f):
+    """
+    Enable CORS headers on a route.
+    """
+
+    f.required_methods = getattr(f, "required_methods", set())
+    f.required_methods.add("OPTIONS")
+    f.provide_automatic_options = False
+
+    def wrapped_function(*args, **kwargs):
+        if request.method == "OPTIONS":
+            resp = current_app.make_default_options_response()
+        else:
+            resp = make_response(f(*args, **kwargs))
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        resp.headers["Access-Control-Allow-Methods"] = "OPTIONS, GET, POST"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return resp
+
+    return update_wrapper(wrapped_function, f)
