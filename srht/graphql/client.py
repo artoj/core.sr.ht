@@ -47,7 +47,7 @@ class GraphQLOperation:
         else:
             self.variables[key] = value
 
-    def execute(self, site, user=None, client_id=None, valid=None):
+    def execute(self, site, user=None, client_id=None, valid=None, oauth2_token=None):
         """
         Executes a GraphQL query against the given site's GraphQL API. If no user
         is specified, the authenticated user is used. If a validation argument is
@@ -58,8 +58,17 @@ class GraphQLOperation:
 
         headers={
             "X-Forwarded-For": ", ".join(request.access_route) if has_request_context() else None,
-            **encrypt_request_authorization(user=user, client_id=client_id),
         }
+        if oauth2_token is not None:
+            headers={
+                **headers,
+                "Authorization": f"Bearer {oauth2_token}",
+            }
+        else:
+            headers={
+                **headers,
+                **encrypt_request_authorization(user=user, client_id=client_id),
+            }
 
         if len(self.uploads) > 0:
             files = {}
