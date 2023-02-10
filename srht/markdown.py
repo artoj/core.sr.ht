@@ -172,7 +172,7 @@ except ImportError:
     _sanitizer_css["styles"] = bleach.sanitizer.ALLOWED_STYLES + _sanitizer_styles
 
 _sanitizer = bleach.sanitizer.Cleaner(
-    tags=bleach.sanitizer.ALLOWED_TAGS + [
+    tags=list(bleach.sanitizer.ALLOWED_TAGS) + [
         "p", "div", "span", "pre", "hr", "br",
         "dd", "dt", "dl",
         "table", "thead", "tbody", "tr", "th", "td",
