@@ -250,6 +250,7 @@ class SrhtFlask(Flask):
         self.jinja_env.globals['icon'] = icon
         self.jinja_env.globals['csrf_token'] = csrf_token
         self.jinja_loader = ChoiceLoader(choices)
+        self.jinja_env.add_extension('jinja2.ext.do')
         self.secret_key = cfg("sr.ht", "service-key", default=
                 cfg("sr.ht", "secret-key", default=None))
         if self.secret_key is None:
