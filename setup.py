@@ -5,9 +5,6 @@ import glob
 import os
 import sys
 
-if subprocess.call(["npm", "i"], cwd="srht") != 0:
-    sys.exit(1)
-
 ver = os.environ.get("PKGVER") or subprocess.run(['git', 'describe', '--tags'],
       stdout=subprocess.PIPE).stdout.decode().strip()
 

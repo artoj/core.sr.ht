@@ -26,9 +26,7 @@ $(MODULE)static/main.css: scss/*.scss ${SRHT_PATH}/scss/*.scss
 	sassc -I${SRHT_PATH}/scss scss/main.scss $@
 
 $(MODULE)static/main.min.css: $(MODULE)static/main.css
-	node ${SRHT_PATH}/node_modules/clean-css-cli/bin/cleancss \
-		-o static/main.min.css \
-		static/main.css
+	minify -o static/main.min.css static/main.css
 	cp static/main.min.css \
 		static/main.min.$$(sha256sum static/main.min.css | cut -c1-8).css
 
