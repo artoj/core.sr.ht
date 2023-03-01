@@ -97,7 +97,7 @@ def verify_encrypted_authorization(auth):
             status=403,
             mimetype="application/json",
             response=json.dumps({
-                { "reason": "Internal request authorization failed." },
+                "reason": "Internal request authorization failed.",
             }),
         ))
     return json.loads(auth)
