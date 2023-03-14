@@ -11,6 +11,7 @@ class GraphQLError(Exception):
     def __init__(self, body):
         self.body = body
         self.errors = body["errors"]
+        self.data = body.get("data")
 
 def exec_gql(site, query, user=None, client_id=None, valid=None, **variables):
     op = GraphQLOperation(query)
