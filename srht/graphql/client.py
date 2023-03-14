@@ -96,7 +96,7 @@ class GraphQLOperation:
         resp = r.json()
         if r.status_code != 200 or "errors" in resp:
             if valid is None:
-                raise GraphQLError(r.json())
+                raise GraphQLError(resp)
             else:
                 _copy_errors(valid, resp)
                 return resp.get("data")
