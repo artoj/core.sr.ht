@@ -3,7 +3,7 @@
 
 .PHONY: all static watch clean
 
-SRHT_PATH?=/usr/lib/python3.8/site-packages/srht
+SRHT_PATH?=/usr/lib/python3.10/site-packages/srht
 
 _STATIC:=$(patsubst _static/%,$(MODULE)static/%,$(wildcard _static/*.*))
 _STATIC+=$(patsubst $(SRHT_PATH)/static/%,$(MODULE)static/%,$(wildcard $(SRHT_PATH)/static/*.*))
